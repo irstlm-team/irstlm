@@ -18,7 +18,7 @@ The data for the examples described in the User Manual are available under http:
 HOW TO INSTALL WITH AUTOMAKE
 
 step 0: sh regenerate-makefiles.sh [--force]
-# set parameter force to the value "--force" if you want to recreate all links to the autotools
+	set parameter force to the value "--force" if you want to recreate all links to the autotools
 
 step 1: ./configure [--prefix=/path/where/to/install] ...
 # run "configure --help" to get more details on the compilation options
