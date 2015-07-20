@@ -17,28 +17,33 @@ The data for the examples described in the User Manual are available under http:
 
 HOW TO INSTALL WITH AUTOMAKE
 
-step 0: sh regenerate-makefiles.sh [--force]\\
-	set parameter force to the value "--force" if you want to recreate all links to the autotools
+step 0: 
+- sh regenerate-makefiles.sh [--force]
+- set parameter force to the value "--force" if you want to recreate all links to the autotools
 
-step 1: ./configure [--prefix=/path/where/to/install] ...
-# run "configure --help" to get more details on the compilation options
+step 1: 
+- ./configure [--prefix=/path/where/to/install] ...
+- run "configure --help" to get more details on the compilation options
 
 Note: If your g++ compiler does not support '-std=c++0x', please add parameter '--disable-cxx0'
 To check whether g++ complier does support '-std=c++0x', please run the following command:
-$> echo | g++ -E -x c++ -std=c++0x -dM - >& /dev/null ; echo $?
+- $> echo | g++ -E -x c++ -std=c++0x -dM - >& /dev/null ; echo $?
 
 If it returns 0, g++ complier does support '-std=c++0x'; otherwise, it does not, and hence please use '--disable-cxx0'
 
-step 2: make
+step 2: 
+- make
 
-step 3: make install
+step 3: 
+- make install
 
 These steps will generate the irstlm library and commands, respectively,
 under the specified path where to install.
 
 HOW TO INSTALL WITH CMAKE
 
-step 0: cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="/path/where/to/install"
+step 0: 
+- cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="/path/where/to/install"
 
 Note: If your g++ compiler does not support '-std=c++0x', please add parameter '-DCXX0:BOOL=OFF'
 To check whether g++ complier does support '-std=c++0x', please run the following command:
@@ -46,14 +51,16 @@ $> echo | g++ -E -x c++ -std=c++0x -dM - >& /dev/null ; echo $?
 
 If it returns 0, g++ complier does support '-std=c++0x'; otherwise, it does not, and hence please use '-DCXX0:BOOL=OFF'
 
-step 2: make
-step 3: make install
+step 2: 
+- make
+step 3: 
+- make install
 
 HOW TO CONTRIBUTE
 
 If you wish to contribute to the Open Source IRSTLM toolkit just tell us! 
 
 Marcello Federico
-FBK-irst, Trento, ITALY
+FBK, Trento, ITALY
 email: federico AT fbk DOT eu
 
