@@ -34,6 +34,7 @@ SET( LIB_IRSTLM_SRC
         lmmacro.h lmmacro.cpp
         lmtable.h lmtable.cpp
         lmInterpolation.h lmInterpolation.cpp
+        lmContextDependent.h lmContextDependent.h.cpp
         mempool.h mempool.cpp 
         mfstream.h mfstream.cpp 
         n_gram.h n_gram.cpp 

@@ -16,6 +16,7 @@ libirstlm_la_HEADERS = \
   lmmacro.h \
   lmtable.h \
   lmInterpolation.h \
+  lmContextDependent.h \
   mempool.h \
   mfstream.h \
   n_gram.h \
@@ -44,6 +45,7 @@ libirstlm_la_SOURCES = \
   lmmacro.cpp \
   lmtable.cpp \
   lmInterpolation.cpp \
+  lmContextDependent.cpp \
   mempool.cpp \
   mfstream.cpp \
   n_gram.cpp \
