@@ -91,6 +91,7 @@ public:
 	return lprob(ng, ngsize, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
   };
   virtual double lprob(int* ng, int ngsize, topic_map& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+  virtual double lprob(ngram ng, topic_map& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 
   int maxlevel() const {
     return maxlev;

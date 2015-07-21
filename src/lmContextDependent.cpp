@@ -127,18 +127,23 @@ void lmContextDependent::load(const std::string &filename,int mmap)
   inp.close();
 }
 
+double lmContextDependent::lprob(ngram ng, topic_map& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+{
+  double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+  double topic_prob = 0.0;  // to_CHECK
+  double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
+
+  return ret_prob;
+}
+
 double lmContextDependent::lprob(int* codes, int sz, topic_map& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 {
   //create the actual ngram
   ngram ong(dict);
   ong.pushc(codes,sz);
   MY_ASSERT (ong.size == sz);
-	
-  double lm_prob = m_lm->clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
-  double topic_prob = 0.0;  // to_CHECK
-  double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
 
-  return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
+  return lprob(ong, topic_weights, bow, bol, maxsuffptr, statesize, extendible);	
 }
 
 double lmContextDependent::setlogOOVpenalty(int dub)
