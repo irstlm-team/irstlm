@@ -28,11 +28,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 #define _IRSTLM_LMMACRO 2
 #define _IRSTLM_LMCLASS 3
 #define _IRSTLM_LMINTERPOLATION 4
+#define _IRSTLM_LMCONTEXTDEPENDENT 5
 
 
 #include <stdio.h>
 #include <cstdlib>
 #include <stdlib.h>
+#include <map>
 #include "util.h"
 #include "n_gram.h"
 #include "dictionary.h"
@@ -40,6 +42,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
 namespace irstlm {
+
+typedef std::map< std::string, float > topic_map;
+
 class lmContainer
 {
   static const bool debug=true;
@@ -128,6 +133,15 @@ public:
     return 0.0;
   };
 
+  virtual double clprob(ngram ng, topic_map& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(topic_weights);
+    return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+  };
+
+  virtual double clprob(int* ng, int ngsize, topic_map& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(topic_weights);
+    return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
+  }
 
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {

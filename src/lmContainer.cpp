@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 #include "lmmacro.h"
 #include "lmclass.h"
 #include "lmInterpolation.h"
+#include "lmContextDependent.h"
 
 using namespace std;
 	
@@ -92,8 +93,10 @@ int lmContainer::getLanguageModelType(std::string filename)
 
   int type=_IRSTLM_LMUNKNOWN;
   VERBOSE(1,"type: " << type << std::endl);
-  if (header == "lmminterpolation" || header == "LMINTERPOLATION") {
+  if (header == "lminterpolation" || header == "LMINTERPOLATION") {
     type = _IRSTLM_LMINTERPOLATION;
+  } else if (header == "lmcontextdependent" || header == "LMCONTEXTDEPENDENT") {
+    type = _IRSTLM_LMCONTEXTDEPENDENT;
   } else if (header == "lmmacro" || header == "LMMACRO") {
     type = _IRSTLM_LMMACRO;
   } else if (header == "lmclass" || header == "LMCLASS") {
@@ -138,6 +141,10 @@ lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf)
 		case _IRSTLM_LMINTERPOLATION:
 			lm = new lmInterpolation(nlf, dlf);
 			break;
+
+                case _IRSTLM_LMCONTEXTDEPENDENT:
+                        lm = new lmContextDependent(nlf, dlf);
+                        break;
 			
 		default:
 			exit_error(IRSTLM_ERROR_DATA, "This language model type is unknown!");

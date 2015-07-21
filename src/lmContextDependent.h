@@ -28,14 +28,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 #include <stdlib.h>
 #include <string>
 #include <math.h>
-#include <map>
 #include "util.h"
 #include "dictionary.h"
 #include "n_gram.h"
 #include "lmContainer.h"
 
-typedef std::map< std::string, float > topic_map;
-	
 namespace irstlm {
 /*
 Context-dependent LM
@@ -79,11 +76,24 @@ public:
 
   virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
         VERBOSE(0, "This LM type (lmContextDependent) does not support this function");
+        UNUSED(ng);
+        UNUSED(bow);
+        UNUSED(bol);
+        UNUSED(maxsuffptr);
+        UNUSED(statesize);
+        UNUSED(extendible);
         assert(false);
   };
 
   virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 	VERBOSE(0, "This LM type (lmContextDependent) does not support this function");
+        UNUSED(ng);
+        UNUSED(ngsize);
+        UNUSED(bow);
+        UNUSED(bol);
+        UNUSED(maxsuffptr);
+        UNUSED(statesize);
+        UNUSED(extendible);
 	assert(false);
   };
 
