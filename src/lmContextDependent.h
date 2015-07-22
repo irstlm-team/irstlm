@@ -34,6 +34,23 @@
 #include "lmContainer.h"
 
 namespace irstlm {
+	class PseudoTopicModel
+	{
+	public:
+		PseudoTopicModel(){};
+		~PseudoTopicModel(){};
+		
+		void load(const std::string &filename){};
+		
+		double prob(std::vector<std::string>& text, topic_map_t& topic_weights){
+			UNUSED(text);
+			UNUSED(topic_weights);
+			return 1.0;
+		}
+	};
+}
+
+namespace irstlm {
 	/*
 	 Context-dependent LM
 	 Wrapper LM which combines a standard ngram-based word-based LM
@@ -44,6 +61,7 @@ namespace irstlm {
 	
 	class lmContextDependent: public lmContainer
 	{
+	private:
 		static const bool debug=true;
 		int order;
 		int dictionary_upperbound; //set by user
@@ -56,7 +74,7 @@ namespace irstlm {
 		bool m_isinverted;
 		
 		//  TopicModel* m_topicmodel;
-		lmContainer* m_topicmodel;   //to remove when TopicModel is ready
+		PseudoTopicModel* m_topicmodel;   //to remove when TopicModel is ready
 		double m_lm_weight;
 		
 		double m_topicmodel_weight;
@@ -106,6 +124,7 @@ namespace irstlm {
 		};
 		virtual double lprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		virtual double lprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		virtual double lprob(std::vector<std::string>& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		
 		int maxlevel() const {
 			return maxlev;

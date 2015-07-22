@@ -109,22 +109,43 @@ namespace irstlm {
 		
 		//loading topic model and initialization
 		m_topicmodel_weight = (float) atof(words[0]);
-		//m_topic_model = new  xxxxxxxxxxxxxxxx
+		m_topicmodel = new  PseudoTopicModel();
+		m_topicmodel->load(words[1]);
 		
 		inp.close();
 	}
 	
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
+		std::vector<std::string> text;   // replace with the text passed as parameter
 		double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double topic_prob = 0.0;  // to_CHECK
+		double topic_prob = m_topicmodel->prob(text, topic_weights);
 		double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
+		VERBOSE(0, "lm_prob:" << lm_prob << " m_lm_weight:" << m_lm_weight << " topic_prob:" << topic_prob << " m_topicmodel_weight:" << m_topicmodel_weight << " ret_prob:" << ret_prob << std::endl);
 		
 		return ret_prob;
 	}
 	
+	double lmContextDependent::lprob(std::vector<std::string>& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		VERBOSE(0,"lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, " << std::endl);
+		//create the actual ngram
+		ngram ng(dict);
+		ng.pushw(text);
+		MY_ASSERT (ng.size == text.size());
+		
+		double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double topic_prob = m_topicmodel->prob(text, topic_weights);
+		
+		double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
+		VERBOSE(0, "lm_prob:" << lm_prob << " m_lm_weight:" << m_lm_weight << " topic_prob:" << topic_prob << " m_topicmodel_weight:" << m_topicmodel_weight << " ret_prob:" << ret_prob << std::endl);
+		
+		return ret_prob;	
+	}
+	
 	double lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
+		VERBOSE(0,"lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, " << std::endl);
 		//create the actual ngram
 		ngram ong(dict);
 		ong.pushc(codes,sz);
@@ -132,7 +153,6 @@ namespace irstlm {
 		
 		return lprob(ong, topic_weights, bow, bol, maxsuffptr, statesize, extendible);	
 	}
-	
 	double lmContextDependent::setlogOOVpenalty(int dub)
 	{
 		MY_ASSERT(dub > dict->size());
