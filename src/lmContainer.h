@@ -43,7 +43,7 @@ typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
 namespace irstlm {
 
-typedef std::map< std::string, float > topic_map;
+typedef std::map< std::string, float > topic_map_t;
 
 class lmContainer
 {
@@ -133,12 +133,12 @@ public:
     return 0.0;
   };
 
-  virtual double clprob(ngram ng, topic_map& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+  virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
     UNUSED(topic_weights);
     return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
   };
 
-  virtual double clprob(int* ng, int ngsize, topic_map& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+  virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
     UNUSED(topic_weights);
     return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
   }

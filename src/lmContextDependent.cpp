@@ -127,7 +127,7 @@ void lmContextDependent::load(const std::string &filename,int mmap)
   inp.close();
 }
 
-double lmContextDependent::lprob(ngram ng, topic_map& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 {
   double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
   double topic_prob = 0.0;  // to_CHECK
@@ -136,7 +136,7 @@ double lmContextDependent::lprob(ngram ng, topic_map& topic_weights, double* bow
   return ret_prob;
 }
 
-double lmContextDependent::lprob(int* codes, int sz, topic_map& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+double lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 {
   //create the actual ngram
   ngram ong(dict);
