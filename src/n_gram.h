@@ -119,7 +119,9 @@ public:
   int pushc(int c);
   int pushc(int* codes, int sz);
   int pushw(const char* w);
-
+  int pushw(std::string w);
+  int pushw(std::vector<std::string> w_vec);
+	
   //~ngram();
 };
 
