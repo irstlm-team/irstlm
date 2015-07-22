@@ -4,6 +4,7 @@
 #define IRSTLM_UTIL_H
 
 
+#include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -70,10 +71,16 @@ void ShowProgress(long long current,long long total);
 int parseWords(char *, const char **, int);
 int parseline(istream& inp, int Order,ngram& ng,float& prob,float& bow);
 
+//split a string into a vector of string according to one specified delimiter (char)
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+
 void exit_error(int err, const std::string &msg="");
 
 namespace irstlm{
+
+
 	void* reallocf(void *ptr, size_t size);
+
 }
 
 //extern int tracelevel;
