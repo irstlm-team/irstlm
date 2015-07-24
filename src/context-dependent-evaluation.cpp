@@ -24,7 +24,6 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <vector>
 #include <string>
 #include <stdlib.h>
 #include "cmd.h"
@@ -182,8 +181,8 @@ int main(int argc, char **argv)
 		const std::string context_delimiter="___CONTEXT___";
 		const char topic_map_delimiter='=';
 		
-		std::vector<std::string> topic_weight_vec;
-		std::vector<std::string> topic_weight;
+		string_vec_t topic_weight_vec;
+		string_vec_t topic_weight;
 		
 		std::fstream inptxt(testfile,std::ios::in);
 		
@@ -209,9 +208,7 @@ int main(int argc, char **argv)
 				VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
 				
 				//getting context string;
-				std::string context;
 				context = line_str;
-				std::cout << context << std::endl;
 			}else{
 				sentence = line_str;
 				context = "";
@@ -222,7 +219,7 @@ int main(int argc, char **argv)
 			topic_map_t topic_weight_map;
 			
 			split(context, ' ', topic_weight_vec);
-			for (std::vector< std::string >::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
+			for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
 				split(*it, topic_map_delimiter, topic_weight);
 				topic_weight_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
 				topic_weight.clear();
@@ -231,6 +228,50 @@ int main(int argc, char **argv)
 			
 			lmt->dictionary_incflag(1);
 			
+			
+			if(1){
+				// computation using std::string
+				// loop over ngrams of the sentence
+				string_vec_t w_vec;
+				split(sentence, ' ', w_vec);
+				
+				size_t last, first;
+				size_t size=0;
+				size_t order = lmt->maxlevel();
+				for (size_t i=0; i<w_vec.size(); ++i){
+					++size;
+					size=(size<order)?size:order;
+					last=i+1;
+					// reset ngram at begin of sentence
+					if (w_vec.at(i) == lmt->getDict()->BoS()) {
+						size=0;
+						continue;
+					}
+					first = last - size;
+					
+					VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| size:" << size << std::endl);
+					string_vec_t tmp_w_vec(w_vec.begin() + first, w_vec.begin() +last);
+					
+					for (string_vec_t::iterator it=tmp_w_vec.begin(); it!=tmp_w_vec.end(); ++it){
+						
+						VERBOSE(0,"*it:|" << *it << "|" << std::endl);	
+					}
+					if (ng.size>=1) {
+						Pr=lmt->clprob(tmp_w_vec, topic_weight_map, &bow, &bol, &msp, &statesize);
+						VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
+						logPr+=Pr;
+						sent_logPr+=Pr;
+						VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
+						
+						if (debug==1) {
+							std::cout << "first:|" << first << "| and last:| [" << size-bol << "]" << " " << std::endl;
+						}
+					}
+				}
+			}
+			
+			if(0){
+			// computation using ngram object
 			// loop over ngrams of the sentence
 			std::istringstream ss(sentence); // Insert the string into a stream
 			while (ss >> ng){
@@ -246,7 +287,7 @@ int main(int argc, char **argv)
 				}
 				
 				if (ng.size>=1) {
-					Pr=lmt->clprob(ng,topic_weight_map, &bow,&bol,&msp,&statesize);
+					Pr=lmt->clprob(ng,topic_weight_map, &bow, &bol, &msp, &statesize);
 					VERBOSE(0,"prob for ng:|" << ng << "| is Pr=" << Pr << std::endl);	
 					logPr+=Pr;
 					sent_logPr+=Pr;
@@ -296,7 +337,7 @@ int main(int argc, char **argv)
 					sent_logPr=0.0;
 				}
 			}
-			
+			}
 			if ((Nw % 100000)==0) {
 				std::cerr << ".";
 				lmt->check_caches_levels();
