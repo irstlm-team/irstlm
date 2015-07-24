@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
 namespace irstlm {
-
+	
 typedef std::map< std::string, float > topic_map_t;
 
 class lmContainer
@@ -122,6 +122,15 @@ public:
     UNUSED(extendible);
     return 0.0;
   };
+  virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(text);
+    UNUSED(bow);
+    UNUSED(bol);
+    UNUSED(maxsuffptr);
+    UNUSED(statesize);
+    UNUSED(extendible);
+    return 0.0;
+  };
   virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
     UNUSED(ng);
     UNUSED(ngsize);
@@ -142,7 +151,12 @@ public:
     UNUSED(topic_weights);
     return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
   }
-
+	
+	virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(topic_weights);
+    return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
+  }
+	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
     UNUSED(ng);

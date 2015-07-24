@@ -48,6 +48,8 @@ using namespace std;
 #define BUCKET 10000
 #define SSEED 50
 
+typedef std::vector< std::string > string_vec_t;
+
 class ngram;
 class mfstream;
 
@@ -72,7 +74,7 @@ int parseWords(char *, const char **, int);
 int parseline(istream& inp, int Order,ngram& ng,float& prob,float& bow);
 
 //split a string into a vector of string according to one specified delimiter (char)
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+string_vec_t &split(const std::string &s, char delim, string_vec_t &elems);
 
 void exit_error(int err, const std::string &msg="");
 

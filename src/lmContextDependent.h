@@ -40,9 +40,11 @@ namespace irstlm {
 		PseudoTopicModel(){};
 		~PseudoTopicModel(){};
 		
-		void load(const std::string &filename){};
+		void load(const std::string &filename){
+			UNUSED(filename);
+		};
 		
-		double prob(std::vector<std::string>& text, topic_map_t& topic_weights){
+		double prob(string_vec_t& text, topic_map_t& topic_weights){
 			UNUSED(text);
 			UNUSED(topic_weights);
 			return 1.0;
@@ -92,9 +94,21 @@ namespace irstlm {
 		
 		void load(const std::string &filename,int mmap=0);
 		
+		
+		virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			VERBOSE(0, "virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
+			UNUSED(ng);
+			UNUSED(ngsize);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			assert(false);
+		};
+		
 		virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 			VERBOSE(0, "virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
-			VERBOSE(0, "This LM type (lmContextDependent) does not support this function");
 			UNUSED(ng);
 			UNUSED(bow);
 			UNUSED(bol);
@@ -104,10 +118,9 @@ namespace irstlm {
 			assert(false);
 		};
 		
-		virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
-			VERBOSE(0, "virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
-			UNUSED(ng);
-			UNUSED(ngsize);
+		virtual double clprob(string_vec_t& text, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			VERBOSE(0, "virtual double clprob(string_vec_t& text, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
+			UNUSED(text);
 			UNUSED(bow);
 			UNUSED(bol);
 			UNUSED(maxsuffptr);
@@ -122,9 +135,13 @@ namespace irstlm {
 		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 			return lprob(ng, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
+		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			return lprob(text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
+		};
+		
 		virtual double lprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		virtual double lprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-		virtual double lprob(std::vector<std::string>& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		virtual double lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		
 		int maxlevel() const {
 			return maxlev;

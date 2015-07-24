@@ -117,7 +117,7 @@ namespace irstlm {
 	
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		std::vector<std::string> text;   // replace with the text passed as parameter
+		string_vec_t text;   // replace with the text passed as parameter
 		double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
 		double topic_prob = m_topicmodel->prob(text, topic_weights);
 		double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
@@ -126,9 +126,9 @@ namespace irstlm {
 		return ret_prob;
 	}
 	
-	double lmContextDependent::lprob(std::vector<std::string>& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	double lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		VERBOSE(0,"lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, " << std::endl);
+		VERBOSE(0,"lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, " << std::endl);
 		//create the actual ngram
 		ngram ng(dict);
 		ng.pushw(text);
