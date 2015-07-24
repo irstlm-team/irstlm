@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <assert.h>
+#include <math.h>
 
 using namespace std;
 
@@ -101,6 +102,9 @@ extern const int tracelevel;
 */
 
 void MY_ASSERT(bool x);
+
+float logsum(float a,float b);
+double logsum(double a,double b);
 
 #endif
 

@@ -375,3 +375,14 @@ string_vec_t &split(const std::string &s, char delim, string_vec_t &elems) {
 	return elems;
 }
 
+float logsum(float a,float b){
+	if (b<a) return a + logf(1 + expf(b-a));
+	else return b + logf(1+ expf(a-b));
+}
+
+double logsum(double a,double b){
+	if (b<a) return a + log(1 + exp(b-a));
+	else return b + log(1+ exp(a-b));
+}
+
+

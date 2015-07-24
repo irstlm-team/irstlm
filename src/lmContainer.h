@@ -42,9 +42,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
 namespace irstlm {
+	typedef std::map< std::string, float > topic_map_t;
 	
-typedef std::map< std::string, float > topic_map_t;
-
 class lmContainer
 {
   static const bool debug=true;

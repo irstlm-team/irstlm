@@ -43,7 +43,7 @@ namespace irstlm {
 		ngramcache_load_factor = nlf;
 		dictionary_load_factor = dlf;
 		m_lm=NULL;
-		m_topicmodel=NULL;
+		m_similaritymodel=NULL;
 		
 		order=0;
 		memmap=0;
@@ -54,7 +54,7 @@ namespace irstlm {
 	lmContextDependent::~lmContextDependent()
 	{
 		if (m_lm) delete m_lm;
-		if (m_topicmodel) delete m_topicmodel;
+		if (m_similaritymodel) delete m_similaritymodel;
 	}
 	
 	void lmContextDependent::load(const std::string &filename,int mmap)
@@ -88,7 +88,7 @@ namespace irstlm {
 		m_lm_weight = (float) atof(words[0]);
 		
 		//checking the language model type
-		m_lm=lmContainer::CreateLanguageModel(words[1],ngramcache_load_factor,dictionary_load_factor);
+		m_lm=lmContainer::CreateLanguageModel(words[1],ngramcache_load_factor, dictionary_load_factor);
 		
 		m_lm->setMaxLoadedLevel(requiredMaxlev);
 		
@@ -108,9 +108,8 @@ namespace irstlm {
 		}
 		
 		//loading topic model and initialization
-		m_topicmodel_weight = (float) atof(words[0]);
-		m_topicmodel = new  PseudoTopicModel();
-		m_topicmodel->load(words[1]);
+		m_similaritymodel_weight = (float) atof(words[0]);
+		m_similaritymodel = new ContextSimilarity(words[1]);
 		
 		inp.close();
 	}
@@ -118,12 +117,12 @@ namespace irstlm {
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		string_vec_t text;   // replace with the text passed as parameter
-		double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double topic_prob = m_topicmodel->prob(text, topic_weights);
-		double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
-		VERBOSE(0, "lm_prob:" << lm_prob << " m_lm_weight:" << m_lm_weight << " topic_prob:" << topic_prob << " m_topicmodel_weight:" << m_topicmodel_weight << " ret_prob:" << ret_prob << std::endl);
+		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double similarity_score = m_similaritymodel->score(text, topic_weights);
+		double ret_logprob = m_lm_weight * lm_logprob + m_similaritymodel_weight * similarity_score;
+		VERBOSE(0, "lm_logprob:" << lm_logprob << " m_lm_weight:" << m_lm_weight<< " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
 		
-		return ret_prob;
+		return ret_logprob;
 	}
 	
 	double lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
@@ -132,15 +131,13 @@ namespace irstlm {
 		//create the actual ngram
 		ngram ng(dict);
 		ng.pushw(text);
-		MY_ASSERT (ng.size == text.size());
+		MY_ASSERT (ng.size == (int) text.size());
+		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double similarity_score = m_similaritymodel->score(text, topic_weights);
+		double ret_logprob = m_lm_weight * lm_logprob + m_similaritymodel_weight * similarity_score;
+		VERBOSE(0, "lm_logprob:" << lm_logprob << " m_lm_weight:" << m_lm_weight<< " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
 		
-		double lm_prob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double topic_prob = m_topicmodel->prob(text, topic_weights);
-		
-		double ret_prob = m_lm_weight * lm_prob + m_topicmodel_weight * topic_prob;
-		VERBOSE(0, "lm_prob:" << lm_prob << " m_lm_weight:" << m_lm_weight << " topic_prob:" << topic_prob << " m_topicmodel_weight:" << m_topicmodel_weight << " ret_prob:" << ret_prob << std::endl);
-		
-		return ret_prob;	
+		return ret_logprob;
 	}
 	
 	double lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
@@ -153,6 +150,7 @@ namespace irstlm {
 		
 		return lprob(ong, topic_weights, bow, bol, maxsuffptr, statesize, extendible);	
 	}
+	
 	double lmContextDependent::setlogOOVpenalty(int dub)
 	{
 		MY_ASSERT(dub > dict->size());

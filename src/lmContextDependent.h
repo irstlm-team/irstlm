@@ -32,6 +32,7 @@
 #include "dictionary.h"
 #include "n_gram.h"
 #include "lmContainer.h"
+#include "context-similarity.h"
 
 namespace irstlm {
 	class PseudoTopicModel
@@ -72,15 +73,15 @@ namespace irstlm {
 		int memmap;  //level from which n-grams are accessed via mmap
 		
 		lmContainer* m_lm;
-		std::string m_lm_file;
+//		std::string m_lm_file;
 		bool m_isinverted;
 		
 		//  TopicModel* m_topicmodel;
-		PseudoTopicModel* m_topicmodel;   //to remove when TopicModel is ready
+		ContextSimilarity* m_similaritymodel;   //to remove when TopicModel is ready
 		double m_lm_weight;
 		
-		double m_topicmodel_weight;
-		std::string m_topicmodel_file;
+		double m_similaritymodel_weight;
+//		std::string m_similaritymodel_file;
 		
 		float ngramcache_load_factor;
 		float dictionary_load_factor;
