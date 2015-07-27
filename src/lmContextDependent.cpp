@@ -38,6 +38,7 @@ inline void error(const char* message)
 }
 
 namespace irstlm {
+	
 	lmContextDependent::lmContextDependent(float nlf, float dlf)
 	{
 		ngramcache_load_factor = nlf;
@@ -76,13 +77,13 @@ namespace irstlm {
 		tokenN = parseWords(line,words,LMCONFIGURE_MAX_TOKEN);
 		
 		if (tokenN != 1 || ((strcmp(words[0],"LMCONTEXTDEPENDENT") != 0) && (strcmp(words[0],"lmcontextdependent")!=0)))
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_model");
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_num_model topic_nden_model");
 		
 		//reading ngram-based LM
 		inp.getline(line,BUFSIZ,'\n');
 		tokenN = parseWords(line,words,1);
 		if(tokenN < 1 || tokenN > 1) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_model");
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict  topic_num_model topic_nden_model");
 		}
 		
 		VERBOSE(0, "modelfile:|" << words[0] << "|" << std::endl);
@@ -100,22 +101,45 @@ namespace irstlm {
 		
 		//reading topic model
 		inp.getline(line,BUFSIZ,'\n');
-		tokenN = parseWords(line,words,3);
+		tokenN = parseWords(line,words,4);
 		
-		if(tokenN < 3 || tokenN > 3) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_model");
+		if(tokenN < 4 || tokenN > 4) {
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_num_model topic_nden_model");
 		}
 		
 		//loading topic model and initialization
 		m_similaritymodel_weight = (float) atof(words[0]);
-		m_similaritymodel = new ContextSimilarity(words[1], words[2]);
+		std::string _dict = words[1];
+		std::string _num_lm = words[2];
+		std::string _den_lm = words[3];
+		m_similaritymodel = new ContextSimilarity(_dict, _num_lm, _den_lm);
 		
 		inp.close();
 		
-		VERBOSE(0, "topicdict:|" << words[1] << "|" << std::endl);
-		VERBOSE(0, "topicmodel:|" << words[2] << "|" << std::endl);
+		VERBOSE(0, "topic_dict:|" << _dict << "|" << std::endl);
+		VERBOSE(0, "topic_num_model:|" << _num_lm << "|" << std::endl);
+		VERBOSE(0, "topic_den_model:|" << _den_lm << "|" << std::endl);
 	}
-	
+
+	void lmContextDependent::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
+	{
+		size_t pos = line.find(context_delimiter);	
+		if (pos != std::string::npos){ // context_delimiter is found
+			sentence = line.substr(0, pos);
+			std::cout << sentence << std::endl;
+			line.erase(0, pos + context_delimiter.length());
+			VERBOSE(0,"pos:|" << pos << "|" << std::endl);	
+			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
+			VERBOSE(0,"line:|" << line << "|" << std::endl);	
+			
+			//getting context string;
+			context = line;
+		}else{
+			sentence = line;
+			context = "";
+		}	
+	}
+
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		string_vec_t text;   // replace with the text passed as parameter

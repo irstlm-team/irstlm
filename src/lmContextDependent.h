@@ -62,6 +62,8 @@ namespace irstlm {
 	
 #define LMCONFIGURE_MAX_TOKEN 3
 	
+	static const std::string context_delimiter="___CONTEXT___";
+	
 	class lmContextDependent: public lmContainer
 	{
 	private:
@@ -73,15 +75,12 @@ namespace irstlm {
 		int memmap;  //level from which n-grams are accessed via mmap
 		
 		lmContainer* m_lm;
-//		std::string m_lm_file;
 		bool m_isinverted;
 		
-		//  TopicModel* m_topicmodel;
 		ContextSimilarity* m_similaritymodel;   //to remove when TopicModel is ready
 		double m_lm_weight;
 		
 		double m_similaritymodel_weight;
-//		std::string m_similaritymodel_file;
 		
 		float ngramcache_load_factor;
 		float dictionary_load_factor;
@@ -95,6 +94,12 @@ namespace irstlm {
 		
 		void load(const std::string &filename,int mmap=0);
 		
+		
+		inline std::string getContextDelimiter() const{
+			return context_delimiter;
+		}
+		
+		void GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
 		
 		virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 			VERBOSE(0, "virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
@@ -153,6 +158,15 @@ namespace irstlm {
 		virtual inline void setDict(dictionary* d) {
 			if (dict) delete dict;
 			dict=d;
+		};
+		
+		
+		virtual inline lmContainer* getWordLM() const {
+			return m_lm;
+		};
+		
+		virtual inline ContextSimilarity* getContextSimilarity() const {
+			return m_similaritymodel;
 		};
 		
 		virtual inline dictionary* getDict() const {

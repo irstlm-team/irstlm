@@ -37,16 +37,19 @@
 class ngram;
 
 namespace irstlm {
-	
+	#define topic_map_delimiter1 ':'
+	#define topic_map_delimiter2 ','
+	#define SIMILARITY_LOWER_BOUND -10000
 	
 	typedef std::map< std::string, float > topic_map_t;
 	typedef std::set< std::string > topic_dict_t;
 	
-	#define SIMILARITY_LOWER_BOUND -10000
+
 	class ContextSimilarity
 	{
 	private:
-		lmContainer* m_lm; // P(topic | h' w)
+		lmContainer* m_num_lm; // P(topic | h' w)
+		lmContainer* m_den_lm; // P(topic | h')
 		topic_dict_t m_lm_topic_dict; //the dictionary of the topics seen in the language model
 		topic_map_t topic_map; 
 		
@@ -58,10 +61,13 @@ namespace irstlm {
 		double get_topic_similarity(ngram& num_ng, ngram& den_ng);
 		
 	public:
-		ContextSimilarity(const std::string &dictfile, const std::string &modelfile);
+		ContextSimilarity(const std::string &dictfile, const std::string &num_modelfile, const std::string &den_modelfile);
 		~ContextSimilarity();
-
-		topic_map_t get_topic_scores(string_vec_t& text);
+		
+		void setContextMap(topic_map_t& topic_map, const std::string& context);
+		void get_topic_scores(topic_map_t& map, string_vec_t& text);
+		void add_topic_scores(topic_map_t& map, topic_map_t& tmp_map);
+		void print_topic_scores(topic_map_t& map);
 		
 		double score(string_vec_t& text, topic_map_t& topic_weights);
 	};

@@ -30,6 +30,7 @@
 #include "util.h"
 #include "math.h"
 #include "lmContainer.h"
+#include "lmContextDependent.h"
 
 using namespace std;
 using namespace irstlm;
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
 	
 	bool sent_PP_flag = false;
 	bool contextbasedscore = false;
+	bool topicscore = false;
 	
 	int debug = 0;
   int requiredMaxlev = 1000;
@@ -80,7 +82,7 @@ int main(int argc, char **argv)
                 "randcalls", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
 								"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
                 "contextbasedscore", CMDBOOLTYPE|CMDMSG, &contextbasedscore, "computes context-dependent probabilities and pseudo-perplexity of the text from standard input",
-                "cbs", CMDBOOLTYPE|CMDMSG, &contextbasedscore, "computes context-dependent probabilities and pseudo-perplexity of the text from standard input",
+                "topicscore", CMDBOOLTYPE|CMDMSG, &topicscore, "computes the topic scores of the text from standard input",
 								"debug", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
 								"d", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
                 "level", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
@@ -121,6 +123,7 @@ int main(int argc, char **argv)
   if (lmfile!=NULL) std::cerr << "lmfile: " << lmfile << std::endl;
   if (testfile!=NULL) std::cerr << "testfile: " << testfile << std::endl;
   if (contextbasedscore==true) std::cerr << "contextbasedscore: " << contextbasedscore << std::endl;
+  if (topicscore==true) std::cerr << "topicscore: " << topicscore << std::endl;
   std::cerr << "loading up to the LM level " << requiredMaxlev << " (if any)" << std::endl;
   std::cerr << "dub: " << dub<< std::endl;
 	
@@ -139,6 +142,105 @@ int main(int argc, char **argv)
   //use caches to save time (only if PS_CACHE_ENABLE is defined through compilation flags)
   lmt->init_caches(lmt->maxlevel());
 	
+	if (topicscore == true) {
+		
+		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
+			debug = (debug>4)?4:debug;
+			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
+		}
+		if (lmt->getLanguageModelType() == _IRSTLM_LMMACRO) {
+			debug = (debug>4)?4:debug;
+			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
+		}
+		if (lmt->getLanguageModelType() == _IRSTLM_LMCLASS) {
+			debug = (debug>4)?4:debug;
+			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
+		}
+		
+		std::cerr << "Start Topic Score generation " << std::endl;
+		std::cerr << "OOV code: " << lmt->getDict()->oovcode() << std::endl;
+		std::cout.setf(ios::fixed);
+		std::cout.precision(2);
+		
+		std::fstream inptxt(testfile,std::ios::in);
+		
+		// loop over input lines
+		char line[MAX_LINE];
+		while (inptxt.getline(line,MAX_LINE)) {
+			
+			std::string line_str = line;
+			
+			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
+			
+			//getting sentence string;
+			std::string sentence;
+			std::string context;
+			
+			
+			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
+			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
+			VERBOSE(0,"context:|" << context << "|" << std::endl);	
+			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);
+				
+			//getting apriori topic weights
+			topic_map_t apriori_topic_map;
+			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
+			
+			if(1){
+				// computation using std::string
+				// loop over ngrams of the sentence
+				string_vec_t word_vec;
+				split(sentence, ' ', word_vec);
+				
+				//first points to the last recent term to take into account
+				//last points to the position after the most recent term to take into account
+				//last could point outside the vector of string; do NOT use word_vec.at(last)
+				size_t last, first;
+				size_t size=0;
+				size_t order = lmt->maxlevel();
+				
+				
+				
+				topic_map_t sentence_topic_map;
+				VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+				for (size_t i=0; i<word_vec.size(); ++i){
+					++size;
+					size=(size<order)?size:order;
+					last=i+1;
+					// reset ngram at begin of sentence
+					if (word_vec.at(i) == lmt->getDict()->BoS()) {
+						size=0;
+						continue;
+					}
+					first = last - size;
+					
+					VERBOSE(0,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+					string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
+					
+					if (size>=1) {
+						VERBOSE(0,"computing topic_scores for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+						
+						topic_map_t tmp_topic_map;
+						((lmContextDependent*) lmt)->getContextSimilarity()->get_topic_scores(tmp_topic_map, tmp_word_vec);
+						
+						std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter();
+						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
+						
+						((lmContextDependent*) lmt)->getContextSimilarity()->add_topic_scores(sentence_topic_map, tmp_topic_map);
+						tmp_topic_map.clear();
+					}
+				}
+				std::cout << sentence << ((lmContextDependent*) lmt)->getContextDelimiter();
+				((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);
+			}
+			
+			apriori_topic_map.clear();
+		}
+		
+		
+		delete lmt;
+		return 0;
+	}
   if (contextbasedscore == true) {
 		
 		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
@@ -153,7 +255,7 @@ int main(int argc, char **argv)
 			debug = (debug>4)?4:debug;
 			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
 		}
-		std::cerr << "Start Eval" << std::endl;
+		std::cerr << "Start ContextBased Evaluation" << std::endl;
 		std::cerr << "OOV code: " << lmt->getDict()->oovcode() << std::endl;
 		std::cout.setf(ios::fixed);
 		std::cout.precision(2);
@@ -168,16 +270,7 @@ int main(int argc, char **argv)
 		
 		// variables for storing sentence-based Perplexity
 		int sent_Nbo=0, sent_Nw=0,sent_Noov=0;
-		double sent_logPr=0,sent_PP=0,sent_PPwp=0;
-		
-		
-//		ngram ng(lmt->getDict());
-		
-		const std::string context_delimiter="___CONTEXT___";
-		const char topic_map_delimiter='=';
-		
-		string_vec_t topic_weight_vec;
-		string_vec_t topic_weight;
+		double sent_logPr=0,sent_PP=0,sent_PPwp=0;		
 		
 		std::fstream inptxt(testfile,std::ios::in);
 		
@@ -193,65 +286,48 @@ int main(int argc, char **argv)
 			std::string sentence;
 			std::string context;
 			
-			size_t pos = line_str.find(context_delimiter);	
-			if (pos != std::string::npos){ // context_delimiter is found
-				sentence = line_str.substr(0, pos);
-				std::cout << sentence << std::endl;
-				line_str.erase(0, pos + context_delimiter.length());
-				VERBOSE(0,"pos:|" << pos << "|" << std::endl);	
-				VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
-				VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
-				
-				//getting context string;
-				context = line_str;
-			}else{
-				sentence = line_str;
-				context = "";
-			}	
-			
+			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
+			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
 			VERBOSE(0,"context:|" << context << "|" << std::endl);	
-			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
-			//getting topic weights
-			topic_map_t topic_weight_map;
+			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);
 			
-			split(context, ' ', topic_weight_vec);
-			for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
-				split(*it, topic_map_delimiter, topic_weight);
-				topic_weight_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
-				topic_weight.clear();
-			}
-			topic_weight_vec.clear();
+			//getting apriori topic weights
+			topic_map_t apriori_topic_map;
+			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context); 
 			
 			
 			if(1){
 				// computation using std::string
 				// loop over ngrams of the sentence
-				string_vec_t w_vec;
-				split(sentence, ' ', w_vec);
+				string_vec_t word_vec;
+				split(sentence, ' ', word_vec);
 				
+				//first points to the last recent term to take into account
+				//last points to the position after the most recent term to take into account
+				//last could point outside the vector of string; do NOT use word_vec.at(last)
 				size_t last, first;
 				size_t size=0;
 				size_t order = lmt->maxlevel();
 				
-				VERBOSE(0,"w_vec.size():|" << w_vec.size() << "|" << std::endl);	
-				for (size_t i=0; i<w_vec.size(); ++i){
+				VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+				for (size_t i=0; i<word_vec.size(); ++i){
 					++size;
 					size=(size<order)?size:order;
 					last=i+1;
 					// reset ngram at begin of sentence
-					if (w_vec.at(i) == lmt->getDict()->BoS()) {
+					if (word_vec.at(i) == lmt->getDict()->BoS()) {
 						size=0;
 						continue;
 					}
 					first = last - size;
 					
-					VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| size:" << size << std::endl);
-					string_vec_t tmp_w_vec(w_vec.begin() + first, w_vec.begin() +last);
+					VERBOSE(0,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+					string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 					
 					if (size>=1) {
-						VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
-						Pr=lmt->clprob(tmp_w_vec, topic_weight_map, &bow, &bol, &msp, &statesize);
-						VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
+						VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+						Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						VERBOSE(0," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
 						logPr+=Pr;
 						sent_logPr+=Pr;
 						VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
@@ -268,7 +344,7 @@ int main(int argc, char **argv)
 				lmt->check_caches_levels();
 			}
 			
-			topic_weight_map.clear();
+			apriori_topic_map.clear();
 		}
 		
 		

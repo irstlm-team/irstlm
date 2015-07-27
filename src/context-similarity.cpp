@@ -40,13 +40,16 @@ inline void error(const char* message)
 }
 
 namespace irstlm {
-	ContextSimilarity::ContextSimilarity(const std::string &dictfile, const std::string &modelfile)
+	ContextSimilarity::ContextSimilarity(const std::string &dictfile, const std::string &num_modelfile, const std::string &den_modelfile)
 	{
-		m_lm=lmContainer::CreateLanguageModel(modelfile);
+		m_num_lm=lmContainer::CreateLanguageModel(num_modelfile);
+		m_den_lm=lmContainer::CreateLanguageModel(num_modelfile);
 		
-		m_lm->load(modelfile);
+		m_num_lm->load(num_modelfile);
+		m_den_lm->load(den_modelfile);
 		
-		m_lm->getDict()->genoovcode();
+		m_num_lm->getDict()->genoovcode();
+		m_den_lm->getDict()->genoovcode();
 		
 		//loading form file		
 		std::string str;
@@ -74,46 +77,46 @@ namespace irstlm {
 	double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)
 	{
 		VERBOSE(4, "double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
+		double ret_logprob = SIMILARITY_LOWER_BOUND;
+		
 		if (topic_weights.size() == 0){
 			//a-priori topic distribution is "empty", i.e. there is nore score for any topic
 			//return a "constant" lower-bound score,  SIMILARITY_LOWER_BOUND = log(0.0)
-			return SIMILARITY_LOWER_BOUND;
+			ret_logprob = SIMILARITY_LOWER_BOUND;
+		}else{
+			
+			ngram base_num_ng(m_num_lm->getDict());
+			ngram base_den_ng(m_den_lm->getDict());
+			create_ngram(text, base_num_ng, base_den_ng);
+			
+			for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
+			{
+				ngram num_ng = base_num_ng;
+				ngram den_ng = base_den_ng;
+				add_topic(it->first, num_ng, den_ng);
+				double apriori_topic_score = log(it->second);
+				double topic_score = get_topic_similarity(num_ng, den_ng);
+				
+				VERBOSE(3, "topic:|" << it->first  << "apriori_topic_score:" << apriori_topic_score << " topic_score:" << topic_score << std::endl);
+				if (it == topic_weights.begin()){
+					ret_logprob = apriori_topic_score + topic_score;
+				}else{
+					ret_logprob = logsum(ret_logprob, apriori_topic_score + topic_score);
+				}
+				VERBOSE(4, "CURRENT ret_logprob:" << ret_logprob << std::endl);
+			}
 		}
 		
-		ngram base_num_ng(m_lm->getDict());
-		ngram base_den_ng(m_lm->getDict());
-		create_ngram(text, base_num_ng, base_den_ng);
 		
-		double ret_logprob = 0.0;
-		double add_logprob;
-		topic_map_t::iterator it = topic_weights.begin();
-		do
-		{
-			ngram num_ng = base_num_ng;
-			ngram den_ng = base_den_ng;
-			add_topic(it->first, num_ng, den_ng);
-			
-			VERBOSE(0, "topic:|" << it->first << " log(p(topic):" << log(it->second) << std::endl);
-			double topic_score = get_topic_similarity(num_ng, den_ng);
-			add_logprob = log(it->second) + topic_score;
-			VERBOSE(0, "topic_score:" << topic_score << std::endl);
-			VERBOSE(0, "add_logprob:" << add_logprob << std::endl);
-			ret_logprob = logsum(ret_logprob, add_logprob);
-			++it;
-		}while (it!= topic_weights.end());
-		
-		
-		VERBOSE(0, "ret_logprob:" << ret_logprob << std::endl);
+		VERBOSE(3, "ret_logprob:" << ret_logprob << std::endl);
 		return ret_logprob;
 	}
 	
-	
-	topic_map_t ContextSimilarity::get_topic_scores(string_vec_t& text)
-	{
-		topic_map_t topic_map;
-		
-		ngram base_num_ng(m_lm->getDict());
-		ngram base_den_ng(m_lm->getDict());
+	//returns the scores for all topics in the topic models (without apriori topic prob)
+	void ContextSimilarity::get_topic_scores(topic_map_t& topic_map, string_vec_t& text)
+	{		
+		ngram base_num_ng(m_num_lm->getDict());
+		ngram base_den_ng(m_den_lm->getDict());
 		create_ngram(text, base_num_ng, base_den_ng);
 		
 		for (topic_dict_t::iterator it=m_lm_topic_dict.begin(); it != m_lm_topic_dict.end(); ++it)
@@ -123,12 +126,51 @@ namespace irstlm {
 			add_topic(*it, num_ng, den_ng);
 			topic_map[*it] = get_topic_similarity(num_ng, den_ng);
 		}
-		return topic_map;
+	}
+	
+	
+	void ContextSimilarity::add_topic_scores(topic_map_t& topic_map, topic_map_t& tmp_map)
+	{
+		for (topic_map_t::iterator it=tmp_map.begin(); it != tmp_map.end(); ++it){
+			topic_map[it->first] += tmp_map[it->first];
+		}
+	}
+	
+	//returns the scores for all topics in the topic models (without apriori topic prob)
+	void ContextSimilarity::print_topic_scores(topic_map_t& map)
+	{
+		for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it)
+		{
+			if (it!=map.begin()) { std::cout << topic_map_delimiter1; }
+			std::cout << it->first << topic_map_delimiter2 << it->second;
+		}
+		std::cout << std::endl;
+	}
+	
+	void ContextSimilarity::setContextMap(topic_map_t& topic_map, const std::string& context){
+		
+		VERBOSE(0,"context:|" << context << "|" << std::endl);
+		
+		string_vec_t topic_weight_vec;
+		string_vec_t topic_weight;
+		
+		// context is supposed in this format
+		// topic-name1,topic-value1:topic-name2,topic-value2:...:topic-nameN,topic-valueN
+		
+		//first-level split the context in a vector of 	topic-name1,topic-value1, using the first separator ':'
+		split(context, topic_map_delimiter1, topic_weight_vec);
+		for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
+			//first-level split the context in a vector of 	topic-name1 and ,topic-value1, using the second separator ','
+			split(*it, topic_map_delimiter2, topic_weight);
+			topic_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
+			topic_weight.clear();
+		}
+		VERBOSE(0,"found " << topic_map.size() << " entries in the context" << std::endl);
 	}
 	
 	void ContextSimilarity::create_ngram(const string_vec_t& text, ngram& num_ng, ngram& den_ng)
 	{
-		//text is  a vector of string with w in the last position and the history in the previous positions
+		//text is a vector of strings with w in the last position and the history in the previous positions
 		//text must have at least two words
 		VERBOSE(3,"void ContextSimilarity::create_ngram" << std::endl);
 
@@ -136,6 +178,10 @@ namespace irstlm {
 		//		if (text.size()==0)
 		
 		//TO_CHECK: what happens when text has just one element
+		
+		
+		
+		// lm model for the numerator is assumed to be a 3-gram lm, hence num_gr have only size 3 (two words and one topic); here we insert two words
 		if (text.size()==1){
 			num_ng.pushw(num_ng.dict->OOV());
 		}else {
@@ -143,7 +189,7 @@ namespace irstlm {
 		}
 		num_ng.pushw(text.at(text.size()-1));
 		
-		den_ng.pushw(den_ng.dict->OOV());		//or den_ng.pushc(m_lm->getDict()->getoovcode());
+		// lm model for the denominator is assumed to be a 2-gram lm, hence den_gr have only size 2 (one word and one topic); here we insert one word
 		den_ng.pushw(text.at(text.size()-1));
 	}
 	
@@ -163,8 +209,8 @@ namespace irstlm {
 	
 	double ContextSimilarity::get_topic_similarity(string_vec_t text, const std::string& topic)
 	{
-		ngram num_ng(m_lm->getDict());
-		ngram den_ng(m_lm->getDict());
+		ngram num_ng(m_num_lm->getDict());
+		ngram den_ng(m_den_lm->getDict());
 		
 		create_topic_ngram(text, topic, num_ng, den_ng);
 		
@@ -173,11 +219,12 @@ namespace irstlm {
 	
 	double ContextSimilarity::get_topic_similarity(ngram& num_ng, ngram& den_ng)
 	{	
-		double num_pr=m_lm->clprob(num_ng);
-		double den_pr=m_lm->clprob(den_ng);
-	 VERBOSE(0, "num_ng:|" << num_ng << "| pr:" << num_pr << std::endl);
-	 VERBOSE(0, "den_ng:|" << den_ng << "| pr:" << den_pr << std::endl);
-		return m_lm->clprob(num_ng) - m_lm->clprob(den_ng);
+		double num_pr=m_num_lm->clprob(num_ng);
+		double den_pr=m_den_lm->clprob(den_ng);
+	 VERBOSE(4, "num_ng:|" << num_ng << "| pr:" << num_pr << std::endl);
+	 VERBOSE(4, "den_ng:|" << den_ng << "| pr:" << den_pr << std::endl);
+		return num_pr - den_pr;
+		//		return m_lm->clprob(num_ng) - m_lm->clprob(den_ng);
 	}
 	
 }//namespace irstlm
