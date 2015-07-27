@@ -54,7 +54,7 @@ using namespace std;
 #define EOS_ "</s>"
 #endif
 
-//End of document symbol
+//Begin of document symbol
 #ifndef BOD_
 #define BOD_ "<d>"
 #endif
