@@ -47,8 +47,8 @@ namespace irstlm {
 	{
 	private:
 		lmContainer* m_lm; // P(topic | h' w)
-		topic_dict_t* m_lm_topic_dict; //the dictionary of the topics seen in the language model
-		topic_map_t* topic_map; 
+		topic_dict_t m_lm_topic_dict; //the dictionary of the topics seen in the language model
+		topic_map_t topic_map; 
 		
 		void create_ngram(const string_vec_t& text, ngram& num_ng, ngram& den_ng);
 		void add_topic(const std::string& topic, ngram& num_ng, ngram& den_ng);
@@ -58,7 +58,7 @@ namespace irstlm {
 		double get_topic_similarity(ngram& num_ng, ngram& den_ng);
 		
 	public:
-		ContextSimilarity(const std::string &filename);
+		ContextSimilarity(const std::string &dictfile, const std::string &modelfile);
 		~ContextSimilarity();
 
 		topic_map_t get_topic_scores(string_vec_t& text);

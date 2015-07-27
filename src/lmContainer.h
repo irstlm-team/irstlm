@@ -122,6 +122,7 @@ public:
     return 0.0;
   };
   virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+		VERBOSE(0,"lmContainer::clprob(string_vec_t& text, double* bow,...." << std::endl);
     UNUSED(text);
     UNUSED(bow);
     UNUSED(bol);
@@ -152,6 +153,7 @@ public:
   }
 	
 	virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
     UNUSED(topic_weights);
     return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
   }

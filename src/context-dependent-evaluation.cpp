@@ -171,12 +171,7 @@ int main(int argc, char **argv)
 		double sent_logPr=0,sent_PP=0,sent_PPwp=0;
 		
 		
-		ngram ng(lmt->getDict());
-		ng.dict->incflag(1);
-		int bos=ng.dict->encode(ng.dict->BoS());
-		int eos=ng.dict->encode(ng.dict->EoS());
-		ng.dict->incflag(0);
-		
+//		ngram ng(lmt->getDict());
 		
 		const std::string context_delimiter="___CONTEXT___";
 		const char topic_map_delimiter='=';
@@ -212,7 +207,8 @@ int main(int argc, char **argv)
 			}else{
 				sentence = line_str;
 				context = "";
-			}
+			}	
+			
 			VERBOSE(0,"context:|" << context << "|" << std::endl);	
 			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
 			//getting topic weights
@@ -226,8 +222,6 @@ int main(int argc, char **argv)
 			}
 			topic_weight_vec.clear();
 			
-			lmt->dictionary_incflag(1);
-			
 			
 			if(1){
 				// computation using std::string
@@ -238,6 +232,8 @@ int main(int argc, char **argv)
 				size_t last, first;
 				size_t size=0;
 				size_t order = lmt->maxlevel();
+				
+				VERBOSE(0,"w_vec.size():|" << w_vec.size() << "|" << std::endl);	
 				for (size_t i=0; i<w_vec.size(); ++i){
 					++size;
 					size=(size<order)?size:order;
@@ -252,11 +248,8 @@ int main(int argc, char **argv)
 					VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| size:" << size << std::endl);
 					string_vec_t tmp_w_vec(w_vec.begin() + first, w_vec.begin() +last);
 					
-					for (string_vec_t::iterator it=tmp_w_vec.begin(); it!=tmp_w_vec.end(); ++it){
-						
-						VERBOSE(0,"*it:|" << *it << "|" << std::endl);	
-					}
-					if (ng.size>=1) {
+					if (size>=1) {
+						VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
 						Pr=lmt->clprob(tmp_w_vec, topic_weight_map, &bow, &bol, &msp, &statesize);
 						VERBOSE(0,"prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
 						logPr+=Pr;
@@ -270,74 +263,6 @@ int main(int argc, char **argv)
 				}
 			}
 			
-			if(0){
-			// computation using ngram object
-			// loop over ngrams of the sentence
-			std::istringstream ss(sentence); // Insert the string into a stream
-			while (ss >> ng){
-				//computing context-based prob for each ngram of the sentence
-				VERBOSE(0,"working on ng:|" << ng << "| ng.size:" << ng.size << std::endl);	
-				
-				if (ng.size>lmt->maxlevel()) ng.size=lmt->maxlevel();	
-				
-				// reset ngram at begin of sentence
-				if (*ng.wordp(1)==bos) {
-					ng.size=1;
-					continue;
-				}
-				
-				if (ng.size>=1) {
-					Pr=lmt->clprob(ng,topic_weight_map, &bow, &bol, &msp, &statesize);
-					VERBOSE(0,"prob for ng:|" << ng << "| is Pr=" << Pr << std::endl);	
-					logPr+=Pr;
-					sent_logPr+=Pr;
-					VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
-					
-					if (debug==1) {
-						std::cout << ng.dict->decode(*ng.wordp(1)) << " [" << ng.size-bol << "]" << " ";
-						if (*ng.wordp(1)==eos) std::cout << std::endl;
-					} else if (debug==2) {
-						std::cout << ng << " [" << ng.size-bol << "-gram]" << " " << Pr;
-						std::cout << std::endl;
-						std::cout.flush();
-					} else if (debug==3) {
-						std::cout << ng << " [" << ng.size-bol << "-gram]" << " " << Pr << " bow:" << bow;
-						std::cout << std::endl;
-						std::cout.flush();
-					} else if (debug==4) {
-						std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
-						std::cout << std::endl;
-						std::cout.flush();
-					}
-				}
-				
-				if (lmt->is_OOV(*ng.wordp(1))) {
-					Noov++;
-					sent_Noov++;
-				}
-				if (bol) {
-					Nbo++;
-					sent_Nbo++;
-				}
-				Nw++;
-				sent_Nw++;
-				if (sent_PP_flag && (*ng.wordp(1)==eos)) {
-					sent_PP=exp((-sent_logPr * log(10.0)) /sent_Nw);
-					sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * log(10.0) / sent_Nw));
-					
-					std::cout << "%% sent_Nw=" << sent_Nw
-					<< " sent_PP=" << sent_PP
-					<< " sent_PPwp=" << sent_PPwp
-					<< " sent_Nbo=" << sent_Nbo
-					<< " sent_Noov=" << sent_Noov
-					<< " sent_OOV=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
-					std::cout.flush();
-					//reset statistics for sentence based Perplexity
-					sent_Nw=sent_Noov=sent_Nbo=0;
-					sent_logPr=0.0;
-				}
-			}
-			}
 			if ((Nw % 100000)==0) {
 				std::cerr << ".";
 				lmt->check_caches_levels();

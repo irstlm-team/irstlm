@@ -137,6 +137,8 @@ namespace irstlm {
 			return lprob(ng, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
 		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			
+			VERBOSE(0,"lmContainer::clprob(string_vec_t& text,...." << std::endl);
 			return lprob(text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
 		

@@ -92,7 +92,6 @@ namespace irstlm {
 		VERBOSE(1,"LM header:|" << header << "|" << std::endl);
 		
 		int type=_IRSTLM_LMUNKNOWN;
-		VERBOSE(1,"type: " << type << std::endl);
 		if (header == "lminterpolation" || header == "LMINTERPOLATION") {
 			type = _IRSTLM_LMINTERPOLATION;
 		} else if (header == "lmcontextdependent" || header == "LMCONTEXTDEPENDENT") {
@@ -104,7 +103,7 @@ namespace irstlm {
 		} else {
 			type = _IRSTLM_LMTABLE;
 		}
-		VERBOSE(1,"type: " << type << std::endl);
+		VERBOSE(1,"LM type: " << type << std::endl);
 		
 		return type;
 	};
@@ -151,6 +150,7 @@ namespace irstlm {
 		}
 		
 		lm->setLanguageModelType(type);
+		
 		return lm;
 	}
 	

@@ -23,11 +23,13 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include "lmContainer.h"
 #include "context-similarity.h"
 #include "util.h"
+#include "mfstream.h"
 
 using namespace std;
 
@@ -38,22 +40,40 @@ inline void error(const char* message)
 }
 
 namespace irstlm {
-	ContextSimilarity::ContextSimilarity(const std::string &filename)
+	ContextSimilarity::ContextSimilarity(const std::string &dictfile, const std::string &modelfile)
 	{
-		m_lm=lmContainer::CreateLanguageModel(filename);
+		m_lm=lmContainer::CreateLanguageModel(modelfile);
 		
-		m_lm->load(filename);
+		m_lm->load(modelfile);
 		
 		m_lm->getDict()->genoovcode();
+		
+		//loading form file		
+		std::string str;
+		
+		mfstream inp(dictfile.c_str(),ios::in);
+		
+		if (!inp) {
+			std::stringstream ss_msg;
+			ss_msg << "cannot open " << dictfile << "\n";
+			exit_error(IRSTLM_ERROR_IO, ss_msg.str());
+		}
+		VERBOSE(0, "Loading the list of topic" << std::endl);
+		
+		while (inp >> str)
+		{
+			m_lm_topic_dict.insert(str);
+		}
+		VERBOSE(0, "There are " << m_lm_topic_dict.size() << " topic" << std::endl);
 	}
+
 	
 	ContextSimilarity::~ContextSimilarity()
-	{
-		// delete m_lm
-	}
+	{}
 	
 	double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)
 	{
+		VERBOSE(4, "double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
 		if (topic_weights.size() == 0){
 			//a-priori topic distribution is "empty", i.e. there is nore score for any topic
 			//return a "constant" lower-bound score,  SIMILARITY_LOWER_BOUND = log(0.0)
@@ -72,11 +92,18 @@ namespace irstlm {
 			ngram num_ng = base_num_ng;
 			ngram den_ng = base_den_ng;
 			add_topic(it->first, num_ng, den_ng);
-			add_logprob = log(it->second) + get_topic_similarity(num_ng, den_ng);
+			
+			VERBOSE(0, "topic:|" << it->first << " log(p(topic):" << log(it->second) << std::endl);
+			double topic_score = get_topic_similarity(num_ng, den_ng);
+			add_logprob = log(it->second) + topic_score;
+			VERBOSE(0, "topic_score:" << topic_score << std::endl);
+			VERBOSE(0, "add_logprob:" << add_logprob << std::endl);
 			ret_logprob = logsum(ret_logprob, add_logprob);
 			++it;
 		}while (it!= topic_weights.end());
 		
+		
+		VERBOSE(0, "ret_logprob:" << ret_logprob << std::endl);
 		return ret_logprob;
 	}
 	
@@ -89,7 +116,7 @@ namespace irstlm {
 		ngram base_den_ng(m_lm->getDict());
 		create_ngram(text, base_num_ng, base_den_ng);
 		
-		for (topic_dict_t::iterator it=m_lm_topic_dict->begin(); it != m_lm_topic_dict->end(); ++it)
+		for (topic_dict_t::iterator it=m_lm_topic_dict.begin(); it != m_lm_topic_dict.end(); ++it)
 		{
 			ngram num_ng = base_num_ng;
 			ngram den_ng = base_den_ng;
@@ -103,7 +130,17 @@ namespace irstlm {
 	{
 		//text is  a vector of string with w in the last position and the history in the previous positions
 		//text must have at least two words
-		num_ng.pushw(text.at(text.size()-2));
+		VERBOSE(3,"void ContextSimilarity::create_ngram" << std::endl);
+
+		//TO_CHECK: what happens when text has zero element
+		//		if (text.size()==0)
+		
+		//TO_CHECK: what happens when text has just one element
+		if (text.size()==1){
+			num_ng.pushw(num_ng.dict->OOV());
+		}else {
+			num_ng.pushw(text.at(text.size()-2));
+		}
 		num_ng.pushw(text.at(text.size()-1));
 		
 		den_ng.pushw(den_ng.dict->OOV());		//or den_ng.pushc(m_lm->getDict()->getoovcode());
@@ -135,7 +172,11 @@ namespace irstlm {
 	}
 	
 	double ContextSimilarity::get_topic_similarity(ngram& num_ng, ngram& den_ng)
-	{
+	{	
+		double num_pr=m_lm->clprob(num_ng);
+		double den_pr=m_lm->clprob(den_ng);
+	 VERBOSE(0, "num_ng:|" << num_ng << "| pr:" << num_pr << std::endl);
+	 VERBOSE(0, "den_ng:|" << den_ng << "| pr:" << den_pr << std::endl);
 		return m_lm->clprob(num_ng) - m_lm->clprob(den_ng);
 	}
 	
