@@ -65,7 +65,7 @@ done
 eos="";
 bos="";
 
-for i in `seq $repeat`; do bos="$bos<${symbol}> "; eos="$eos <\/${symbol}>";done
+i=0 ; while [ $i -lt $repeat ] ; do bos="$bos<${symbol}> "; eos="$eos <\/${symbol}>" ; i=$(( $i + 1 )) ; done
 
 (sed "s/^/$bos/" | sed "s/\$/ $eos/";) |\
 sed "s/\([^ ]\{$maxwordlen\}\)\([^ ]\{1,\}\)/\1/g"
