@@ -218,14 +218,15 @@ int main(int argc, char **argv)
 					string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 					
 					if (size>=1) {
-						VERBOSE(0,"computing topic_scores for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+						VERBOSE(2,"computing topic_scores for first:|" << first << "| and last:|" << last << "|" << std::endl);	
 						
 						topic_map_t tmp_topic_map;
 						((lmContextDependent*) lmt)->getContextSimilarity()->get_topic_scores(tmp_topic_map, tmp_word_vec);
 						
-						std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter();
-						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
-						
+						VERBOSE(2,std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter());
+						if (debug > 0){
+							((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
+						}
 						((lmContextDependent*) lmt)->getContextSimilarity()->add_topic_scores(sentence_topic_map, tmp_topic_map);
 						tmp_topic_map.clear();
 					}

@@ -126,7 +126,6 @@ namespace irstlm {
 		size_t pos = line.find(context_delimiter);	
 		if (pos != std::string::npos){ // context_delimiter is found
 			sentence = line.substr(0, pos);
-			std::cout << sentence << std::endl;
 			line.erase(0, pos + context_delimiter.length());
 			VERBOSE(0,"pos:|" << pos << "|" << std::endl);	
 			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
