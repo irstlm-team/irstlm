@@ -1430,8 +1430,9 @@ namespace irstlm {
 		if (_OOV_unigram){
 			ngram ung(dict,1);
 			*ung.wordp(1)=dict->oovcode();
-			pr=oovprob;
 			ibow=0.0;
+			pr=oovprob;
+			pr=(pr?log10(pr):-99);
 			lmt->addwithoffset(ung,(float)pr,(float)ibow);
 			num[1]++;
 		}
@@ -1594,9 +1595,9 @@ namespace irstlm {
 					}else { //i==maxlev
 						ibow=0.0; //default value for backoff weight at the highest level
 					}
-					VERBOSE(3,"mdiadaptlm::saveARPA_per_level(char *filename,int backoff,char* subdictfile ) writing w:|" << (char *)dict->decode(w) << "| pr:" << pr << " ibow:" << ibow << std::endl);
+					VERBOSE(3,"mdiadaptlm::saveBIN_per_level(char *filename,int backoff,char* subdictfile ) writing w:|" << (char *)dict->decode(w) << "| pr:" << pr << " ibow:" << ibow << std::endl);
 					if (ibow != DONT_PRINT ) {
-						lmt->add(ng,(float)log10(pr),(float)ibow);
+						lmt->add(ng,(float)pr,(float)ibow);
 					}
 				}
 				//add unigram with OOV and its accumulate oov probability
