@@ -181,60 +181,57 @@ int main(int argc, char **argv)
 			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
 			VERBOSE(0,"context:|" << context << "|" << std::endl);	
 			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);
-				
+			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
 			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
 			
-			if(1){
-				// computation using std::string
-				// loop over ngrams of the sentence
-				string_vec_t word_vec;
-				split(sentence, ' ', word_vec);
-				
-				//first points to the last recent term to take into account
-				//last points to the position after the most recent term to take into account
-				//last could point outside the vector of string; do NOT use word_vec.at(last)
-				size_t last, first;
-				size_t size=0;
-				size_t order = lmt->maxlevel();
-				
-				
-				
-				topic_map_t sentence_topic_map;
-				VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
-				for (size_t i=0; i<word_vec.size(); ++i){
-					++size;
-					size=(size<order)?size:order;
-					last=i+1;
-					// reset ngram at begin of sentence
-					if (word_vec.at(i) == lmt->getDict()->BoS()) {
-						size=0;
-						continue;
-					}
-					first = last - size;
-					
-					VERBOSE(0,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
-					string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
-					
-					if (size>=1) {
-						VERBOSE(2,"computing topic_scores for first:|" << first << "| and last:|" << last << "|" << std::endl);	
-						
-						topic_map_t tmp_topic_map;
-						((lmContextDependent*) lmt)->getContextSimilarity()->get_topic_scores(tmp_topic_map, tmp_word_vec);
-						
-						VERBOSE(2,std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter());
-						if (debug > 0){
-							((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
-						}
-						((lmContextDependent*) lmt)->getContextSimilarity()->add_topic_scores(sentence_topic_map, tmp_topic_map);
-						tmp_topic_map.clear();
-					}
-				}
-				std::cout << sentence << ((lmContextDependent*) lmt)->getContextDelimiter();
-				((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);
-			}
+			// computation using std::string
+			// loop over ngrams of the sentence
+			string_vec_t word_vec;
+			split(sentence, ' ', word_vec);
 			
+			//first points to the last recent term to take into account
+			//last points to the position after the most recent term to take into account
+			//last could point outside the vector of string; do NOT use word_vec.at(last)
+			size_t last, first;
+			size_t size=0;
+			size_t order = lmt->maxlevel();
+			
+			
+			
+			topic_map_t sentence_topic_map;
+			VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+			for (size_t i=0; i<word_vec.size(); ++i){
+				++size;
+				size=(size<order)?size:order;
+				last=i+1;
+				// reset ngram at begin of sentence
+				if (word_vec.at(i) == lmt->getDict()->BoS()) {
+					size=0;
+					continue;
+				}
+				first = last - size;
+				
+				VERBOSE(0,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
+				
+				if (size>=1) {
+					VERBOSE(2,"computing topic_scores for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+					
+					topic_map_t tmp_topic_map;
+					((lmContextDependent*) lmt)->getContextSimilarity()->get_topic_scores(tmp_topic_map, tmp_word_vec);
+					
+					VERBOSE(2,std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter());
+					if (debug > 0){
+						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
+					}
+					((lmContextDependent*) lmt)->getContextSimilarity()->add_topic_scores(sentence_topic_map, tmp_topic_map);
+					tmp_topic_map.clear();
+				}
+			}
+			std::cout << sentence << ((lmContextDependent*) lmt)->getContextDelimiter();
+			((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);			
 			apriori_topic_map.clear();
 		}
 		
@@ -261,7 +258,7 @@ int main(int argc, char **argv)
 		std::cout.setf(ios::fixed);
 		std::cout.precision(2);
 		
-		int Nbo=0, Nw=0,Noov=0;
+		int Nw=0,Noov=0;
 		double logPr=0,PP=0,PPwp=0,Pr;
 		
 		double bow;
@@ -270,7 +267,7 @@ int main(int argc, char **argv)
 		unsigned int statesize;
 		
 		// variables for storing sentence-based Perplexity
-		int sent_Nbo=0, sent_Nw=0,sent_Noov=0;
+		int sent_Nw=0,sent_Noov=0;
 		double sent_logPr=0,sent_PP=0,sent_PPwp=0;		
 		
 		std::fstream inptxt(testfile,std::ios::in);
@@ -282,7 +279,7 @@ int main(int argc, char **argv)
 			std::string line_str = line;
 			
 			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
-						
+			
 			//getting sentence string;
 			std::string sentence;
 			std::string context;
@@ -296,54 +293,77 @@ int main(int argc, char **argv)
 			topic_map_t apriori_topic_map;
 			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context); 
 			
+			// computation using std::string
+			// loop over ngrams of the sentence
+			string_vec_t word_vec;
+			split(sentence, ' ', word_vec);
 			
-			if(1){
-				// computation using std::string
-				// loop over ngrams of the sentence
-				string_vec_t word_vec;
-				split(sentence, ' ', word_vec);
+			//first points to the last recent term to take into account
+			//last points to the position after the most recent term to take into account
+			//last could point outside the vector of string; do NOT use word_vec.at(last)
+			size_t last, first;
+			size_t size=0;
+			size_t order = lmt->maxlevel();
+			
+			VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+			for (size_t i=0; i<word_vec.size(); ++i){
+				++size;
+				size=(size<order)?size:order;
+				last=i+1;
+				// reset ngram at begin of sentence
+				if (word_vec.at(i) == lmt->getDict()->BoS()) {
+					size=0;
+					continue;
+				}
+				first = last - size;
 				
-				//first points to the last recent term to take into account
-				//last points to the position after the most recent term to take into account
-				//last could point outside the vector of string; do NOT use word_vec.at(last)
-				size_t last, first;
-				size_t size=0;
-				size_t order = lmt->maxlevel();
+				VERBOSE(0,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 				
-				VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
-				for (size_t i=0; i<word_vec.size(); ++i){
-					++size;
-					size=(size<order)?size:order;
-					last=i+1;
-					// reset ngram at begin of sentence
-					if (word_vec.at(i) == lmt->getDict()->BoS()) {
-						size=0;
-						continue;
-					}
-					first = last - size;
+				if (size>=1) {
+					VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+					Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+					VERBOSE(0," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
+					logPr+=Pr;
+					sent_logPr+=Pr;
+					VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
 					
-					VERBOSE(0,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
-					string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
-					
-					if (size>=1) {
-						VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
-						Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						VERBOSE(0," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
-						logPr+=Pr;
-						sent_logPr+=Pr;
-						VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
-						
-						if (debug==1) {
-							std::cout << "first:|" << first << "| and last:| [" << size-bol << "]" << " " << std::endl;
-						}
+					if (debug==1) {
+						std::cout << "first:|" << first << "| and last:| [" << size-bol << "]" << " " << std::endl;
 					}
+					
+					VERBOSE(0,"word_vec.at(i):|" << word_vec.at(i) << " lmt->getDict()->OOV():|" << lmt->getDict()->OOV() << std::endl);
+					if (lmt->getDict()->encode(word_vec.at(i).c_str()) == lmt->getDict()->oovcode()) {
+						Noov++;
+						sent_Noov++;
+					}
+					Nw++;
+					sent_Nw++;
+					
+					if ((Nw % 100000)==0) {
+						std::cerr << ".";
+						lmt->check_caches_levels();
+					}
+					
 				}
 			}
 			
-			if ((Nw % 100000)==0) {
-				std::cerr << ".";
-				lmt->check_caches_levels();
+			if (sent_PP_flag) {
+				sent_PP=exp((-sent_logPr * log(10.0)) /sent_Nw);
+				sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * log(10.0) / sent_Nw));
+				
+				std::cout << "%% sent_Nw=" << sent_Nw
+				<< " sent_PP=" << sent_PP
+				<< " sent_PPwp=" << sent_PPwp
+				<< " sent_Noov=" << sent_Noov
+				<< " sent_OOV=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
+				std::cout.flush();
+				//reset statistics for sentence based Perplexity
+				sent_Nw=sent_Noov;
+				sent_logPr=0.0;
 			}
+			
+			
 			
 			apriori_topic_map.clear();
 		}
@@ -356,7 +376,6 @@ int main(int argc, char **argv)
 		std::cout << "%% Nw=" << Nw
 		<< " PP=" << PP
 		<< " PPwp=" << PPwp
-		<< " Nbo=" << Nbo
 		<< " Noov=" << Noov
 		<< " OOV=" << (float)Noov/Nw * 100.0 << "%";
 		if (debug) std::cout << " logPr=" <<  logPr;
