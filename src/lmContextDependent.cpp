@@ -144,7 +144,10 @@ namespace irstlm {
 		string_vec_t text;   // replace with the text passed as parameter
 		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
 		double similarity_score = m_similaritymodel->score(text, topic_weights);
-		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
+		double ret_logprob = lm_logprob;
+		if (similarity_score != SIMILARITY_LOWER_BOUND){
+			ret_logprob += m_similaritymodel_weight * similarity_score;
+		}
 		VERBOSE(0, "lm_logprob:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
@@ -161,7 +164,10 @@ namespace irstlm {
 		MY_ASSERT (ng.size == (int) text.size());
 		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
 		double similarity_score = m_similaritymodel->score(text, topic_weights);
-		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
+		double ret_logprob = lm_logprob;
+		if (similarity_score != SIMILARITY_LOWER_BOUND){
+			ret_logprob += m_similaritymodel_weight * similarity_score;
+		}
 		VERBOSE(0, "lm_logprob:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
 		
 		return ret_logprob;

@@ -77,13 +77,9 @@ namespace irstlm {
 	double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)
 	{
 		VERBOSE(4, "double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
-		double ret_logprob = SIMILARITY_LOWER_BOUND;
+		double ret_logprob;
 		
-		if (topic_weights.size() == 0){
-			//a-priori topic distribution is "empty", i.e. there is nore score for any topic
-			//return a "constant" lower-bound score,  SIMILARITY_LOWER_BOUND = log(0.0)
-			ret_logprob = SIMILARITY_LOWER_BOUND;
-		}else{
+		if (topic_weights.size() > 0){
 			
 			ngram base_num_ng(m_num_lm->getDict());
 			ngram base_den_ng(m_den_lm->getDict());
@@ -105,8 +101,11 @@ namespace irstlm {
 				}
 				VERBOSE(4, "CURRENT ret_logprob:" << ret_logprob << std::endl);
 			}
+		}else{
+			//a-priori topic distribution is "empty", i.e. there is nore score for any topic
+			//return a "constant" lower-bound score,  SIMILARITY_LOWER_BOUND = log(0.0)
+			ret_logprob = SIMILARITY_LOWER_BOUND;
 		}
-		
 		
 		VERBOSE(3, "ret_logprob:" << ret_logprob << std::endl);
 		return ret_logprob;

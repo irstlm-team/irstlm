@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 			
 			std::string line_str = line;
 			
-			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
+			VERBOSE(1,"input_line:|" << line_str << "|" << std::endl);	
 			
 			//getting sentence string;
 			std::string sentence;
@@ -178,9 +178,8 @@ int main(int argc, char **argv)
 			
 			
 			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
-			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
-			VERBOSE(0,"context:|" << context << "|" << std::endl);	
-			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);
+			VERBOSE(1,"sentence:|" << sentence << "|" << std::endl);	
+			VERBOSE(1,"context:|" << context << "|" << std::endl);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
@@ -201,7 +200,7 @@ int main(int argc, char **argv)
 			
 			
 			topic_map_t sentence_topic_map;
-			VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+			VERBOSE(1,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
 			for (size_t i=0; i<word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
@@ -213,7 +212,7 @@ int main(int argc, char **argv)
 				}
 				first = last - size;
 				
-				VERBOSE(0,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+				VERBOSE(2,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 				
 				if (size>=1) {
@@ -234,7 +233,6 @@ int main(int argc, char **argv)
 			((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);			
 			apriori_topic_map.clear();
 		}
-		
 		
 		delete lmt;
 		return 0;
@@ -278,16 +276,15 @@ int main(int argc, char **argv)
 			
 			std::string line_str = line;
 			
-			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);	
+			VERBOSE(1,"input_line:|" << line_str << "|" << std::endl);	
 			
 			//getting sentence string;
 			std::string sentence;
 			std::string context;
 			
 			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
-			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
-			VERBOSE(0,"context:|" << context << "|" << std::endl);	
-			VERBOSE(0,"line_str:|" << line_str << "|" << std::endl);
+			VERBOSE(1,"sentence:|" << sentence << "|" << std::endl);	
+			VERBOSE(1,"context:|" << context << "|" << std::endl);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
@@ -305,7 +302,7 @@ int main(int argc, char **argv)
 			size_t size=0;
 			size_t order = lmt->maxlevel();
 			
-			VERBOSE(0,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
+			VERBOSE(1,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
 			for (size_t i=0; i<word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
@@ -317,22 +314,22 @@ int main(int argc, char **argv)
 				}
 				first = last - size;
 				
-				VERBOSE(0,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
+				VERBOSE(2,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 				
 				if (size>=1) {
-					VERBOSE(0,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
+					VERBOSE(2,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
 					Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-					VERBOSE(0," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
+					VERBOSE(2," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
 					logPr+=Pr;
 					sent_logPr+=Pr;
-					VERBOSE(0,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
+					VERBOSE(2,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
 					
 					if (debug==1) {
 						std::cout << "first:|" << first << "| and last:| [" << size-bol << "]" << " " << std::endl;
 					}
 					
-					VERBOSE(0,"word_vec.at(i):|" << word_vec.at(i) << " lmt->getDict()->OOV():|" << lmt->getDict()->OOV() << std::endl);
+					VERBOSE(2,"word_vec.at(i):|" << word_vec.at(i) << " lmt->getDict()->OOV():|" << lmt->getDict()->OOV() << std::endl);
 					if (lmt->getDict()->encode(word_vec.at(i).c_str()) == lmt->getDict()->oovcode()) {
 						Noov++;
 						sent_Noov++;
@@ -362,8 +359,6 @@ int main(int argc, char **argv)
 				sent_Nw=sent_Noov;
 				sent_logPr=0.0;
 			}
-			
-			
 			
 			apriori_topic_map.clear();
 		}
