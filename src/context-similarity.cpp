@@ -74,10 +74,11 @@ namespace irstlm {
 	ContextSimilarity::~ContextSimilarity()
 	{}
 	
+	//return the log10 of the similarity score
 	double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)
 	{
 		VERBOSE(4, "double ContextSimilarity::score(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
-		double ret_logprob;
+		double ret_log10_pr;
 		
 		if (topic_weights.size() > 0){
 			
@@ -90,25 +91,25 @@ namespace irstlm {
 				ngram num_ng = base_num_ng;
 				ngram den_ng = base_den_ng;
 				add_topic(it->first, num_ng, den_ng);
-				double apriori_topic_score = log(it->second);
-				double topic_score = get_topic_similarity(num_ng, den_ng);
+				double apriori_topic_score = log10(it->second);
+				double topic_score = get_topic_similarity(num_ng, den_ng); //log10-prob
 				
 				VERBOSE(3, "topic:|" << it->first  << "apriori_topic_score:" << apriori_topic_score << " topic_score:" << topic_score << std::endl);
 				if (it == topic_weights.begin()){
-					ret_logprob = apriori_topic_score + topic_score;
+					ret_log10_pr = apriori_topic_score + topic_score;
 				}else{
-					ret_logprob = logsum(ret_logprob, apriori_topic_score + topic_score);
+					ret_log10_pr = logsum(ret_log10_pr, apriori_topic_score + topic_score)/M_LN10;
 				}
-				VERBOSE(4, "CURRENT ret_logprob:" << ret_logprob << std::endl);
+				VERBOSE(4, "CURRENT ret_log10_pr:" << ret_log10_pr << std::endl);
 			}
 		}else{
 			//a-priori topic distribution is "empty", i.e. there is nore score for any topic
 			//return a "constant" lower-bound score,  SIMILARITY_LOWER_BOUND = log(0.0)
-			ret_logprob = SIMILARITY_LOWER_BOUND;
+			ret_log10_pr = SIMILARITY_LOWER_BOUND;
 		}
 		
-		VERBOSE(3, "ret_logprob:" << ret_logprob << std::endl);
-		return ret_logprob;
+		VERBOSE(3, "ret_log10_pr:" << ret_log10_pr << std::endl);
+		return ret_log10_pr;
 	}
 	
 	//returns the scores for all topics in the topic models (without apriori topic prob)
