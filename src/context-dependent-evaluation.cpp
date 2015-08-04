@@ -346,8 +346,8 @@ int main(int argc, char **argv)
 			}
 			
 			if (sent_PP_flag) {
-				sent_PP=exp((-sent_logPr * log(10.0)) /sent_Nw);
-				sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * log(10.0) / sent_Nw));
+				sent_PP=exp((-sent_logPr * M_LN10) /sent_Nw);
+				sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * M_LN10 / sent_Nw));
 				
 				std::cout << "%% sent_Nw=" << sent_Nw
 				<< " sent_PP=" << sent_PP
@@ -364,16 +364,15 @@ int main(int argc, char **argv)
 		}
 		
 		
-		PP=exp((-logPr * log(10.0)) /Nw);
-		
-		PPwp= PP * (1 - 1/exp((Noov *  lmt->getlogOOVpenalty()) * log(10.0) / Nw));
+		PP=exp((-logPr * M_LN10) / Nw);
+		PPwp= PP * (1 - 1/exp((Noov *  lmt->getlogOOVpenalty()) * M_LN10 / Nw));
 		
 		std::cout << "%% Nw=" << Nw
 		<< " PP=" << PP
 		<< " PPwp=" << PPwp
 		<< " Noov=" << Noov
 		<< " OOV=" << (float)Noov/Nw * 100.0 << "%";
-		if (debug) std::cout << " logPr=" <<  logPr;
+		if (debug > 0) std::cout << " log10_Pr=" <<  logPr;
 		std::cout << std::endl;
 		std::cout.flush();
 		

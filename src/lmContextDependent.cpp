@@ -148,7 +148,7 @@ namespace irstlm {
 		if (similarity_score != SIMILARITY_LOWER_BOUND){
 			ret_logprob += m_similaritymodel_weight * similarity_score;
 		}
-		VERBOSE(0, "lm_logprob:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
+		VERBOSE(0, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
 	}
@@ -168,7 +168,7 @@ namespace irstlm {
 		if (similarity_score != SIMILARITY_LOWER_BOUND){
 			ret_logprob += m_similaritymodel_weight * similarity_score;
 		}
-		VERBOSE(0, "lm_logprob:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_logprob:" << ret_logprob << std::endl);
+		VERBOSE(0, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
 	}
@@ -188,8 +188,7 @@ namespace irstlm {
 	{
 		MY_ASSERT(dub > dict->size());
 		m_lm->setlogOOVpenalty(dub);  //set OOV Penalty by means of DUB
-		double OOVpenalty = m_lm->getlogOOVpenalty();  //get OOV Penalty
-		logOOVpenalty=log(OOVpenalty);
+		logOOVpenalty=log(m_lm->getlogOOVpenalty());
 		return logOOVpenalty;
 	}
 }//namespace irstlm
