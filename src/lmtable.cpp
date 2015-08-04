@@ -845,7 +845,7 @@ namespace irstlm {
 					
 					int tmp=maxlev;
 					maxlev=level-1;
-					prob= log(exp((double)prob * M_LN10) +  exp(((double)rbow + lprob(ng)) * M_LN10))/M_LN10;
+					prob= log10(exp((double)prob * M_LN10) +  exp(((double)rbow + lprob(ng)) * M_LN10));
 					maxlev=tmp;
 				}
 				
@@ -2449,7 +2449,7 @@ namespace irstlm {
 				if (extendible) *extendible=succrange(ing.path[ing.lev],ing.lev)>0;
 				if (lastbow) *lastbow=(double) (isQtable?Bcenters[ing.lev][(qfloat_t)ing.bow]:ing.bow);
 			} else { // means a real unknown word!
-				lpr=-log(UNIGRAM_RESOLUTION)/M_LN10;
+				lpr=-log10(UNIGRAM_RESOLUTION);
 				if (statesize)  *statesize=0;     //default statesize for zero-gram!
 				if (maxsuffptr) *maxsuffptr=NULL; //default stateptr for zero-gram!
 			}
@@ -2499,7 +2499,7 @@ namespace irstlm {
 					if (ng.size==1) { //means a real unknow word!
 						if (maxsuffptr) *maxsuffptr=NULL; //default stateptr for zero-gram!
 						if (statesize)  *statesize=0;
-						return rbow -log(UNIGRAM_RESOLUTION)/M_LN10;
+						return rbow - log10(UNIGRAM_RESOLUTION);
 					} else { //compute backoff
 						if (bol) (*bol)++; //increase backoff level
 						if (ng.lev==(ng.size-1)) { //if search stopped at previous level
@@ -2762,7 +2762,7 @@ namespace irstlm {
 			
 			//OOV not included in dictionary
 			if(ng.size==1) {
-				pr = -log(UNIGRAM_RESOLUTION)/M_LN10;
+				pr = -log10(UNIGRAM_RESOLUTION);
 				if(lkp) *lkp=pr; // this is the innermost probability
 				pr += bo; //add all the accumulated back-off probability
 				return pr;
@@ -2870,7 +2870,7 @@ namespace irstlm {
 				}
 				// adjusts backoff:
 				// 1-sum_succ(pr(w|ng)) / 1-sum_succ(pr(w|bng))
-				bo = log((1-nextlevel_ts)/(1-nextlevel_tbs))/M_LN10;
+				bo = log10((1-nextlevel_ts)/(1-nextlevel_tbs));
 				ibo=(float)bo;
 				bow(ndp, ndt, ibo);
 			} else { //we are at the highest level
@@ -2901,7 +2901,7 @@ namespace irstlm {
 		char            *ndp;
 		float             ipr;
 		
-		s=log(s)/M_LN10;
+		s=log10(s);
 		ndp = table[lev]+ (table_pos_t) ipos*ndsz;
 		for(table_entry_pos_t i=ipos; i<epos; ndp+=ndsz,i++) {
 			ipr = prob(ndp, ndt);
