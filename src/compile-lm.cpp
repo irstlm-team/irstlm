@@ -370,9 +370,9 @@ int main(int argc, char **argv)
           Nw++;
           sent_Nw++;
           if (sent_PP_flag && (*ng.wordp(1)==eos)) {
-            sent_PP=exp((-sent_logPr * M_LN10) /sent_Nw);
-            sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * M_LN10 / sent_Nw));
-
+            sent_PP=exp((-sent_logPr * M_LN10) / sent_Nw);
+            sent_PPwp= sent_PP * (1 - 1/exp(sent_Noov * ( lmt->getlogOOVpenalty() * M_LN10 ) / sent_Nw));
+						
             std::cout << "%% sent_Nw=" << sent_Nw
                       << " sent_PP=" << sent_PP
                       << " sent_PPwp=" << sent_PPwp
@@ -393,9 +393,9 @@ int main(int argc, char **argv)
         }
       }
 
-      PP=exp((-logPr * M_LN10) /Nw);
+      PP=exp((-logPr * M_LN10) / Nw);
 
-      PPwp= PP * (1 - 1/exp((Noov *  lmt->getlogOOVpenalty()) * M_LN10 / Nw));
+      PPwp= PP * (1 - 1/exp(Noov * ( lmt->getlogOOVpenalty() * M_LN10 ) / Nw));
 
       std::cout << "%% Nw=" << Nw
                 << " PP=" << PP
