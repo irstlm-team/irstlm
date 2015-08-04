@@ -356,7 +356,8 @@ int main(int argc, char **argv)
 				<< " sent_OOV=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
 				std::cout.flush();
 				//reset statistics for sentence based Perplexity
-				sent_Nw=sent_Noov;
+				sent_Noov = 0;
+				sent_Nw = 0;
 				sent_logPr=0.0;
 			}
 			
