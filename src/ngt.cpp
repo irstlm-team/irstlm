@@ -421,12 +421,13 @@ int main(int argc, char **argv)
     }
 
     PP=exp(-logPr/Nw);
-    PPwp= PP * exp(Noov * log(10000000.0-ngt->dict->size())/Nw);
+		int dub=10000000;
+    PPwp= PP * exp(Noov * log((double) dub - ngt->dict->size())/Nw);
 
     cout << "%%% NGT TEST OF SMT LM\n";
     cout << "%% LM=" << inp << " SIZE="<< ngt->maxlevel();
     cout << "   TestFile="<< ftlm << "\n";
-    cout << "%% OOV PENALTY = 1/" << 10000000.0-ngt->dict->size() << "\n";
+    cout << "%% OOV PENALTY = 1/" << (dub - ngt->dict->size()) << "\n";
 
 
     cout << "%% Nw=" << Nw << " PP=" << PP << " PPwp=" << PPwp

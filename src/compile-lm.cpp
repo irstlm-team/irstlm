@@ -370,8 +370,8 @@ int main(int argc, char **argv)
           Nw++;
           sent_Nw++;
           if (sent_PP_flag && (*ng.wordp(1)==eos)) {
-            sent_PP=exp((-sent_logPr * log(10.0)) /sent_Nw);
-            sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * log(10.0) / sent_Nw));
+            sent_PP=exp((-sent_logPr * M_LN10) /sent_Nw);
+            sent_PPwp= sent_PP * (1 - 1/exp((sent_Noov *  lmt->getlogOOVpenalty()) * M_LN10 / sent_Nw));
 
             std::cout << "%% sent_Nw=" << sent_Nw
                       << " sent_PP=" << sent_PP
@@ -393,9 +393,9 @@ int main(int argc, char **argv)
         }
       }
 
-      PP=exp((-logPr * log(10.0)) /Nw);
+      PP=exp((-logPr * M_LN10) /Nw);
 
-      PPwp= PP * (1 - 1/exp((Noov *  lmt->getlogOOVpenalty()) * log(10.0) / Nw));
+      PPwp= PP * (1 - 1/exp((Noov *  lmt->getlogOOVpenalty()) * M_LN10 / Nw));
 
       std::cout << "%% Nw=" << Nw
                 << " PP=" << PP
@@ -448,10 +448,11 @@ int main(int argc, char **argv)
           std::cerr << ".";
           lmt->check_caches_levels();
         }
-        std::cout << ng << " p= " << lmt->clprob(ng,&bow,&bol) * M_LN10;
+				//pay attention: lmt->clprob(ng,&bow,&bol) is a log10(prob(ng), hence lmt->clprob(ng,&bow,&bol) * M_LN10   is a ln(prob(ng)
+        std::cout << ng << " ln_p= " << lmt->clprob(ng,&bow,&bol) * M_LN10;
         std::cout << " bo= " << bol << std::endl;
       } else {
-        std::cout << ng << " p= NULL" << std::endl;
+        std::cout << ng << " ln_p= NULL" << std::endl;
       }
       std::cout << "> ";
     }

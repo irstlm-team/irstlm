@@ -244,15 +244,16 @@ public:
 	
 	void configure(int n,bool quantized);
 	
-	//set penalty for OOV words
+	//returns log10 penalty for OOV words
 	inline double getlogOOVpenalty() const {
 		return logOOVpenalty;
 	}
 	
+	//set penalty for OOV words, as log10
 	inline double setlogOOVpenalty(int dub) {
 		MY_ASSERT(dub > dict->size());
 		dictionary_upperbound = dub;
-		return logOOVpenalty=log((double)(dictionary_upperbound - dict->size()))/M_LN10;
+		return logOOVpenalty=log10((double)(dictionary_upperbound - dict->size()));
 	}
 	
 	inline double setlogOOVpenalty(double oovp) {

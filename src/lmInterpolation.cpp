@@ -147,7 +147,7 @@ lmContainer* lmInterpolation::load_lm(int i,int memmap, float nlf, float dlf)
   return lmt;
 }
 
-
+//return log10 prob of an ngram
 double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 {
 	
@@ -213,7 +213,7 @@ double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,
 	 if (bow) std::cerr << " bow:" << *bow << std::endl;
 	 if (bol) std::cerr << " bol:" << *bol << std::endl;
 	 */
-  return log(pr)/M_LN10;
+  return log10(pr);
 }
 
 double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
@@ -234,10 +234,12 @@ double lmInterpolation::setlogOOVpenalty(int dub)
   double OOVpenalty=0.0;
   for (int i=0; i<m_number_lm; i++) {
     m_lm[i]->setlogOOVpenalty(dub);  //set OOV Penalty for each LM
-    _logpr=m_lm[i]->getlogOOVpenalty();
-    OOVpenalty+=m_weight[i]*exp(_logpr);
+    _logpr=m_lm[i]->getlogOOVpenalty(); // logOOV penalty is in log10
+//    OOVpenalty+=m_weight[i]*exp(_logpr);
+    OOVpenalty+=m_weight[i]*exp(_logpr*M_LN10);  // logOOV penalty is in log10
   }
-  logOOVpenalty=log(OOVpenalty);
+//  logOOVpenalty=log(OOVpenalty);
+  logOOVpenalty=log10(OOVpenalty);
   return logOOVpenalty;
 }
 }//namespace irstlm

@@ -399,7 +399,7 @@ void interplm::test_txt(char* filename,int size,bool /* unused parameter: backof
       pr=prob(ng,ng.size);
 
       if (outpr)
-        outp << ng << "[" << ng.size << "-gram]" << " " << pr << " " << log(pr)/log(10.0) << std::endl;
+        outp << ng << "[" << ng.size << "-gram]" << " " << pr << " " << log10(pr) << std::endl;
 
       lp-=log(pr);
 

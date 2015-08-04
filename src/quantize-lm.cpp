@@ -414,11 +414,7 @@ int main(int argc, char **argv)
 
 int ComputeCluster(int centers,double* ctrs,unsigned int N,DataItem* bintable)
 {
-
-
   //cerr << "\nExecuting Clutering Algorithm:  k=" << centers<< "\n";
-  double log10=log(10.0);
-
   for (unsigned int i=0; i<N; i++) bintable[i].code=0;
 
   //cout << "start sort \n";
@@ -475,13 +471,13 @@ int ComputeCluster(int centers,double* ctrs,unsigned int N,DataItem* bintable)
 
     MY_ASSERT(bintable[i].code < centers);
 
-    ctrs[bintable[i].code]=ctrs[bintable[i].code]+exp(bintable[i].pt * log10);
+    ctrs[bintable[i].code]=ctrs[bintable[i].code]+exp(bintable[i].pt * M_LN10);
 
   }
 
   for (int i=0; i<centers; i++) {
     if (population[i]>0)
-      ctrs[i]=log(ctrs[i]/population[i])/log10;
+      ctrs[i]=log10(ctrs[i]/population[i]);
     else
       ctrs[i]=-99;
 

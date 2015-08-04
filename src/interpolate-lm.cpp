@@ -424,8 +424,8 @@ int main(int argc, char **argv)
             if (*ong.wordp(1) != lmt[i]->getDict()->oovcode()) OOV_all_flag=false; //OOV wrt LM[i]
             if (*ong.wordp(1) == lmt[i]->getDict()->oovcode()) OOV_any_flag=true; //OOV wrt LM[i]
           }
-
-          lPr=log(Pr)/M_LN10;
+					
+          lPr=log10(Pr);
           logPr+=lPr;
           sent_logPr+=lPr;
 
@@ -433,9 +433,9 @@ int main(int argc, char **argv)
             std::cout << ng.dict->decode(*ng.wordp(1)) << " [" << ng.size-minbol << "]" << " ";
             if (*ng.wordp(1)==eos) std::cout << std::endl;
           }
-          if (debug==2)
-            std::cout << ng << " [" << ng.size-minbol << "-gram]" << " " << log(Pr) << std::endl;
-
+          if (debug==2){ //pay attention: log-prob is ln(Pr)
+            std::cout << ng << " [" << ng.size-minbol << "-gram]" << " ln_p=" << log(Pr) << std::endl;
+					}
           if (minbol) {
             Nbo++;  //all LMs have back-offed by at least one
             sent_Nbo++;
@@ -454,7 +454,7 @@ int main(int argc, char **argv)
           sent_Nw++;
 
           if (*ng.wordp(1)==eos && sent_PP_flag) {
-            sent_PP=exp((-sent_logPr * log(10.0)) /sent_Nw);
+            sent_PP=exp((-sent_logPr * M_LN10) / sent_Nw);
             std::cout << "%% sent_Nw=" << sent_Nw
                       << " sent_PP=" << sent_PP
                       << " sent_Nbo=" << sent_Nbo
@@ -519,15 +519,16 @@ int main(int argc, char **argv)
         for (i=0; i<N; i++) {
           ngram ong(lmt[i]->getDict());
           ong.trans(ng);
-          logpr = lmt[i]->clprob(ong,&bow,&bol,NULL,&statesize); //LM log-prob (using caches if available)
+          logpr = lmt[i]->clprob(ong,&bow,&bol,NULL,&statesize); //LM log10-prob (using caches if available)
 
           Pr+=w[i] * pow(10.0,logpr); //actual prob of the interpolation
-          std::cout << "lm " << i << ":" << " logpr: " << logpr << " weight: " << w[i] << std::endl;
+          std::cout << "lm " << i << ":" << " log10_pr: " << logpr << " weight: " << w[i] << std::endl;
           if (maxbol<bol) maxbol=bol;
           if (maxstatesize<statesize) maxstatesize=statesize;
         }
-
-        std::cout << ng << " p= " << log(Pr) << " bo= " << maxbol << " recombine= " << maxstatesize << std::endl;
+				
+				//pay attention: log-prob is ln(Pr)
+        std::cout << ng << " ln_p= " << log(Pr) << " log10_p= " << log10(Pr) << " bo= " << maxbol << " recombine= " << maxstatesize << std::endl;
 
         if ((n % 10000000)==0) {
           std::cerr << "." << std::endl;
