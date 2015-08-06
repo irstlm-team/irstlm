@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 			
 			std::string line_str = line;
 			
-			VERBOSE(1,"input_line:|" << line_str << "|" << std::endl);	
+			VERBOSE(2,"input_line:|" << line_str << "|" << std::endl);	
 			
 			//getting sentence string;
 			std::string sentence;
@@ -178,8 +178,8 @@ int main(int argc, char **argv)
 			
 			
 			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
-			VERBOSE(1,"sentence:|" << sentence << "|" << std::endl);	
-			VERBOSE(1,"context:|" << context << "|" << std::endl);
+			VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);	
+			VERBOSE(2,"context:|" << context << "|" << std::endl);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;

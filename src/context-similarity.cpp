@@ -149,8 +149,6 @@ namespace irstlm {
 	
 	void ContextSimilarity::setContextMap(topic_map_t& topic_map, const std::string& context){
 		
-		VERBOSE(0,"context:|" << context << "|" << std::endl);
-		
 		string_vec_t topic_weight_vec;
 		string_vec_t topic_weight;
 		
@@ -165,7 +163,6 @@ namespace irstlm {
 			topic_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
 			topic_weight.clear();
 		}
-		VERBOSE(0,"found " << topic_map.size() << " entries in the context" << std::endl);
 	}
 	
 	void ContextSimilarity::create_ngram(const string_vec_t& text, ngram& num_ng, ngram& den_ng)
