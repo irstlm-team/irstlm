@@ -66,6 +66,7 @@ int main(int argc, char **argv)
 	bool sent_PP_flag = false;
 	bool contextbasedscore = false;
 	bool topicscore = false;
+	bool context_model_active = true;
 	
 	int debug = 0;
   int requiredMaxlev = 1000;
@@ -91,6 +92,7 @@ int main(int argc, char **argv)
                 "sentence", CMDBOOLTYPE|CMDMSG, &sent_PP_flag, "computes perplexity at sentence level (identified through the end symbol)",
                 "dict_load_factor", CMDFLOATTYPE|CMDMSG, &dictionary_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is 0",
                 "ngram_load_factor", CMDFLOATTYPE|CMDMSG, &ngramcache_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is false",
+                "context_model_active", CMDBOOLTYPE|CMDMSG, &context_model_active, "enable/disable context-dependent models (default is true)",
 								
 								"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
 								"h", CMDBOOLTYPE|CMDMSG, &help, "print this help",
@@ -126,6 +128,7 @@ int main(int argc, char **argv)
   if (topicscore==true) std::cerr << "topicscore: " << topicscore << std::endl;
   std::cerr << "loading up to the LM level " << requiredMaxlev << " (if any)" << std::endl;
   std::cerr << "dub: " << dub<< std::endl;
+  std::cerr << "dub: " << dub<< std::endl;
 	
 	
   //checking the language model type
@@ -136,7 +139,8 @@ int main(int argc, char **argv)
   lmt->setMaxLoadedLevel(requiredMaxlev);
 	
   lmt->load(infile);
-
+	((lmContextDependent*) lmt)->set_Active(context_model_active);
+	
   if (dub) lmt->setlogOOVpenalty((int)dub);
 	
   //use caches to save time (only if PS_CACHE_ENABLE is defined through compilation flags)
@@ -197,10 +201,7 @@ int main(int argc, char **argv)
 			size_t size=0;
 			size_t order = lmt->maxlevel();
 			
-			
-			
 			topic_map_t sentence_topic_map;
-			VERBOSE(1,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
 			for (size_t i=0; i<word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
@@ -212,7 +213,6 @@ int main(int argc, char **argv)
 				}
 				first = last - size;
 				
-				VERBOSE(2,"topic scores for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 				
 				if (size>=1) {
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 					topic_map_t tmp_topic_map;
 					((lmContextDependent*) lmt)->getContextSimilarity()->get_topic_scores(tmp_topic_map, tmp_word_vec);
 					
-					VERBOSE(2,std::cout << "first:" << first << " last:" << last << ((lmContextDependent*) lmt)->getContextDelimiter());
+					VERBOSE(2,"first:" << first << " last:" << last <<  " tmp_topic_map.size:" << tmp_topic_map.size() << std::endl);
 					if (debug > 0){
 						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
 					}
@@ -302,11 +302,11 @@ int main(int argc, char **argv)
 			size_t size=0;
 			size_t order = lmt->maxlevel();
 			
-			VERBOSE(1,"word_vec.size():|" << word_vec.size() << "|" << std::endl);	
-			for (size_t i=0; i<word_vec.size(); ++i){
+			for (size_t i=0; i< word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
 				last=i+1;
+
 				// reset ngram at begin of sentence
 				if (word_vec.at(i) == lmt->getDict()->BoS()) {
 					size=0;
@@ -314,13 +314,11 @@ int main(int argc, char **argv)
 				}
 				first = last - size;
 				
-				VERBOSE(2,"prob for first:|" << first << "| last:|" << last << "| size:" << size << std::endl);
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
 				
 				if (size>=1) {
 					VERBOSE(2,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);	
 					Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-					VERBOSE(2," --> prob for first:|" << first << "| and last:|" << last << "| is Pr=" << Pr << std::endl);	
 					logPr+=Pr;
 					sent_logPr+=Pr;
 					VERBOSE(2,"sent_logPr:|" << sent_logPr << " logPr:|" << logPr << std::endl);	
