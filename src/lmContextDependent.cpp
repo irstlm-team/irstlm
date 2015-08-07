@@ -61,7 +61,7 @@ namespace irstlm {
 	void lmContextDependent::load(const std::string &filename,int mmap)
 	{
 		VERBOSE(2,"lmContextDependent::load(const std::string &filename,int memmap)" << std::endl);
-		VERBOSE(2," filename:|" << filename << "|" << std::endl);
+		VERBOSE(2,"configuration file:|" << filename << "|" << std::endl);
 		
 		dictionary_upperbound=1000000;
 		int memmap=mmap;
@@ -71,22 +71,22 @@ namespace irstlm {
 		VERBOSE(0, "filename:|" << filename << "|" << std::endl);
 		
 		char line[MAX_LINE];
-		const char* words[LMCONFIGURE_MAX_TOKEN];
+		const char* words[LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN];
 		int tokenN;
 		inp.getline(line,MAX_LINE,'\n');
-		tokenN = parseWords(line,words,LMCONFIGURE_MAX_TOKEN);
+		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
 		
 		if (tokenN != 1 || ((strcmp(words[0],"LMCONTEXTDEPENDENT") != 0) && (strcmp(words[0],"lmcontextdependent")!=0)))
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_num_model topic_nden_model");
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
 		
 		//reading ngram-based LM
 		inp.getline(line,BUFSIZ,'\n');
 		tokenN = parseWords(line,words,1);
 		if(tokenN < 1 || tokenN > 1) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict  topic_num_model topic_nden_model");
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
 		}
 		
-		VERBOSE(0, "modelfile:|" << words[0] << "|" << std::endl);
+		VERBOSE(0, "model_w:|" << words[0] << "|" << std::endl);
 		//checking the language model type
 		m_lm=lmContainer::CreateLanguageModel(words[0],ngramcache_load_factor, dictionary_load_factor);
 		
@@ -101,24 +101,31 @@ namespace irstlm {
 		
 		//reading topic model
 		inp.getline(line,BUFSIZ,'\n');
-		tokenN = parseWords(line,words,4);
+		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
 		
-		if(tokenN < 4 || tokenN > 4) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight topic_dict topic_num_model topic_nden_model");
+		if(tokenN < 5 || tokenN > LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN) {
+			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
 		}
 		
 		//loading topic model and initialization
 		m_similaritymodel_weight = (float) atof(words[0]);
-		std::string _dict = words[1];
-		std::string _num_lm = words[2];
-		std::string _den_lm = words[3];
-		m_similaritymodel = new ContextSimilarity(_dict, _num_lm, _den_lm);
+		std::string _k_ngt = words[1];
+		std::string _hk_ngt = words[2];
+		std::string _hwk_ngt = words[3];
+		int _thr = atoi(words[4]);
+		double _smoothing = 0.1;
+		if (tokenN == 6){ _smoothing = atof(words[5]); }
+		m_similaritymodel = new ContextSimilarity(_k_ngt, _hk_ngt, _hwk_ngt);
+		m_similaritymodel->set_Threshold_on_H(_thr);
+		m_similaritymodel->set_SmoothingValue(_smoothing);
 		
 		inp.close();
 		
-		VERBOSE(0, "topic_dict:|" << _dict << "|" << std::endl);
-		VERBOSE(0, "topic_num_model:|" << _num_lm << "|" << std::endl);
-		VERBOSE(0, "topic_den_model:|" << _den_lm << "|" << std::endl);
+		VERBOSE(0, "model_k:|" << _k_ngt << "|" << std::endl);
+		VERBOSE(0, "model_hk:|" << _hk_ngt << "|" << std::endl);
+		VERBOSE(0, "model_hwk:|" << _hwk_ngt << "|" << std::endl);
+		VERBOSE(0, "topic_threshold_on_h:|" << m_similaritymodel->get_Threshold_on_H() << "|" << std::endl);
+		VERBOSE(0, "shift-beta smoothing on counts:|" << m_similaritymodel->get_SmoothingValue() << "|" << std::endl);
 	}
 
 	void lmContextDependent::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
@@ -127,9 +134,6 @@ namespace irstlm {
 		if (pos != std::string::npos){ // context_delimiter is found
 			sentence = line.substr(0, pos);
 			line.erase(0, pos + context_delimiter.length());
-			VERBOSE(0,"pos:|" << pos << "|" << std::endl);	
-			VERBOSE(0,"sentence:|" << sentence << "|" << std::endl);	
-			VERBOSE(0,"line:|" << line << "|" << std::endl);	
 			
 			//getting context string;
 			context = line;
@@ -137,38 +141,41 @@ namespace irstlm {
 			sentence = line;
 			context = "";
 		}	
+		VERBOSE(1,"line:|" << line << "|" << std::endl);
+		VERBOSE(1,"sentence:|" << sentence << "|" << std::endl);	
+		VERBOSE(1,"context:|" << context << "|" << std::endl);	
 	}
 
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		string_vec_t text;   // replace with the text passed as parameter
-		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double similarity_score = m_similaritymodel->score(text, topic_weights);
-		double ret_logprob = lm_logprob;
-		if (similarity_score != SIMILARITY_LOWER_BOUND){
-			ret_logprob += m_similaritymodel_weight * similarity_score;
+		VERBOSE(2,"lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, ...)" << std::endl);
+		string_vec_t text;
+		if (ng.size>1){
+			text.push_back(ng.dict->decode(*ng.wordp(2)));
 		}
-		VERBOSE(0, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
+		text.push_back(ng.dict->decode(*ng.wordp(1)));
+		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double similarity_score = m_similaritymodel->get_context_similarity(text, topic_weights);
+		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
+		VERBOSE(3, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
 	}
 	
 	double lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		VERBOSE(0,"lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, " << std::endl);
+		VERBOSE(2,"lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, ...)" << std::endl);
+
 		//create the actual ngram
 		ngram ng(dict);
 		ng.pushw(text);
-		VERBOSE(0,"ng:|" << ng << "|" << std::endl);		
+		VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
 		
 		MY_ASSERT (ng.size == (int) text.size());
 		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double similarity_score = m_similaritymodel->score(text, topic_weights);
-		double ret_logprob = lm_logprob;
-		if (similarity_score != SIMILARITY_LOWER_BOUND){
-			ret_logprob += m_similaritymodel_weight * similarity_score;
-		}
-		VERBOSE(0, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
+		double similarity_score = m_similaritymodel->get_context_similarity(text, topic_weights);
+		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
+		VERBOSE(3, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
 	}

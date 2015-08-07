@@ -60,7 +60,7 @@ namespace irstlm {
 	 and a bigram-based topic model 
 	 */
 	
-#define LMCONFIGURE_MAX_TOKEN 3
+#define LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN 6
 	
 	static const std::string context_delimiter="___CONTEXT___";
 	
@@ -142,8 +142,6 @@ namespace irstlm {
 			return lprob(ng, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
 		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
-			
-			VERBOSE(0,"lmContainer::clprob(string_vec_t& text,...." << std::endl);
 			return lprob(text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
 		
@@ -201,6 +199,10 @@ namespace irstlm {
 		
 		inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
 			return m_lm->is_OOV(code);
+		}
+		
+		inline void set_Active(bool value){
+			m_similaritymodel->set_Active(value);
 		}
 	};
 }//namespace irstlm
