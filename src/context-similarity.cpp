@@ -304,7 +304,7 @@ namespace irstlm {
 		}
 		else{
 			ng.pushc(0);
-			if (m_hk_ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
+			if (ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
 				ret=true;
 			}else{
 				ret=false;
