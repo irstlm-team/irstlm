@@ -71,8 +71,8 @@ namespace irstlm {
 		double get_topic_similarity(string_vec_t text, const std::string& topic);
 		double get_topic_similarity(ngram& num_ng, ngram& den_ng);
 		
-		bool num_reliable(ngram& num_ng);
-		bool den_reliable(ngram& den_ng);
+		bool reliable(ngram& ng, int size, ngramtable* ngt);
+		bool base_reliable(ngram& ng, int size, ngramtable* ngt);
 		
 	public:
 		ContextSimilarity(const std::string &dictfile, const std::string &num_modelfile, const std::string &den_modelfile);

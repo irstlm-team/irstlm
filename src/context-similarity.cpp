@@ -56,6 +56,13 @@ namespace irstlm {
 		
 		m_topic_size = m_k_ngt->getDict()->size();
 		VERBOSE(1, "There are " << m_topic_size << " topics in the model" << std::endl);
+		
+#ifdef MY_ASSERT_FLAG
+		VERBOSE(0, "MY_ASSERT is active" << std::endl);
+#else
+		VERBOSE(0, "MY_ASSERT is NOT active" << std::endl);
+#endif
+		
 	}
 
 	
@@ -84,7 +91,7 @@ namespace irstlm {
 			
 			
 			create_ngram(text, base_num_ng, base_den_ng);
-			if (den_reliable(base_den_ng)){ //we do not know about the reliability of the denominator
+			if (base_reliable(base_den_ng, 2, m_hk_ngt)){ //we do not know about the reliability of the denominator
 				
 				for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
 				{
@@ -180,8 +187,9 @@ namespace irstlm {
 		//if text has two word, further computation will rely on normal counts, i.e. counts(h,w,k), counts(h,w), counts(h,k), counts(k)
 		//if text has only one word, further computation will rely on lower-order counts, i.e. (w,k), counts(w), counts(k), counts()
 		VERBOSE(2,"void ContextSimilarity::create_ngram" << std::endl);
+		VERBOSE(2,"text.size:" << text.size() << std::endl);
 
-		MY_ASSERT(text.size()==0);
+		MY_ASSERT(text.size()>0);
 		
 		if (text.size()==1){
 			//all further computation will rely on lower-order counts
@@ -228,76 +236,83 @@ namespace irstlm {
 		
 		if (den_ng.size == m_hk_order){//we rely on counts(h,k) and counts(h)
 			if (m_hk_ngt->get(den_ng)) {	c_hk += den_ng.freq; }
-			if (m_hk_ngt->get(den_ng,2,1)) { c_h += den_ng.freq; }
+			if (m_hk_ngt->get(den_ng,den_ng.size,den_ng.size-1)) { c_h += den_ng.freq; }
 		}else{//we actually rely on counts(k) and counts()
-			/*
-			 if (m_k_ngt->get(den_ng)) {	c_hk += den_ng.freq; }
-			 c_h += m_hk_ngt->getDict()->totfreq();
-			 */
 			c_hk += m_hk_ngt->getDict()->freq(*(den_ng.wordp(1)));
 			c_h += m_k_ngt->getDict()->totfreq();
 		}
 		den_log_pr = log10(c_hk) - log10(c_h);
 		VERBOSE(3, "c_hk:" << c_hk << " c_h:" << c_h << std::endl);
 		
-		
-		if (num_reliable(num_ng)){
-			if (num_ng.size == m_hwk_order){ //we rely on counts(h,w,k) and counts(h,w)
+		if (num_ng.size == m_hwk_order){ //we rely on counts(h,w,k) and counts(h,w)
+			if (reliable(num_ng, num_ng.size, m_hwk_ngt)){
 				if (m_hwk_ngt->get(num_ng)) {	c_hwk += num_ng.freq; }
-				if (m_hwk_ngt->get(num_ng,3,2)) { c_hw += num_ng.freq; }
-			}else{ //we actually rely on counts(h,k) and counts(h)
-				if (m_hk_ngt->get(num_ng)) {	c_hwk += num_ng.freq; }
-				if (m_hk_ngt->get(num_ng,3,2)) { c_hw += num_ng.freq; }
+				if (m_hwk_ngt->get(num_ng,num_ng.size,num_ng.size-1)) { c_hw += num_ng.freq; }
+			}else{
+				c_hwk=1;
+				c_hk=m_topic_size;
 			}
-			num_log_pr = log10(c_hwk) - log10(c_hw);
-			VERBOSE(3, "c_hwk:" << c_hwk << " c_hw:" << c_hw << std::endl);
-		}else{
-			num_log_pr = -log10(m_topic_size);
+		}else{ //hence num_ng.size=m_hwk_order-1, we actually rely on counts(h,k) and counts(h)
+			if (reliable(num_ng, num_ng.size, m_hk_ngt)){
+				if (m_hk_ngt->get(num_ng)) {	c_hwk += num_ng.freq; }
+				if (m_hk_ngt->get(num_ng,num_ng.size,num_ng.size-1)) { c_hw += num_ng.freq; }
+			}else{
+				c_hwk=1;
+				c_hk=m_topic_size;
+			}
 		}
+		VERBOSE(3, "c_hwk:" << c_hwk << " c_hw:" << c_hw << std::endl);
+		num_log_pr = log10(c_hwk) - log10(c_hw);
 		
 		VERBOSE(3, "num_log_pr:" << num_log_pr << " den_log_pr:" << den_log_pr << std::endl);
 		return num_log_pr - den_log_pr;
 	}
 	
-	bool ContextSimilarity::num_reliable(ngram& num_ng)
+	bool ContextSimilarity::reliable(ngram& ng, int size, ngramtable* ngt)
 	{
-		VERBOSE(2, "ContextSimilarity::num_reliable(ngram& num_ng) num_ng:|" << num_ng << "| thr:" << m_threshold_on_h << "|" << std::endl);		
-		if (num_ng.size < 2){
+		VERBOSE(2, "ContextSimilarity::reliable(ngram& ng, int size, ngramtable* ngt) ng:|" << ng << "| thr:" << m_threshold_on_h << "| ng.size:" << ng.size << " size:" << size << std::endl);	
+		
+		bool ret=false;
+		
+		if (ng.size < size){
 			//num_ng has size lower than expected (2)
 			//in this case we will rely on counts(h, topic) instead of counts(h, w, topic)
-			VERBOSE(3, "num_ng:|" << num_ng << "| has size lower than expected (2) TRUE" << std::endl);
-			return true;
+			VERBOSE(3, "ng:|" << ng << "| has size (" << ng.size<< " ) lower than expected (" << size << ")" << std::endl);
+			ret=true;
 		}
-		if (m_hwk_ngt->get(num_ng,3,2) && (num_ng.freq > m_threshold_on_h)){
-			VERBOSE(3, "num_ng:|" << num_ng << "| thr:" << m_threshold_on_h << " TRUE" << std::endl);
-			return true;
+		
+		if (ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
+			ret=true;
 		}else{
-			VERBOSE(3, "num_ng:|" << num_ng << "| thr:" << m_threshold_on_h << " FALSE" << std::endl);
-			return false;
+			ret=false;
 		}
+		VERBOSE(3, "ng:|" << ng << "| thr:" << m_threshold_on_h << " reliable:" << ret << std::endl);
+		return ret;
 	}
 	
-	
-	bool ContextSimilarity::den_reliable(ngram& den_ng)
+	bool ContextSimilarity::base_reliable(ngram& ng, int size, ngramtable* ngt)
 	{
-		VERBOSE(2, "ContextSimilarity::den_reliable(ngram& den_ng) den_ng:|" << den_ng << "| thr:" << m_threshold_on_h << "|" << std::endl);
+		VERBOSE(2, "ContextSimilarity::base_reliable(ngram& ng, int size, ngramtable* ngt) ng:|" << ng << "| thr:" << m_threshold_on_h << "|" << std::endl);
 
-		if (den_ng.size < 1){
+		bool ret=false;
+		
+		if (ng.size < size){
 			//den_ng has size lower than expected (1)
 			//in this case we will rely on counts(topic) instead of counts(h, topic)
-			VERBOSE(3, "den_ng:|" << den_ng << "| has size lower than expected (1) TRUE" << std::endl);
-			return true;
+			VERBOSE(3, "ng:|" << ng << "| has size (" << ng.size<< " ) lower than expected (" << size << ")" << std::endl);
+			ret=true;
 		}
-		den_ng.pushc(0);
-		if (m_hk_ngt->get(den_ng,2,1) && (den_ng.freq > m_threshold_on_h)){
-			den_ng.shift();
-			VERBOSE(3, "den_ng:|" << den_ng << "| thr:" << m_threshold_on_h << " TRUE" << std::endl);
-			return true;
-		}else{
-			den_ng.shift();
-			VERBOSE(3, "den_ng:|" << den_ng << "| thr:" << m_threshold_on_h << " FALSE" << std::endl);
-			return false;
+		else{
+			ng.pushc(0);
+			if (m_hk_ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
+				ret=true;
+			}else{
+				ret=false;
+			}
+			ng.shift();
 		}
+		VERBOSE(3, "ng:|" << ng << "| thr:" << m_threshold_on_h << " reliable:" << ret << std::endl);
+		return ret;
 	}
 	
 }//namespace irstlm
