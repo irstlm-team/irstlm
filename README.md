@@ -31,6 +31,11 @@ To check whether g++ complier does support '-std=c++0x', please run the followin
 
 If it returns 0, g++ complier does support '-std=c++0x'; otherwise, it does not, and hence please use '--disable-cxx0'
 
+To enable/disable assert for debugging purpose, please add parameter '--enable-assert' (default) or '--disable-assert'
+
+To modify debugging level, please add parameter '--with-tracelevel=<val>' (default is 0)
+
+
 step 2: 
 - make
 
@@ -50,6 +55,11 @@ To check whether g++ complier does support '-std=c++0x', please run the followin
 $> echo | g++ -E -x c++ -std=c++0x -dM - >& /dev/null ; echo $?
 
 If it returns 0, g++ complier does support '-std=c++0x'; otherwise, it does not, and hence please use '-DCXX0:BOOL=OFF'
+
+To enable/disable assert for debugging purpose, please add parameter '-DASSERT:BOOL=ON' (default) or '-DASSERT:BOOL=OFF'
+
+To modify debugging level, please add parameter '-DTRACE_LEVEL=<val>' (default is 0)
+
 
 step 2: 
 - make
