@@ -380,9 +380,32 @@ float logsum(float a,float b){
 	else return b + logf(1+ expf(a-b));
 }
 
+float log10sum(float a,float b){
+	if (b<a) return a + log10(1 + pow(10.0,(b-a)));
+	else return b + log10(1 + pow(10.0,(a-b)));
+}
+
 double logsum(double a,double b){
 	if (b<a) return a + log(1 + exp(b-a));
-	else return b + log(1+ exp(a-b));
+	else return b + log(1 + exp(a-b));
+}
+
+double log10sum(double a,double b){
+	if (b<a) return a + log10(1 + pow(10.0,(b-a)));
+	else return b + log10(1 + pow(10.0,(a-b)));
 }
 
 
+double logistic_function(double x, double max, double steep)
+{
+	//domain: (-inf, +inf)
+	//image: [0,max)
+	//logistic_function(0.0,max,steep) = max/2
+	//lim_{x->+inf} logistic_function(x,max,steep) = max
+	//lim_{x->-inf} logistic_function(x,max,steep) = 0
+	//if steep1>steep2, then
+	// logistic_function(x,max,steep1) > logistic_function(x,max,steep2)   if x>0
+	// logistic_function(x,max,steep1) < logistic_function(x,max,steep2)   if x<0
+
+	return max/1+exp(-steep*x);
+}

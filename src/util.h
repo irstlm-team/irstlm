@@ -104,7 +104,11 @@ extern const int tracelevel;
 void MY_ASSERT(bool x);
 
 float logsum(float a,float b);
+float log10sum(float a,float b);
 double logsum(double a,double b);
+double log10sum(double a,double b);
+
+double logistic_function(double x, double max=1.0, double steep=1.0);
 
 #endif
 

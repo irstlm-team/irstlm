@@ -12,6 +12,15 @@ if (TRACE_LEVEL)
   ADD_DEFINITIONS("-DTRACE_LEVEL=${TRACE_LEVEL}")
 endif()
 
+if (OPTION)
+  ADD_DEFINITIONS("-DOPTION_${OPTION}")
+endif()
+
+if (SOLUTION)
+  ADD_DEFINITIONS("-DSOLUTION_${SOLUTION}")
+endif()
+
+
 if (CXX0)
   MESSAGE( STATUS "HAVE_CXX0=true; hence, variable HAVE_CXX0 is set" )
   SET(STD_FLAG "-std=c++0x")

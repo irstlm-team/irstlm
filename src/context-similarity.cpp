@@ -45,9 +45,11 @@ namespace irstlm {
 	{
 		m_hwk_order=3;
 		m_hk_order=2;
+		m_wk_order=m_hk_order;
 		m_k_order=1;
 		m_hwk_ngt=new ngramtable((char*) hwk_modelfile.c_str(), m_hwk_order, NULL,NULL,NULL);
 		m_hk_ngt=new ngramtable((char*) hk_modelfile.c_str(), m_hk_order, NULL,NULL,NULL);
+		m_wk_ngt=m_hk_ngt; //just a link to m_hk_ngt
 		m_k_ngt=new ngramtable((char*) k_modelfile.c_str(), m_k_order, NULL,NULL,NULL);
 		
 		m_smoothing = 0.001;
@@ -64,85 +66,54 @@ namespace irstlm {
 #endif
 		
 	}
-
+	
 	
 	ContextSimilarity::~ContextSimilarity()
 	{
 		delete m_hwk_ngt;
 		delete m_hk_ngt;
+		//delete m_wk_ngt;  //it is just a link to m_hk_ngt
+		delete m_k_ngt;
 	}
 	
-	//return the log10 of the similarity score
-	double ContextSimilarity::get_context_similarity(string_vec_t& text, topic_map_t& topic_weights)
+	void ContextSimilarity::normalize_topic_scores(topic_map_t& map)
+	{	
+		UNUSED(map);
+		/* normalization type 1
+		 double max = -1000000.0;
+		 double min =  1000000.0;
+		 for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it){
+		 min = (map[it->first]<min)?map[it->first]:min;
+		 max = (map[it->first]>max)?map[it->first]:max;
+		 }
+		 for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it){
+		 map[it->first] = (map[it->first]-min)/(max-min);
+		 }
+		 VERBOSE(2,"min:"<<min << " max:" << max << std::endl);
+		 */
+		/*
+		 //normalization type 2
+		 double norm =  0.0;
+     for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it){
+		 norm += fabs(map[it->first]);
+		 }
+		 for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it){
+		 map[it->first] = map[it->first]/norm;
+		 }
+		 VERBOSE(2,"norm:" << norm << std::endl);
+		 */
+	}
+	
+	double ContextSimilarity::DeltaCrossEntropy(topic_map_t& topic_map, topic_map_t& tmp_map, double len)
 	{
-		VERBOSE(2, "double ContextSimilarity::get_context_similarity(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
-		double ret_log10_pr;
-		
-		if (!m_active){ //similarity score is disable
-			ret_log10_pr = 0.0;
-		}else if (m_topic_size == 0){
-			//a-priori topic distribution is "empty", i.e. there is no score for any topic
-			//return an uninforming score (0.0)
-			ret_log10_pr = 0.0;
-		} else{
-			VERBOSE(3, "topic_weights.size():" << topic_weights.size() << std::endl);
-			ngram base_num_ng(m_hwk_ngt->getDict());
-			ngram base_den_ng(m_hk_ngt->getDict());
-			
-			
-			create_ngram(text, base_num_ng, base_den_ng);
-			if (base_reliable(base_den_ng, 2, m_hk_ngt)){ //we do not know about the reliability of the denominator
-				
-				for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
-				{
-					ngram num_ng = base_num_ng;
-					ngram den_ng = base_den_ng;
-					add_topic(it->first, num_ng, den_ng);
-					
-					double apriori_topic_score = log10(it->second); //log10-prob
-					double topic_score = get_topic_similarity(num_ng, den_ng); //log10-prob
-					
-					VERBOSE(3, "topic:|" << it->first  << "| apriori_topic_score:" << apriori_topic_score << " topic_score:" << topic_score << std::endl);
-					if (it == topic_weights.begin()){
-						ret_log10_pr = apriori_topic_score + topic_score;
-					}else{
-						ret_log10_pr = logsum(ret_log10_pr, apriori_topic_score + topic_score)/M_LN10;
-					}
-					VERBOSE(3, "CURRENT ret_log10_pr:" << ret_log10_pr << std::endl);
-				}
-			}else{
-				//the similarity score is not reliable enough, because occurrences of base_den_ng are too little 
-				//we also assume that also counts for base_num_ng are unreliable
-				//return an uninforming score (0.0)
-				ret_log10_pr = 0.0;
-			}
+		double xDeltaEntropy = 0.0;
+		for (topic_map_t::iterator it=tmp_map.begin(); it != tmp_map.end(); ++it){
+			xDeltaEntropy += topic_map[it->first] * tmp_map[it->first];
+			//			VERBOSE(2,"topic_map[it->first]:" << topic_map[it->first] << " tmp_map[it->first]:" << tmp_map[it->first] << " product:" << topic_map[it->first] * tmp_map[it->first] << std::endl);
 		}
-		
-		VERBOSE(2, "ret_log10_pr:" << ret_log10_pr << std::endl);
-		return ret_log10_pr;
+		//		VERBOSE(2," xDeltaEntropy:" << xDeltaEntropy << " len:" << len << " xDeltaEntropy/len:" << xDeltaEntropy/len << std::endl);
+		return xDeltaEntropy/len;
 	}
-
-	//returns the scores for all topics in the topic models (without apriori topic prob)
-	void ContextSimilarity::get_topic_scores(topic_map_t& topic_map, string_vec_t& text)
-	{				
-		ngram base_num_ng(m_hwk_ngt->getDict());
-		ngram base_den_ng(m_hk_ngt->getDict());
-		create_ngram(text, base_num_ng, base_den_ng);
-		
-		
-		if (m_active){ //similarity score is disable
-			for (int i=0; i<m_k_ngt->getDict()->size();++i)
-			{
-				ngram num_ng = base_num_ng;
-				ngram den_ng = base_den_ng;
-				std::string _topic = m_k_ngt->getDict()->decode(i);
-				add_topic(_topic, num_ng, den_ng);
-				topic_map[_topic] = get_topic_similarity(num_ng, den_ng);
-			}
-		}
-			
-	}
-	
 	
 	void ContextSimilarity::add_topic_scores(topic_map_t& topic_map, topic_map_t& tmp_map)
 	{
@@ -158,7 +129,20 @@ namespace irstlm {
 		{
 			if (it!=map.begin()) { std::cout << topic_map_delimiter1; }
 			std::cout << it->first << topic_map_delimiter2 << it->second;
+			//			std::cout << it->first << topic_map_delimiter2 << exp(it->second * M_LN10);
 		}
+		
+		std::cout << std::endl;
+	}
+	
+	void ContextSimilarity::print_topic_scores(topic_map_t& map, topic_map_t& refmap, double len)
+	{
+		for (topic_map_t::iterator it=map.begin(); it != map.end(); ++it)
+		{
+			if (it!=map.begin()) { std::cout << topic_map_delimiter1; }
+			std::cout << it->first << topic_map_delimiter2 << it->second;
+		}
+		std::cout << " DeltaCrossEntropy:" << DeltaCrossEntropy(refmap,map,len);
 		std::cout << std::endl;
 	}
 	
@@ -180,108 +164,368 @@ namespace irstlm {
 		}
 	}
 	
-	void ContextSimilarity::create_ngram(const string_vec_t& text, ngram& num_ng, ngram& den_ng)
+	void ContextSimilarity::create_ngram(const string_vec_t& text, ngram& ng)
 	{
 		//text is a vector of strings with w in the last position and the history in the previous positions
 		//text must have at least one word
-		//if text has two word, further computation will rely on normal counts, i.e. counts(h,w,k), counts(h,w), counts(h,k), counts(k)
-		//if text has only one word, further computation will rely on lower-order counts, i.e. (w,k), counts(w), counts(k), counts()
+		//if text has two word, further computation will rely on normal counts, i.e. counts(h,w,k), counts(h,w), counts(w,k), counts(h,k), counts(k)
+		//if text has only one word, further computation will rely on lower-order counts, i.e. (w,k), counts(w), counts(w), counts(k), counts()
 		VERBOSE(2,"void ContextSimilarity::create_ngram" << std::endl);
 		VERBOSE(2,"text.size:" << text.size() << std::endl);
-
+		
 		MY_ASSERT(text.size()>0);
 		
 		if (text.size()==1){
 			//all further computation will rely on lower-order counts
-			num_ng.pushw(text.at(text.size()-1));
+			ng.pushw(text.at(text.size()-1));
 		}else {
-			num_ng.pushw(text.at(text.size()-2));
-			num_ng.pushw(text.at(text.size()-1));
-			den_ng.pushw(text.at(text.size()-2));
+			ng.pushw(text.at(text.size()-2));
+			ng.pushw(text.at(text.size()-1));
 		}
+		VERBOSE(2,"output of create_ngram ng:|" << ng << "| ng.size:" << ng.size << std::endl);
 	}
 	
-	void ContextSimilarity::create_topic_ngram(const string_vec_t& text, const std::string& topic, ngram& num_ng, ngram& den_ng)
+	void ContextSimilarity::create_topic_ngram(const string_vec_t& text, const std::string& topic, ngram& ng)
 	{
-		//text is  a vector of string with w in the last position and the history in the previous positions
-		//text must have at least two words
-		create_ngram(text, num_ng, den_ng);
-		add_topic(topic, num_ng, den_ng);
+		//text is a vector of string with w in the last position and the history in the previous positions
+		//text must have at least one word
+		//topic is added in the most recent position of the ngram
+		create_ngram(text, ng);
+		add_topic(topic, ng);
+		VERBOSE(2,"output of create_topic_ngram ng:|" << ng << "| ng.size:" << ng.size << std::endl);
 	}
 	
-	void ContextSimilarity::add_topic(const std::string& topic, ngram& num_ng, ngram& den_ng)
+	void ContextSimilarity::add_topic(const std::string& topic, ngram& ng)
 	{		
-		num_ng.pushw(topic);
-		den_ng.pushw(topic);
+		ng.pushw(topic);
 	}
 	
-	double ContextSimilarity::get_topic_similarity(string_vec_t text, const std::string& topic)
-	{
-		ngram num_ng(m_hwk_ngt->getDict());
-		ngram den_ng(m_hk_ngt->getDict());
-		
-		create_topic_ngram(text, topic, num_ng, den_ng);
-		
-		return get_topic_similarity(num_ng, den_ng);
+	void ContextSimilarity::modify_topic(const std::string& topic, ngram& ng)
+	{		
+		*ng.wordp(1) = ng.dict->encode(topic.c_str());
 	}
 	
-	double ContextSimilarity::get_topic_similarity(ngram& num_ng, ngram& den_ng)
+	void ContextSimilarity::get_counts(ngram& ng, ngramtable& ngt, double& c_xk, double& c_x)
 	{			
-		VERBOSE(2, "double ContextSimilarity::get_topic_similarity(ngram& num_ng, ngram& den_ng) with  num_ng:|" << num_ng << "| den_ng:|" << den_ng << "|" << std::endl);
+		VERBOSE(2, "double ContextSimilarity::get_counts(ngram& ng, double& c_xk, double& c_x) with ng:|" << ng << "|" << std::endl);
+		//counts taken from the tables are modified to avoid zero values for the probs
+		//a constant epsilon (smmothing) is added
+		//we also assume that c(x) = sum_k c(xk)
 		
-		double num_log_pr, den_log_pr;
+		//we assume that ng ends with a correct topic 
+		//we assume that ng is compliant with ngt, and has the correct size
 		
-		double c_hk=m_smoothing, c_h=m_smoothing * m_topic_size;
-		double c_hwk=m_smoothing, c_hw=m_smoothing * m_topic_size;
+		c_xk = m_smoothing;
+		c_x  = m_smoothing * m_topic_size;
 		
-		if (den_ng.size == m_hk_order){//we rely on counts(h,k) and counts(h)
-			if (m_hk_ngt->get(den_ng)) {	c_hk += den_ng.freq; }
-			if (m_hk_ngt->get(den_ng,den_ng.size,den_ng.size-1)) { c_h += den_ng.freq; }
-		}else{//we actually rely on counts(k) and counts()
-			c_hk += m_hk_ngt->getDict()->freq(*(den_ng.wordp(1)));
-			c_h += m_k_ngt->getDict()->totfreq();
-		}
-		den_log_pr = log10(c_hk) - log10(c_h);
-		VERBOSE(3, "c_hk:" << c_hk << " c_h:" << c_h << std::endl);
+		if (ngt.get(ng)) { c_xk += ng.freq; }
+		if (ngt.get(ng,ng.size,ng.size-1)) { c_x += ng.freq; }
 		
-		if (num_ng.size == m_hwk_order){ //we rely on counts(h,w,k) and counts(h,w)
-			if (reliable(num_ng, num_ng.size, m_hwk_ngt)){
-				if (m_hwk_ngt->get(num_ng)) {	c_hwk += num_ng.freq; }
-				if (m_hwk_ngt->get(num_ng,num_ng.size,num_ng.size-1)) { c_hw += num_ng.freq; }
-			}else{
-				c_hwk=1;
-				c_hk=m_topic_size;
-			}
-		}else{ //hence num_ng.size=m_hwk_order-1, we actually rely on counts(h,k) and counts(h)
-			if (reliable(num_ng, num_ng.size, m_hk_ngt)){
-				if (m_hk_ngt->get(num_ng)) {	c_hwk += num_ng.freq; }
-				if (m_hk_ngt->get(num_ng,num_ng.size,num_ng.size-1)) { c_hw += num_ng.freq; }
-			}else{
-				c_hwk=1;
-				c_hk=m_topic_size;
-			}
-		}
-		VERBOSE(3, "c_hwk:" << c_hwk << " c_hw:" << c_hw << std::endl);
-		num_log_pr = log10(c_hwk) - log10(c_hw);
-		
-		VERBOSE(3, "num_log_pr:" << num_log_pr << " den_log_pr:" << den_log_pr << std::endl);
-		return num_log_pr - den_log_pr;
+		VERBOSE(3, "c_xk:" << c_xk << " c_x:" << c_x << std::endl);
 	}
 	
-	bool ContextSimilarity::reliable(ngram& ng, int size, ngramtable* ngt)
+	double ContextSimilarity::topic_score(string_vec_t text, const std::string& topic, ngramtable& ngt, ngramtable& ngt2)
 	{
-		VERBOSE(2, "ContextSimilarity::reliable(ngram& ng, int size, ngramtable* ngt) ng:|" << ng << "| thr:" << m_threshold_on_h << "| ng.size:" << ng.size << " size:" << size << std::endl);	
+		ngram ng(ngt.getDict());
+		
+		create_topic_ngram(text, topic, ng);
+		
+		return topic_score(ng, ngt, ngt2);
+	}
+	
+	double ContextSimilarity::topic_score(ngram& ng, ngramtable& ngt, ngramtable& ngt2){
+#ifdef OPTION_1
+		return topic_score_option1(ng, ngt, ngt2);
+#elif OPTION_2
+		return topic_score_option2(ng, ngt, ngt2);
+#elif OPTION_3
+		return topic_score_option3(ng, ngt, ngt2);
+#else
+		return topic_score_option0(ng, ngt, ngt2);
+#endif
+	}
+	
+	double ContextSimilarity::topic_score_option0(ngram& ng, ngramtable& ngt, ngramtable& ngt2)
+	{
+		UNUSED(ngt);
+		UNUSED(ngt2);
+		VERBOSE(2, "double ContextSimilarity::topic_score_option0(ngram& ng, ngramtable& ngt) with ng:|" << ng << "|" << std::endl);
+		
+		//option 0: uniform (not considering log function) 
+		//P(k|hw) = 1/number_of_topics
+		double log_pr = -log(m_topic_size)/M_LN10;
+		
+		VERBOSE(3, "option0: return: " << log_pr<< std::endl);	
+		return log_pr;
+	}
+	
+	double ContextSimilarity::topic_score_option1(ngram& ng, ngramtable& ngt, ngramtable& ngt2)
+	{
+		VERBOSE(2, "double ContextSimilarity::topic_score_option1(ngram& ng, ngramtable& ngt) with ng:|" << ng << "|" << std::endl);
+		
+		//ngt provides counts c(hwk) and c(hw) (or c(wk) and c(w))
+		double c_xk, c_x;
+		get_counts(ng, ngt, c_xk, c_x);
+		
+		//copy and transform codes
+		// shift all terms, but the topic
+		// ng2[3]=ng[4];
+		// ng2[2]=ng[3];
+		// ng2[1]=ng[1];
+		ngram ng2(ngt2.getDict());
+		ng2.trans(ng);
+		int topic=*ng.wordp(1);
+		ng2.shift();
+		*ng2.wordp(2)=topic;
+		
+		//ngt2 provides counts c(hk) and c(h) (or c(k) and c())
+		double c_xk2, c_x2;
+		get_counts(ng2, ngt2, c_xk2, c_x2);
+		
+		//option 1: (not considering log function) 
+		//P(k|hw)/sum_v P(k|hv) ~approx~ P(k|hw)/P(k|h) ~approx~ num_pr/den_pr
+		//num_pr = c'(hwk)/c'(hw)
+		//den_pr = c'(hk)/c'(h)
+		double den_log_pr = log10(c_xk2) - log10(c_x2);
+		double num_log_pr = log10(c_xk) - log10(c_x);
+		double log_pr = num_log_pr - den_log_pr;
+		VERBOSE(3, "option1: num_log_pr:" << num_log_pr << " den_log_pr:" << den_log_pr << " return: " << log_pr << std::endl);
+		return log_pr;
+	}
+	
+	double ContextSimilarity::topic_score_option2(ngram& ng, ngramtable& ngt, ngramtable& ngt2)
+	{
+		UNUSED(ngt2);
+		VERBOSE(2, "double ContextSimilarity::topic_score_option2(ngram& ng, ngramtable& ngt) with ng:|" << ng << "|" << std::endl);
+		
+		//ngt provides counts c(hwk) and c(hw) (or c(wk) and c(w))
+		double c_xk, c_x;
+		get_counts(ng, ngt, c_xk, c_x);
+		
+		//option 1: (not considering log function) 
+		//P(k|hw)/sum_v P(k|hv) ~approx~ P(k|hw)/P(k|h) ~approx~ c'(hwk)/c'(hw)
+		double log_pr = log10(c_xk) - log10(c_x);
+		VERBOSE(3, "option2: log_pr:" << log_pr << " return: " << log_pr << std::endl);
+		return log_pr;
+	}
+	
+	double ContextSimilarity::topic_score_option3(ngram& ng, ngramtable& ngt, ngramtable& ngt2)
+	{
+		VERBOSE(2, "double ContextSimilarity::topic_score_option3(ngram& ng, ngramtable& ngt) with ng:|" << ng << "|" << std::endl);
+		
+		//ngt provides counts c(hwk) and c(hw) (or c(wk) and c(w))
+		double c_xk, c_x;
+		get_counts(ng, ngt, c_xk, c_x);
+		
+		//copy and transform codes
+		// shift all terms, but the topic
+		// ng2[3]=ng[4];
+		// ng2[2]=ng[3];
+		// ng2[1]=ng[1];
+		ngram ng2(ngt2.getDict());
+		ng2.trans(ng);
+		int topic=*ng.wordp(1);
+		ng2.shift();
+		*ng2.wordp(2)=topic;
+		
+		//ngt2 provides counts c(hk) and c(h) (or c(k) and c())
+		double c_xk2, c_x2;
+		get_counts(ng2, ngt2, c_xk2, c_x2);
+		
+		/*;
+		 //approximation 3: (not considering log function) 
+		 //P(k|hw)/sum_v P(k|hv) ~approx~ logistic_function(P(k|hw)/P(k|h))
+		 // ~approx~ logistic_function(num_pr/den_pr)
+		 // ~approx~ logistic_function(c'(hwk)/c'(hw)/c'(hk)/c'(h))
+		 // ~approx~ logistic_function((c'(hwk)*c'(h))/(c'(hw)*c'(hk)))
+		 
+		 return logistic_function((c'(hwk)*c'(h))/(c'(hw)*c'(hk)),1.0,1.0)
+		 */
+		
+		double log_pr = logistic_function((c_xk*c_x2)/(c_x*c_xk2),1.0,1.0);
+		
+		VERBOSE(3, "option3: return: " << log_pr << std::endl);
+		return log_pr;
+	}
+	
+	double ContextSimilarity::total_topic_score(string_vec_t text, const std::string& topic, ngramtable& ngt, ngramtable& ngt2, dictionary& dict)
+	{
+		ngram ng(ngt.getDict());
+		create_topic_ngram(text, topic, ng);
+		return total_topic_score(ng, ngt, ngt2, dict);
+	}
+	
+	double ContextSimilarity::total_topic_score(ngram& ng, ngramtable& ngt, ngramtable& ngt2, dictionary& dict)
+	{		
+		double tot_pr = 0.0;
+		double v_topic_pr;
+		for (int v=0; v<dict.size(); ++v){
+			//replace last word, which is in position 2, keeping topic in position 1 unchanged
+			*ng.wordp(2) = ng.dict->encode(dict.decode(v));
+			v_topic_pr = topic_score(ng, ngt, ngt2);
+			tot_pr += pow(10.0,v_topic_pr); //v_pr is a lo10 prob
+		}
+		return log10(tot_pr);
+	}
+	
+	double ContextSimilarity::total_topic_score(string_vec_t text, const std::string& topic, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight)
+	{
+		ngram ng(ngt.getDict());
+		create_topic_ngram(text, topic, ng);
+		return total_topic_score(ng, ngt, ngt2, dict, lm, weight);
+	}
+	
+	double ContextSimilarity::total_topic_score(ngram& ng, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight)
+	{		
+		double tot_pr = 0.0;
+		double v_pr, v_topic_pr, v_lm_pr;
+		for (int v=0; v<dict.size(); ++v){
+			//replace last word, which is in position 2, keeping topic in position 1 unchanged
+			*ng.wordp(2) = ng.dict->encode(dict.decode(v));
+			v_topic_pr = topic_score(ng, ngt, ngt2);
+			v_lm_pr = lm.clprob(ng);
+			v_pr = v_lm_pr + weight * v_topic_pr;
+			tot_pr += pow(10.0,v_pr); //v_pr is a lo10 prob
+		}
+		return log10(tot_pr);
+	}
+	
+	void ContextSimilarity::modify_context_map(string_vec_t& text, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, topic_map_t& topic_weights, topic_map_t& mod_topic_weights)
+	{
+		ngram ng(ngt.getDict());
+		create_topic_ngram(text, "dummy_topic", ng); //just for initialization
+		
+		modify_context_map(ng, ngt, ngt2, dict, topic_weights, mod_topic_weights);
+	}
+	
+	void ContextSimilarity::modify_context_map(ngram& ng, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, topic_map_t& topic_weights, topic_map_t& mod_topic_weights)
+	{
+		double global_score;
+		double mod_topic_pr;
+		for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
+		{
+			modify_topic(it->first, ng);
+			global_score = total_topic_score(ng, ngt, ngt2, dict);
+			global_score = pow(10.0,global_score);
+			mod_topic_pr = it->second/global_score;
+			mod_topic_weights.insert(make_pair(it->first,mod_topic_pr));
+		}
+	}
+	
+	void ContextSimilarity::modify_context_map(string_vec_t& text, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight, topic_map_t& topic_weights, topic_map_t& mod_topic_weights)
+	{
+		ngram ng(ngt.getDict());
+		create_topic_ngram(text, "dummy_topic", ng); //just for initialization
+		
+		modify_context_map(ng, ngt, ngt2, dict, lm, weight, topic_weights, mod_topic_weights);
+	}
+	
+	void ContextSimilarity::modify_context_map(ngram& ng, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight, topic_map_t& topic_weights, topic_map_t& mod_topic_weights)
+	{
+		double global_score;
+		double mod_topic_pr;
+		for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
+		{
+			modify_topic(it->first, ng);
+			global_score = total_topic_score(ng, ngt, ngt2, dict, lm, weight);
+			global_score = pow(10.0,global_score);
+			mod_topic_pr = it->second/global_score;
+			mod_topic_weights.insert(make_pair(it->first,mod_topic_pr));
+		}
+	}
+	
+	
+	double ContextSimilarity::context_similarity(string_vec_t& text, topic_map_t& topic_weights)
+	{
+#ifdef SOLUTION_1
+		return context_similarity_solution1(text, topic_weights);
+#elif SOLUTION_2
+		return context_similarity_solution2(text, topic_weights);
+#else
+		UNUSED(text);
+		UNUSED(topic_weights);
+		exit(IRSTLM_CMD_ERROR_GENERIC);
+#endif
+	}
+	
+	//return the log10 of the similarity score
+	double ContextSimilarity::context_similarity_solution1(string_vec_t& text, topic_map_t& topic_weights)
+	{
+		VERBOSE(2, "double ContextSimilarity::context_similarity_solution1(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
+		double ret_log10_pr = 0.0;
+		
+		if (!m_active){
+			//similarity score is disable
+			//return an uninforming score (log(1.0) = 0.0)
+			ret_log10_pr = 0.0;
+		}
+		else if (m_topic_size == 0){
+			//a-priori topic distribution is "empty", i.e. there is no score for any topic
+			//return an uninforming score (log(1.0) = 0.0)
+			ret_log10_pr = 0.0;
+		}
+		else{
+			VERBOSE(3, "topic_weights.size():" << topic_weights.size() << std::endl);
+				
+			ngramtable* current_ngt;
+			ngramtable* current_ngt2;
+			
+			if (text.size()==1){
+				current_ngt = m_wk_ngt;
+				current_ngt2 = m_k_ngt;
+			}
+			else{
+				current_ngt = m_hwk_ngt;
+				current_ngt2 = m_hk_ngt;
+			}
+			
+			ngram ng(current_ngt->getDict());
+			create_topic_ngram(text, "dummy_topic", ng); //just for initialization
+			
+			
+			if (reliable(ng, current_ngt)){
+				//this word sequence is reliable
+				
+				double ret_pr = 0.0;
+				for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
+				{
+					ngram current_ng = ng;
+					modify_topic(it->first, current_ng);
+					
+					double apriori_topic_score = it->second; //prob
+					double current_topic_score = exp(topic_score(current_ng, *current_ngt, *current_ngt2) * M_LN10); //topic_score(...) returns  a log10; hence exp is applied to (score *  M_LN10)
+					
+					VERBOSE(3, "current_ng:|" << current_ng << "| topic:|" << it->first  << "| apriori_topic_score:" << apriori_topic_score << " topic_score:" << current_topic_score << " score_toadd:" << ret_pr << std::endl);
+					ret_pr += apriori_topic_score * current_topic_score;
+					VERBOSE(3, "CURRENT ret_pr:" << ret_pr << std::endl);
+				}
+				ret_log10_pr = log10(ret_pr);
+			}
+			else{
+				//this word sequence is not reliable enough, because occurrences of base_den_ng are too little
+				//return an uninforming score (log(1.0) = 0.0)
+				ret_log10_pr = 0.0;
+				VERBOSE(3, "CURRENT ret_pr:" << 1.0 << std::endl);
+			}
+			
+		}
+		VERBOSE(2, "ret_log10_pr:" << ret_log10_pr << std::endl);
+		return ret_log10_pr;
+	}
+	
+	//return the log10 of the similarity score
+	double ContextSimilarity::context_similarity_solution2(string_vec_t& text, topic_map_t& topic_weights)
+	{
+		return context_similarity_solution1(text, topic_weights);
+	}
+	
+	bool ContextSimilarity::reliable(ngram& ng, ngramtable* ngt)
+	{
+		VERBOSE(2, "ContextSimilarity::reliable(ngram& ng, ngramtable* ngt) ng:|" << ng << "| ng.size:" << ng.size<< "| thr:" << m_threshold_on_h << std::endl);	
 		
 		bool ret=false;
 		
-		if (ng.size < size){
-			//num_ng has size lower than expected (2)
-			//in this case we will rely on counts(h, topic) instead of counts(h, w, topic)
-			VERBOSE(3, "ng:|" << ng << "| has size (" << ng.size<< " ) lower than expected (" << size << ")" << std::endl);
-			ret=true;
-		}
-		
-		if (ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
+		if (ngt->get(ng,ng.size,ng.size-1) && (ng.freq > m_threshold_on_h)){
 			ret=true;
 		}else{
 			ret=false;
@@ -290,29 +534,42 @@ namespace irstlm {
 		return ret;
 	}
 	
-	bool ContextSimilarity::base_reliable(ngram& ng, int size, ngramtable* ngt)
+	
+	//returns the scores for all topics in the topic models (without apriori topic prob)
+	void ContextSimilarity::get_topic_scores(string_vec_t& text, topic_map_t& topic_map)
 	{
-		VERBOSE(2, "ContextSimilarity::base_reliable(ngram& ng, int size, ngramtable* ngt) ng:|" << ng << "| thr:" << m_threshold_on_h << "|" << std::endl);
-
-		bool ret=false;
-		
-		if (ng.size < size){
-			//den_ng has size lower than expected (1)
-			//in this case we will rely on counts(topic) instead of counts(h, topic)
-			VERBOSE(3, "ng:|" << ng << "| has size (" << ng.size<< " ) lower than expected (" << size << ")" << std::endl);
-			ret=true;
-		}
-		else{
-			ng.pushc(0);
-			if (ngt->get(ng,size,size-1) && (ng.freq > m_threshold_on_h)){
-				ret=true;
-			}else{
-				ret=false;
+		if (m_active){ //similarity score is disable
+			ngramtable* current_ngt;
+			ngramtable* current_ngt2;
+			
+			if (text.size()==1){
+				current_ngt = m_wk_ngt;
+				current_ngt2 = m_k_ngt;
 			}
-			ng.shift();
+			else{
+				current_ngt = m_hwk_ngt;
+				current_ngt2 = m_hk_ngt;
+			}
+			
+			ngram ng(current_ngt->getDict());
+			create_topic_ngram(text, "dummy_topic", ng); //just for initialization
+			
+			get_topic_scores(ng, *current_ngt, *current_ngt2, topic_map);
 		}
-		VERBOSE(3, "ng:|" << ng << "| thr:" << m_threshold_on_h << " reliable:" << ret << std::endl);
-		return ret;
-	}
+	}	
+	
+	
+	//returns the scores for all topics in the topic models (without apriori topic prob)
+	void ContextSimilarity::get_topic_scores(ngram& ng, ngramtable& ngt, ngramtable& ngt2, topic_map_t& topic_map)
+	{		
+		if (m_active){ //similarity score is disable
+			for (int i=0; i<m_k_ngt->getDict()->size();++i)
+			{
+				std::string _topic = m_k_ngt->getDict()->decode(i);
+				modify_topic(_topic, ng);
+				topic_map[_topic] = pow(10.0,topic_score(ng, ngt, ngt2));
+			}
+		}
+	}	
 	
 }//namespace irstlm
