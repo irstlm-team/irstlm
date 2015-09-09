@@ -77,6 +77,11 @@ namespace irstlm {
 		lmContainer* m_lm;
 		bool m_isinverted;
 		
+		
+		//flag for enabling/disabling normalization of the language model 
+		// if disabled, score returns by the language model do not sum to 1.0
+		bool m_normalization;
+		
 		ContextSimilarity* m_similaritymodel;   //to remove when TopicModel is ready
 		double m_lm_weight;
 		
@@ -149,6 +154,10 @@ namespace irstlm {
 		virtual double lprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		virtual double lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		
+		double lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible);
+		double total_clprob(string_vec_t& text, topic_map_t& topic_weights);
+		double total_clprob(ngram& ng, topic_map_t& topic_weights);		
+		
 		int maxlevel() const {
 			return maxlev;
 		};
@@ -157,7 +166,6 @@ namespace irstlm {
 			if (dict) delete dict;
 			dict=d;
 		};
-		
 		
 		virtual inline lmContainer* getWordLM() const {
 			return m_lm;
@@ -204,6 +212,14 @@ namespace irstlm {
 		inline void set_Active(bool value){
 			m_similaritymodel->set_Active(value);
 		}
+		
+		bool is_Normalized(){
+			return  m_normalization;
+		}
+		void set_Normalized(bool val){
+			m_normalization = val;
+		}
+		
 	};
 }//namespace irstlm
 

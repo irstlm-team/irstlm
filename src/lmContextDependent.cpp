@@ -130,6 +130,8 @@ namespace irstlm {
 
 	void lmContextDependent::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
 	{
+		VERBOSE(2,"lmContextDependent::GetSentenceAndContext" << std::endl);
+		VERBOSE(2,"line:|" << line << "|" << std::endl);
 		size_t pos = line.find(context_delimiter);	
 		if (pos != std::string::npos){ // context_delimiter is found
 			sentence = line.substr(0, pos);
@@ -141,9 +143,8 @@ namespace irstlm {
 			sentence = line;
 			context = "";
 		}	
-		VERBOSE(1,"line:|" << line << "|" << std::endl);
-		VERBOSE(1,"sentence:|" << sentence << "|" << std::endl);	
-		VERBOSE(1,"context:|" << context << "|" << std::endl);	
+		VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);	
+		VERBOSE(2,"context:|" << context << "|" << std::endl);	
 	}
 
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
@@ -154,30 +155,65 @@ namespace irstlm {
 			text.push_back(ng.dict->decode(*ng.wordp(2)));
 		}
 		text.push_back(ng.dict->decode(*ng.wordp(1)));
-		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double similarity_score = m_similaritymodel->get_context_similarity(text, topic_weights);
-		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
-		VERBOSE(3, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
-		return ret_logprob;
+		return lprob(ng, text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 	}
 	
 	double lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		VERBOSE(2,"lmContextDependent::lprob(string_vec_t& text, topic_map_t& topic_weights, ...)" << std::endl);
-
+		
 		//create the actual ngram
 		ngram ng(dict);
 		ng.pushw(text);
 		VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
 		
 		MY_ASSERT (ng.size == (int) text.size());
+		return lprob(ng, text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
+	}
+	
+	double lmContextDependent::lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, topic_map_t& topic_weights, ...)" << std::endl);
 		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double similarity_score = m_similaritymodel->get_context_similarity(text, topic_weights);
+//		double similarity_score = 1.0;
+		double similarity_score = m_similaritymodel->context_similarity(text, topic_weights);
 		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
 		VERBOSE(3, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
 		
 		return ret_logprob;
+	}
+	
+	
+	double lmContextDependent::total_clprob(string_vec_t& text, topic_map_t& topic_weights)
+	{		
+		VERBOSE(2,"lmContextDependent::total_lprob(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
+		double tot_pr = 0.0;
+		double v_pr;
+		for (int v=0; v<dict->size(); ++v){
+			//replace last word, which is in position 2, keeping topic in position 1 unchanged
+			text.at(text.size()-1) = dict->decode(v);
+			v_pr = clprob(text, topic_weights);
+			tot_pr += pow(10.0,v_pr); //v_pr is a lo10 prob
+		}
+		return log10(tot_pr);
+	}
+	
+	double lmContextDependent::total_clprob(ngram& ng, topic_map_t& topic_weights)
+	{		
+		VERBOSE(2,"lmContextDependent::total_lprob(ngram& ng, topic_map_t& topic_weights)" << std::endl);
+		double tot_pr = 0.0;
+		double v_pr;
+		double oovpenalty = getlogOOVpenalty();
+		setlogOOVpenalty((double) 0);
+		for (int v=0; v<dict->size(); ++v){
+			//replace last word, which is in position 2, keeping topic in position 1 unchanged
+			*ng.wordp(1) = ng.dict->encode(dict->decode(v));
+			v_pr = clprob(ng, topic_weights);
+			tot_pr += pow(10.0,v_pr); //v_pr is a lo10 prob
+		}
+		setlogOOVpenalty(oovpenalty);
+		return log10(tot_pr);
 	}
 	
 	double lmContextDependent::lprob(int* codes, int sz, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
