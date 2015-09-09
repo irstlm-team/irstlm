@@ -411,20 +411,22 @@ int main(int argc, char **argv)
 					//computation of the oracle probability. i.e. the maximum prob
 					double best_pr = -1000000.0;
 					int best_code = lmt->getlogOOVpenalty();
-					for (int i=0; i<lmt->getDict()->size(); ++i)
+					for (int j=0; j<lmt->getDict()->size(); ++j)
 					{
 						//loop over all words in the LM
-					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(i);
+					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(j);
 						IFVERBOSE(3){
-							std::cout << "tmp_word_vec i:" << i;
-							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {	std::cout << " |" << (*it2) << "|"; }
+							std::cout << "tmp_word_vec j:" << j;
+							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
+								std::cout << " |" << (*it2) << "|";
+							}
 							std::cout << std::endl;
 						}				
 						
 						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
 						if (best_pr < pr){
 							best_pr = pr;
-							best_code = i;
+							best_code = j;
 							VERBOSE(3,"current_best:" << best_code << " current_word:|" << lmt->getDict()->decode(best_code) << "| best_prob:" << pow(10.0,best_pr) << " norm_best_prob:" << pow(10.0,best_pr - tot_pr) << std::endl);
 						}
 					}
@@ -448,7 +450,7 @@ int main(int argc, char **argv)
 
 					norm_Pr = Pr - tot_pr;
 					model_norm_Pr = model_Pr - tot_pr;
-					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
+					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << " model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
 
 					model_norm_logPr+=model_norm_Pr;
 					sent_model_norm_logPr+=model_norm_Pr;
