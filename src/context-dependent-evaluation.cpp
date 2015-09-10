@@ -602,16 +602,17 @@ int main(int argc, char **argv)
 		int tot_rank = 0;
 		
 		//collect total occurrences of current word in the following intervals
-		// [1-1], [1-5], [1-10], [1-20], [1-50]
+		// [firs position], [<=1%], [<=2%], [<=5%], [<=10%]
 		int Rank_histo[5];
 		int Rank_limit[5];
 		int max_rank = lmt->getDict()->size();
 		
+		memset(Rank_histo,0,5);
 		Rank_limit[0] = 1;
-		Rank_limit[1] = 0.05 * max_rank;
-		Rank_limit[2] = 0.10 * max_rank;
-		Rank_limit[3] = 0.20 * max_rank;
-		Rank_limit[4] = 0.50 * max_rank;
+		Rank_limit[1] = 0.01 * max_rank;
+		Rank_limit[2] = 0.02 * max_rank;
+		Rank_limit[3] = 0.05 * max_rank;
+		Rank_limit[4] = 0.10 * max_rank;
 		
 		double bow;
 		int bol=0;
@@ -839,15 +840,15 @@ int main(int argc, char **argv)
 		<< " Noov=" << Noov
 		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
 		std::cout << " Rank_[bst]=" << Rank_histo[0];
-		std::cout << " Rank_[ 5%]=" << Rank_histo[1];
-		std::cout << " Rank_[10%]=" << Rank_histo[2];
-		std::cout << " Rank_[20%]=" << Rank_histo[3];
-		std::cout << " Rank_[50%]=" << Rank_histo[4];
+		std::cout << " Rank_[ 1%]=" << Rank_histo[1];
+		std::cout << " Rank_[ 2%]=" << Rank_histo[2];
+		std::cout << " Rank_[ 5%]=" << Rank_histo[3];
+		std::cout << " Rank_[10%]=" << Rank_histo[4];
 		std::cout << " Rank_[bst]=" << (float)Rank_histo[0]/Nw * 100.0 << "%";
-		std::cout << " Rank_[ 5%]=" << (float)Rank_histo[1]/Nw * 100.0 << "%";
-		std::cout << " Rank_[10%]=" << (float)Rank_histo[2]/Nw * 100.0 << "%";
-		std::cout << " Rank_[20%]=" << (float)Rank_histo[3]/Nw * 100.0 << "%";
-		std::cout << " Rank_[50%]=" << (float)Rank_histo[4]/Nw * 100.0 << "%";
+		std::cout << " Rank_[ 1%]=" << (float)Rank_histo[1]/Nw * 100.0 << "%";
+		std::cout << " Rank_[ 2%]=" << (float)Rank_histo[2]/Nw * 100.0 << "%";
+		std::cout << " Rank_[ 5%]=" << (float)Rank_histo[3]/Nw * 100.0 << "%";
+		std::cout << " Rank_[10%]=" << (float)Rank_histo[4]/Nw * 100.0 << "%";
 		std::cout << std::endl;
 		std::cout.flush();
 		
