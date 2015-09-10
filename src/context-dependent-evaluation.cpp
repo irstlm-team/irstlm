@@ -604,7 +604,7 @@ int main(int argc, char **argv)
 		//collect total occurrences of current word in the following intervals
 		// [firs position], [<=1%], [<=2%], [<=5%], [<=10%]
 		int Rank_histogram[5];
-		int Rank_perc[5];
+		double Rank_perc[5];
 		int Rank_limit[5];
 		int max_rank = lmt->getDict()->size();
 		
