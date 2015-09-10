@@ -604,19 +604,33 @@ int main(int argc, char **argv)
 		//collect total occurrences of current word in the following intervals
 		// [firs position], [<=1%], [<=2%], [<=5%], [<=10%]
 		int Rank_histogram[5];
+		int Rank_perc[5];
 		int Rank_limit[5];
 		int max_rank = lmt->getDict()->size();
+		
+		Rank_perc[0] = 0;
+		Rank_perc[1] = 0.001;
+		Rank_perc[2] = 0.002;
+		Rank_perc[3] = 0.005;
+		Rank_perc[4] = 0.010;
+		Rank_limit[0] = 1;
+		Rank_limit[1] = Rank_perc[1] * max_rank;
+		Rank_limit[2] = Rank_perc[2] * max_rank;
+		Rank_limit[3] = Rank_perc[3] * max_rank;
+		Rank_limit[4] = Rank_perc[4] * max_rank;
+		
+		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 0 << 
+						" Rank_[1]=" << Rank_perc[1]*100 <<"%<=" << Rank_limit[1] << 
+						" Rank_[2]=" << Rank_perc[2]*100 <<"%<=" << Rank_limit[2] << 
+						" Rank_[3]=" << Rank_perc[3]*100 <<"%<=" << Rank_limit[3] << 
+						" Rank_[4]=" << Rank_perc[4]*100 <<"%<=" << Rank_limit[4] << 
+						std::endl);
 		
 		Rank_histogram[0] = 0;
 		Rank_histogram[1] = 0;
 		Rank_histogram[2] = 0;
 		Rank_histogram[3] = 0;
 		Rank_histogram[4] = 0;
-		Rank_limit[0] = 1;
-		Rank_limit[1] = 0.01 * max_rank;
-		Rank_limit[2] = 0.02 * max_rank;
-		Rank_limit[3] = 0.05 * max_rank;
-		Rank_limit[4] = 0.10 * max_rank;
 		
 		double bow;
 		int bol=0;
@@ -844,15 +858,15 @@ int main(int argc, char **argv)
 		<< " Noov=" << Noov
 		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
 		std::cout << " Rank_[bst]=" << Rank_histogram[0];
-		std::cout << " Rank_[ 1%]=" << Rank_histogram[1];
-		std::cout << " Rank_[ 2%]=" << Rank_histogram[2];
-		std::cout << " Rank_[ 5%]=" << Rank_histogram[3];
-		std::cout << " Rank_[10%]=" << Rank_histogram[4];
+		std::cout << " Rank_[1]=" << Rank_histogram[1];
+		std::cout << " Rank_[2]=" << Rank_histogram[2];
+		std::cout << " Rank_[3]=" << Rank_histogram[3];
+		std::cout << " Rank_[4]=" << Rank_histogram[4];
 		std::cout << " Rank_[bst]=" << (float)Rank_histogram[0]/Nw * 100.0 << "%";
-		std::cout << " Rank_[ 1%]=" << (float)Rank_histogram[1]/Nw * 100.0 << "%";
-		std::cout << " Rank_[ 2%]=" << (float)Rank_histogram[2]/Nw * 100.0 << "%";
-		std::cout << " Rank_[ 5%]=" << (float)Rank_histogram[3]/Nw * 100.0 << "%";
-		std::cout << " Rank_[10%]=" << (float)Rank_histogram[4]/Nw * 100.0 << "%";
+		std::cout << " Rank_[1]=" << (float)Rank_histogram[1]/Nw * 100.0 << "%";
+		std::cout << " Rank_[2]=" << (float)Rank_histogram[2]/Nw * 100.0 << "%";
+		std::cout << " Rank_[3]=" << (float)Rank_histogram[3]/Nw * 100.0 << "%";
+		std::cout << " Rank_[4]=" << (float)Rank_histogram[4]/Nw * 100.0 << "%";
 		std::cout << std::endl;
 		std::cout.flush();
 		
