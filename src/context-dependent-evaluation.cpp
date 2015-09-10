@@ -806,13 +806,13 @@ int main(int argc, char **argv)
 						++Rank_histogram[1];
 						VERBOSE(1,"HERE 1 current_rank:" << current_rank << " Rank_limit[1]:" << Rank_limit[1] << std::endl);
 					}else if (current_rank <= Rank_limit[2]){
-						++Rank_histogram[1]; ++Rank_histo[2];
+						++Rank_histogram[1]; ++Rank_histogram[2];
 						VERBOSE(1,"HERE 2 current_rank:" << current_rank << " Rank_limit[2]:" << Rank_limit[2] << std::endl);
 					}else if (current_rank <= Rank_limit[3]){
-						++Rank_histogram[1]; ++Rank_histo[2]; ++Rank_histo[3];
+						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3];
 						VERBOSE(1,"HERE 3 current_rank:" << current_rank << " Rank_limit[3]:" << Rank_limit[3] << std::endl);
 					}else if (current_rank <= Rank_limit[4]){
-						++Rank_histogram[1];  ++Rank_histo[2]; ++Rank_histo[3]; ++Rank_histo[4];
+						++Rank_histogram[1];  ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
 						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
 					}
 				}
