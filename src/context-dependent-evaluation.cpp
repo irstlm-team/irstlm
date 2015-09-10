@@ -601,6 +601,18 @@ int main(int argc, char **argv)
 		double avgRank;
 		int tot_rank = 0;
 		
+		//collect total occurrences of current word in the following intervals
+		// [1-1], [1-5], [1-10], [1-20], [1-50]
+		int Rank_histo[5];
+		int Rank_limit[5];
+		int max_rank = lmt->getDict()->size();
+		
+		Rank_limit[0] = 1;
+		Rank_limit[1] = 0.05 * max_rank;
+		Rank_limit[2] = 0.10 * max_rank;
+		Rank_limit[3] = 0.20 * max_rank;
+		Rank_limit[4] = 0.50 * max_rank;
+		
 		double bow;
 		int bol=0;
 		char *msp;
@@ -609,7 +621,7 @@ int main(int argc, char **argv)
 		// variables for storing sentence-based Rank Statistics
 		int sent_Nw=0,sent_Noov=0;
 		double sent_avgRank;
-		int sent_tot_rank = 0;	
+		int sent_tot_rank = 0;
 		
 		std::fstream inptxt(testfile,std::ios::in);
 		
@@ -781,13 +793,30 @@ int main(int argc, char **argv)
 					
 					sent_tot_rank += current_rank;
 					tot_rank += current_rank;
+					if (current_rank <= Rank_limit[0]){
+						++Rank_histo[0];
+						VERBOSE(1,"HERE 0 current_rank:" << current_rank << " Rank_limit[0]:" << Rank_limit[0] << std::endl);
+					}
+					if (current_rank <= Rank_limit[1]){
+						++Rank_histo[1];
+						VERBOSE(1,"HERE 1 current_rank:" << current_rank << " Rank_limit[1]:" << Rank_limit[1] << std::endl);
+					}else if (current_rank <= Rank_limit[2]){
+						++Rank_histo[1]; ++Rank_histo[2];
+						VERBOSE(1,"HERE 2 current_rank:" << current_rank << " Rank_limit[2]:" << Rank_limit[2] << std::endl);
+					}else if (current_rank <= Rank_limit[3]){
+						++Rank_histo[1]; ++Rank_histo[2]; ++Rank_histo[3];
+						VERBOSE(1,"HERE 3 current_rank:" << current_rank << " Rank_limit[3]:" << Rank_limit[3] << std::endl);
+					}else if (current_rank <= Rank_limit[4]){
+						++Rank_histo[1];  ++Rank_histo[2]; ++Rank_histo[3]; ++Rank_histo[4];
+						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
+					}
 				}
 			}
 			
 			if (sent_flag) {
 				VERBOSE(1," sent_tot_rank:" << sent_tot_rank << " sent_Nw:" << sent_Nw << std::endl);
 				
-				sent_avgRank = sent_tot_rank / sent_Nw;
+				sent_avgRank = ((double) sent_tot_rank)  / sent_Nw;
 				
 				std::cout << "%% sent_Nw=" << sent_Nw
 				<< " sent_avgRank=" << sent_avgRank
@@ -803,12 +832,22 @@ int main(int argc, char **argv)
 			}
 		}
 		
-		avgRank = tot_rank / Nw;
+		avgRank = ((double) tot_rank) / Nw;
 		
 		std::cout << "%% Nw=" << Nw
 		<< " avgRank=" << avgRank
 		<< " Noov=" << Noov
 		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
+		std::cout << " Rank_[bst]=" << Rank_histo[0];
+		std::cout << " Rank_[ 5%]=" << Rank_histo[1];
+		std::cout << " Rank_[10%]=" << Rank_histo[2];
+		std::cout << " Rank_[20%]=" << Rank_histo[3];
+		std::cout << " Rank_[50%]=" << Rank_histo[4];
+		std::cout << " Rank_[bst]=" << (float)Rank_histo[0]/Nw * 100.0 << "%";
+		std::cout << " Rank_[ 5%]=" << (float)Rank_histo[1]/Nw * 100.0 << "%";
+		std::cout << " Rank_[10%]=" << (float)Rank_histo[2]/Nw * 100.0 << "%";
+		std::cout << " Rank_[20%]=" << (float)Rank_histo[3]/Nw * 100.0 << "%";
+		std::cout << " Rank_[50%]=" << (float)Rank_histo[4]/Nw * 100.0 << "%";
 		std::cout << std::endl;
 		std::cout.flush();
 		
