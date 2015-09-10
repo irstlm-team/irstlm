@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 
 					norm_Pr = Pr - tot_pr;
 					model_norm_Pr = model_Pr - tot_pr;
-					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << " model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
+					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << "| model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
 
 					model_norm_logPr+=model_norm_Pr;
 					sent_model_norm_logPr+=model_norm_Pr;
@@ -681,8 +681,38 @@ int main(int argc, char **argv)
 					
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
-					int current_code = lmt->getDict()->encode(current_word.c_str());
 					
+					double current_pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+					double tot_pr = 0.0;
+					if (context_model_normalization){
+						tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
+						current_pr = current_pr - tot_pr;
+					}
+					
+					int current_rank = 1;
+					//computation of the ranking of the current word (among all LM words)
+					for (int i=0; i<lmt->getDict()->size(); i++)
+					{
+						//loop over all words in the LM
+					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(i);
+						//					  *it = lmt->getDict()->decode(i);
+						IFVERBOSE(3){
+							std::cout << "tmp_word_vec i:" << i;
+							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
+								std::cout << " |" << (*it2) << "|";
+							}
+							std::cout << std::endl;
+						}
+						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						if (context_model_normalization){
+							pr = pr - tot_pr;
+						}
+						if (pr > current_pr){
+							++current_rank;	
+						}
+					}
+					
+					/*
 					int_to_double_and_int_map code_to_prob_and_code_map;
 					double_and_int_to_double_and_int_map prob_and_code_to_prob_and_rank_map;
 					
@@ -702,7 +732,6 @@ int main(int argc, char **argv)
 						}
 						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
 						if (context_model_normalization){
-							double tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
 							pr = pr - tot_pr;
 						}
 						code_to_prob_and_code_map.insert(make_pair(i,make_pair(pr,i)));
@@ -720,9 +749,7 @@ int main(int argc, char **argv)
 						{
 							VERBOSE(3,"it3: pr:" << (it3->first).first << " second:" << (it3->first).second << " norm_pr:" << (it3->second).first << " rank:" << (it3->second).second << std::endl);
 						}
-					}
-					
-					
+					}					
 					//set rank of word according to their prob
 					//note that prob are already sorted in the map in ascending order wrt to prob (and secondarily code)
 					int rank=0;
@@ -735,7 +762,8 @@ int main(int argc, char **argv)
 								VERBOSE(3,"it3: pr:" << (it3->first).first << " code:" << (it3->first).second << " rank:" << (it3->second).second << std::endl);
 							}
 						}
-					}
+					 }
+
 
 					IFVERBOSE(3){
 						int i_tmp=0;
@@ -748,6 +776,8 @@ int main(int argc, char **argv)
 					double_and_int_pair current_prob_and_code = (code_to_prob_and_code_map.find(current_code))->second;
 					int current_rank = ((prob_and_code_to_prob_and_rank_map.find(current_prob_and_code))->second).second;
 					VERBOSE(1," current_word:" << current_word << " current_code:" << current_code << " current_rank:" << current_rank << std::endl);
+					 
+					 */
 					
 					sent_tot_rank += current_rank;
 					tot_rank += current_rank;
