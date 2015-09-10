@@ -619,7 +619,7 @@ int main(int argc, char **argv)
 		Rank_limit[3] = Rank_perc[3] * max_rank;
 		Rank_limit[4] = Rank_perc[4] * max_rank;
 		
-		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 0 << 
+		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 
 						" Rank_[1]=" << Rank_perc[1]*100 <<"%<=" << Rank_limit[1] << 
 						" Rank_[2]=" << Rank_perc[2]*100 <<"%<=" << Rank_limit[2] << 
 						" Rank_[3]=" << Rank_perc[3]*100 <<"%<=" << Rank_limit[3] << 
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
 						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3];
 						VERBOSE(1,"HERE 3 current_rank:" << current_rank << " Rank_limit[3]:" << Rank_limit[3] << std::endl);
 					}else if (current_rank <= Rank_limit[4]){
-						++Rank_histogram[1];  ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
+						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
 						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
 					}
 				}
