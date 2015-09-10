@@ -817,16 +817,16 @@ int main(int argc, char **argv)
 						VERBOSE(1,"HERE 0 current_rank:" << current_rank << " Rank_limit[0]:" << Rank_limit[0] << std::endl);
 					}
 					if (current_rank <= Rank_limit[1]){
-						++Rank_histogram[1];
+						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
 						VERBOSE(1,"HERE 1 current_rank:" << current_rank << " Rank_limit[1]:" << Rank_limit[1] << std::endl);
 					}else if (current_rank <= Rank_limit[2]){
-						++Rank_histogram[1]; ++Rank_histogram[2];
+						++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
 						VERBOSE(1,"HERE 2 current_rank:" << current_rank << " Rank_limit[2]:" << Rank_limit[2] << std::endl);
 					}else if (current_rank <= Rank_limit[3]){
-						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3];
+						++Rank_histogram[3]; ++Rank_histogram[4];
 						VERBOSE(1,"HERE 3 current_rank:" << current_rank << " Rank_limit[3]:" << Rank_limit[3] << std::endl);
 					}else if (current_rank <= Rank_limit[4]){
-						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
+						++Rank_histogram[4];
 						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
 					}
 				}
