@@ -92,6 +92,7 @@ int main(int argc, char **argv)
 	bool rankscore = false;
 	bool context_model_active = true;
 	bool context_model_normalization = false;
+  char *lexiconfile=NULL;
 	
 	int debug = 0;
   int requiredMaxlev = 1000;
@@ -105,6 +106,7 @@ int main(int argc, char **argv)
 	DeclareParams((char*)
 								"lm", CMDSTRINGTYPE|CMDMSG, &lmfile, "LM to load",
 								"test", CMDSTRINGTYPE|CMDMSG, &testfile, "computes scores of the specified text file",
+								"lexicon", CMDSTRINGTYPE|CMDMSG, &lexiconfile, "lexicon file contains associated words (required by rankscore)",
                 "randcalls", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
 								"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
                 "contextbasedscore", CMDBOOLTYPE|CMDMSG, &contextbasedscore, "computes context-dependent probabilities and pseudo-perplexity of the text from standard input",
@@ -153,6 +155,15 @@ int main(int argc, char **argv)
   if (testfile!=NULL) std::cerr << "testfile: " << testfile << std::endl;
   if (contextbasedscore==true) std::cerr << "contextbasedscore: " << contextbasedscore << std::endl;
   if (topicscore==true) std::cerr << "topicscore: " << topicscore << std::endl;
+  if (rankscore==true){
+		std::cerr << "rankscore: " << rankscore << std::endl;
+		
+		if (lexiconfile == NULL) {
+			usage();
+			exit_error(IRSTLM_ERROR_DATA,"Warning: Please specify a lexicon file to read from");
+		}
+		std::cerr << "lexicon: " << lexiconfile << std::endl;
+	}
   std::cerr << "loading up to the LM level " << requiredMaxlev << " (if any)" << std::endl;
   std::cerr << "dub: " << dub<< std::endl;
 	
@@ -600,24 +611,25 @@ int main(int argc, char **argv)
 		int Nw=0,Noov=0;
 		double avgRank;
 		int tot_rank = 0;
+		int max_rank = 0;
 		
+		/*
 		//collect total occurrences of current word in the following intervals
 		// [firs position], [<=1%], [<=2%], [<=5%], [<=10%]
 		int Rank_histogram[5];
-		double Rank_perc[5];
 		int Rank_limit[5];
-		int max_rank = lmt->getDict()->size();
+		*/
 		
-		Rank_perc[0] = 0;
-		Rank_perc[1] = 0.001;
-		Rank_perc[2] = 0.002;
-		Rank_perc[3] = 0.005;
-		Rank_perc[4] = 0.010;
-		Rank_limit[0] = 1;
-		Rank_limit[1] = Rank_perc[1] * max_rank;
-		Rank_limit[2] = Rank_perc[2] * max_rank;
-		Rank_limit[3] = Rank_perc[3] * max_rank;
-		Rank_limit[4] = Rank_perc[4] * max_rank;
+		/*
+		int max_rank = lmt->getDict()->size();
+		double ratio = 0.001;
+		
+		double Rank_perc[5];
+		Rank_perc[0] = 0; Rank_limit[0] = 1;
+		Rank_perc[1] =  1 * ratio; Rank_limit[1] = Rank_perc[1] * max_rank;
+		Rank_perc[2] =  2 * ratio; Rank_limit[2] = Rank_perc[2] * max_rank;
+		Rank_perc[3] =  5 * ratio; Rank_limit[3] = Rank_perc[3] * max_rank;
+		Rank_perc[4] = 10 * ratio; Rank_limit[4] = Rank_perc[4] * max_rank;
 		
 		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 
 						" Rank_[1]=" << Rank_perc[1]*100 <<"%<=" << Rank_limit[1] << 
@@ -625,12 +637,28 @@ int main(int argc, char **argv)
 						" Rank_[3]=" << Rank_perc[3]*100 <<"%<=" << Rank_limit[3] << 
 						" Rank_[4]=" << Rank_perc[4]*100 <<"%<=" << Rank_limit[4] << 
 						std::endl);
+		*/
+		
+		/*
+		Rank_limit[0] = 1;
+		Rank_limit[1] =  10;
+		Rank_limit[2] =  20;
+		Rank_limit[3] =  50;
+		Rank_limit[4] = 100;
+		
+		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 
+						" Rank_[1]=" << Rank_limit[1] << 
+						" Rank_[2]=" << Rank_limit[2] << 
+						" Rank_[3]=" << Rank_limit[3] << 
+						" Rank_[4]=" << Rank_limit[4] << 
+						std::endl);
 		
 		Rank_histogram[0] = 0;
 		Rank_histogram[1] = 0;
 		Rank_histogram[2] = 0;
 		Rank_histogram[3] = 0;
 		Rank_histogram[4] = 0;
+		*/
 		
 		double bow;
 		int bol=0;
@@ -641,6 +669,7 @@ int main(int argc, char **argv)
 		int sent_Nw=0,sent_Noov=0;
 		double sent_avgRank;
 		int sent_tot_rank = 0;
+		int sent_id = 0;
 		
 		std::fstream inptxt(testfile,std::ios::in);
 		
@@ -673,6 +702,8 @@ int main(int argc, char **argv)
 			size_t last, first;
 			size_t size=0;
 			size_t order = lmt->maxlevel();
+
+			std::stringstream rank_outstr;
 			
 			for (size_t i=0; i<word_vec.size(); ++i){
 				++size;
@@ -720,6 +751,61 @@ int main(int argc, char **argv)
 						current_pr = current_pr - tot_pr;
 					}
 					
+					/*
+					 //loop over all words in the LM
+					 dictionary* current_dict = lmt->getDict();
+					*/
+					
+					//read lexicon form file
+					std::multimap< std::string, std::string > lexicon;
+					
+					fstream inp(lexiconfile,ios::in|ios::binary);
+				  std::string w1, w2;
+					while (inp >> w1 >> w2){
+						lexicon.insert(make_pair(w1,w2));
+						lexicon.insert(make_pair(w2,w1));
+						lexicon.insert(make_pair(w1,w1));
+						lexicon.insert(make_pair(w2,w2));
+					}
+					//loop over a set of selected alternative words
+					//populate the dictionary with all words associated with the current word
+					dictionary* current_dict = new dictionary((char *)NULL,1000000);
+					current_dict->incflag(1);
+					
+					std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
+					for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
+					{
+						if (current_word != (it->second).c_str()){
+							//exclude the current word from the selected alternative words
+							current_dict->encode((it->second).c_str());
+						}
+					}
+					current_dict->incflag(0);
+					
+					max_rank = current_dict->size()+1; //we add 1, to count for the current word as well, which is not included in the selected alternative words
+					int current_rank = 1;
+					for (int i=0; i<current_dict->size(); i++)
+					{
+					  tmp_word_vec.at(current_pos) = current_dict->decode(i);
+						IFVERBOSE(3){
+							std::cout << "tmp_word_vec i:" << i;
+							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
+								std::cout << " |" << (*it2) << "|";
+							}
+							std::cout << std::endl;
+						}
+						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						if (context_model_normalization){
+							pr = pr - tot_pr;
+						}
+						if (pr > current_pr){
+							++current_rank;	
+						}
+						
+						VERBOSE(3," current_pos:" << current_pos << " word:|" << tmp_word_vec.at(current_pos) << "| current_pr:" << current_pr << " pr:" << pr << " current_rank:" << current_rank <<std::endl);
+					}
+					
+					/* loop over the whole dictionary
 					int current_rank = 1;
 					//computation of the ranking of the current word (among all LM words)
 					for (int i=0; i<lmt->getDict()->size(); i++)
@@ -742,6 +828,8 @@ int main(int argc, char **argv)
 							++current_rank;	
 						}
 					}
+					 */
+					
 					
 					/*
 					int_to_double_and_int_map code_to_prob_and_code_map;
@@ -812,6 +900,7 @@ int main(int argc, char **argv)
 					
 					sent_tot_rank += current_rank;
 					tot_rank += current_rank;
+					/*
 					if (current_rank <= Rank_limit[0]){
 						++Rank_histogram[0];
 						VERBOSE(1,"HERE 0 current_rank:" << current_rank << " Rank_limit[0]:" << Rank_limit[0] << std::endl);
@@ -829,11 +918,22 @@ int main(int argc, char **argv)
 						++Rank_histogram[4];
 						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
 					}
+					*/
+					if (debug>1){
+						//output format:
+						//current_pos:current_rank:max_rank
+						rank_outstr << " " << current_pos << ":" << current_rank << ":" << max_rank;
+					}
 				}
 			}
 			
 			if (sent_flag) {
-				VERBOSE(1," sent_tot_rank:" << sent_tot_rank << " sent_Nw:" << sent_Nw << std::endl);
+				if (debug>1){
+					VERBOSE(1," sent_tot_rank:" << sent_tot_rank << " sent_Nw:" << sent_Nw << std::endl);
+					//output format: a blank-separated list of triplets
+					//current_pos:current_rank:max_rank
+					std::cout << "sent_id=" << sent_id << " ranking= " << rank_outstr.str() << std::endl;
+				}
 				
 				sent_avgRank = ((double) sent_tot_rank)  / sent_Nw;
 				
@@ -848,6 +948,7 @@ int main(int argc, char **argv)
 				sent_Nw = 0;
 				sent_Noov = 0;
 				sent_tot_rank = 0;
+				++sent_id;
 			}
 		}
 		
@@ -857,6 +958,7 @@ int main(int argc, char **argv)
 		<< " avgRank=" << avgRank
 		<< " Noov=" << Noov
 		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
+		/*
 		std::cout << " Rank_[bst]=" << Rank_histogram[0];
 		std::cout << " Rank_[1]=" << Rank_histogram[1];
 		std::cout << " Rank_[2]=" << Rank_histogram[2];
@@ -867,6 +969,7 @@ int main(int argc, char **argv)
 		std::cout << " Rank_[2]=" << (float)Rank_histogram[2]/Nw * 100.0 << "%";
 		std::cout << " Rank_[3]=" << (float)Rank_histogram[3]/Nw * 100.0 << "%";
 		std::cout << " Rank_[4]=" << (float)Rank_histogram[4]/Nw * 100.0 << "%";
+		 */
 		std::cout << std::endl;
 		std::cout.flush();
 		
