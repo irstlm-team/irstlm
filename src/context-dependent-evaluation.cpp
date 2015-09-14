@@ -705,13 +705,13 @@ int main(int argc, char **argv)
 
 			std::stringstream rank_outstr;
 			
-			for (size_t i=0; i<word_vec.size(); ++i){
+			for (size_t word_pos=0; word_pos<word_vec.size(); ++word_pos){
 				++size;
 				size=(size<order)?size:order;
-				last=i+1;
+				last=word_pos+1;
 				
 				// reset ngram at begin of sentence
-				if (word_vec.at(i) == lmt->getDict()->BoS()) {
+				if (word_vec.at(word_pos) == lmt->getDict()->BoS()) {
 					size=0;
 					continue;
 				}
@@ -723,9 +723,9 @@ int main(int argc, char **argv)
 					
 					VERBOSE(2,"computing rank for first:|" << first << "| and last:|" << last << "|" << std::endl);	
 					
-					VERBOSE(2,"word_vec.at(i):|" << word_vec.at(i) << "| lmt->getDict()->OOV():|" << lmt->getDict()->OOV() << "|" << std::endl);
+					VERBOSE(2,"word_vec.at(word_pos):|" << word_vec.at(word_pos) << "| lmt->getDict()->OOV():|" << lmt->getDict()->OOV() << "|" << std::endl);
 					
-					if (lmt->getDict()->encode(word_vec.at(i).c_str()) == lmt->getDict()->oovcode()) {
+					if (lmt->getDict()->encode(word_vec.at(word_pos).c_str()) == lmt->getDict()->oovcode()) {
 						Noov++;
 						sent_Noov++;
 					}
@@ -921,8 +921,8 @@ int main(int argc, char **argv)
 					*/
 					if (debug>1){
 						//output format:
-						//current_pos:current_rank:max_rank
-						rank_outstr << " " << current_pos << ":" << current_rank << ":" << max_rank;
+						//word_pos:current_rank:max_rank
+						rank_outstr << " " << word_pos << ":" << current_rank << ":" << max_rank;
 					}
 				}
 			}
