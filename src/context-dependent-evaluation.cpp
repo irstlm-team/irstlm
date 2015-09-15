@@ -763,9 +763,6 @@ int main(int argc, char **argv)
 				  std::string w1, w2;
 					while (inp >> w1 >> w2){
 						lexicon.insert(make_pair(w1,w2));
-						lexicon.insert(make_pair(w2,w1));
-						lexicon.insert(make_pair(w1,w1));
-						lexicon.insert(make_pair(w2,w2));
 					}
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
@@ -804,7 +801,7 @@ int main(int argc, char **argv)
 						
 						VERBOSE(3," current_pos:" << current_pos << " word:|" << tmp_word_vec.at(current_pos) << "| current_pr:" << current_pr << " pr:" << pr << " current_rank:" << current_rank <<std::endl);
 					}
-					
+					delete current_dict;
 					/* loop over the whole dictionary
 					int current_rank = 1;
 					//computation of the ranking of the current word (among all LM words)
