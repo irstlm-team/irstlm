@@ -63,7 +63,7 @@ public:
   int  isym;             // last interruption symbol
 
   ngram(dictionary* d,int sz=0);
-  ngram(ngram& ng);
+  ngram(const ngram& ng);
 
   inline int *wordp() { // n-gram pointer
     return wordp(size);

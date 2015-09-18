@@ -50,7 +50,7 @@ ngram::ngram(dictionary* d,int sz)
   memset(path,0,sizeof(char *)*MAX_NGRAM);
 }
 
-ngram::ngram(ngram& ng)
+ngram::ngram(const ngram& ng)
 {
   size=ng.size;
   freq=ng.freq;
