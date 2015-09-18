@@ -737,7 +737,10 @@ SetParam(Cmd_T	*cmd,
 			SetFlag(cmd, s);
 			break;
 		case CMDINTTYPE:
-			if(sscanf(s, "%i", (int*)cmd->Val)!=1) {
+			/*They are the same when used for output, e.g. with printf, but different when used as input specifier e.g. with scanf, where %d scans an integer as a signed decimal number, but %i defaults to decimal but also allows hexadecimal (if preceded by "0x") and octal if preceded by "0".
+			 So "033" would be 27 with %i but 33 with %d.
+			 */
+			if(sscanf(s, "%d", (int*)cmd->Val)!=1) {
 				fprintf(stderr,
 								"Integer value required for parameter \"%s\"\n",
 								cmd->Name);
@@ -872,8 +875,11 @@ SetSubrange(Cmd_T	*cmd,
 						char	*s)
 {
 	int	n;
-	
-	if(sscanf(s, "%i", &n)!=1) {
+
+	/*They are the same when used for output, e.g. with printf, but different when used as input specifier e.g. with scanf, where %d scans an integer as a signed decimal number, but %i defaults to decimal but also allows hexadecimal (if preceded by "0x") and octal if preceded by "0".
+	 So "033" would be 27 with %i but 33 with %d.
+	 */
+	if(sscanf(s, "%d", &n)!=1) {
 		fprintf(stderr,
 						"Integer value required for parameter \"%s\"\n",
 						cmd->Name);
@@ -892,7 +898,10 @@ SetGte(Cmd_T	*cmd,
 {
 	int	n;
 	
-	if(sscanf(s, "%i", &n)!=1) {
+	/*They are the same when used for output, e.g. with printf, but different when used as input specifier e.g. with scanf, where %d scans an integer as a signed decimal number, but %i defaults to decimal but also allows hexadecimal (if preceded by "0x") and octal if preceded by "0".
+		So "033" would be 27 with %i but 33 with %d.
+		*/
+	if(sscanf(s, "%d", &n)!=1) {
 		fprintf(stderr,
 						"Integer value required for parameter \"%s\"\n",
 						cmd->Name);
@@ -928,7 +937,10 @@ SetLte(Cmd_T	*cmd,
 {
 	int	n;
 	
-	if(sscanf(s, "%i", &n)!=1) {
+	/*They are the same when used for output, e.g. with printf, but different when used as input specifier e.g. with scanf, where %d scans an integer as a signed decimal number, but %i defaults to decimal but also allows hexadecimal (if preceded by "0x") and octal if preceded by "0".
+	 So "033" would be 27 with %i but 33 with %d.
+	 */
+	if(sscanf(s, "%d", &n)!=1) {
 		fprintf(stderr,
 						"Integer value required for parameter \"%s\"\n",
 						cmd->Name);
