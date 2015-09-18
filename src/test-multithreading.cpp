@@ -103,18 +103,16 @@ int main(int argc, char **argv)
 								(char *)NULL
 								);
 	
-	std::cout << "argc:" << argc << std::endl;
-/*
- if (argc > 0){
-		usage();
-		exit_error(IRSTLM_NO_ERROR);
-	}
-	*/
-	
   GetParams(&argc, &argv, (char*) NULL);
 	
-	std::cout << "help:" << help << std::endl;
-	std::cout << "lmfile:" << lmfile << std::endl;
+	VERBOSE(1, "threads:" << threads << std::endl);
+	VERBOSE(1, "lmfile:" << lmfile << std::endl);
+	VERBOSE(1, "testfile:" << testfile << std::endl);
+	
+	if (threads == 0){
+		threads = 1;
+		VERBOSE(1, "Impossible request for 0 threads; number of threads forced to 1" << std::endl);
+	}
 	
 	if (help){
 		usage();
