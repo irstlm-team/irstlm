@@ -1,4 +1,4 @@
-// $Id: compile-lm.cpp 3677 2010-10-13 09:06:51Z bertoldi $
+// $Id: verify_caching.cpp 3677 2010-10-13 09:06:51Z bertoldi $
 
 /******************************************************************************
  IrstLM: IRST Language Model Toolkit, compile LM
