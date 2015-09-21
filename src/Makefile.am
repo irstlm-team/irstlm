@@ -16,8 +16,6 @@ libirstlm_la_HEADERS = \
   lmmacro.h \
   lmtable.h \
   lmInterpolation.h \
-  lmContextDependent.h \
-  context-similarity.h \
   mempool.h \
   mfstream.h \
   n_gram.h \
@@ -46,8 +44,6 @@ libirstlm_la_SOURCES = \
   lmmacro.cpp \
   lmtable.cpp \
   lmInterpolation.cpp \
-  lmContextDependent.cpp \
-  context-similarity.cpp \
   mempool.cpp \
   mfstream.cpp \
   n_gram.cpp \
@@ -73,7 +69,7 @@ libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB)
 LDADD = -lirstlm -lpthread
 DEPENDENCIES = libirstlm.la
 
-bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa context-dependent-evaluation
+bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa
 
 dict_SOURCES = dict.cpp
 dict_DEPENDENCIES = $(DEPENDENCIES)
@@ -99,5 +95,3 @@ verify_caching_SOURCES = verify-caching.cpp
 verify_caching_DEPENDENCIES = $(DEPENDENCIES)
 cswa_SOURCES = cswa.cpp
 cswa_DEPENDENCIES = $(DEPENDENCIES)
-context_dependent_evaluation_SOURCES = context-dependent-evaluation.cpp
-context_dependent_evaluation_DEPENDENCIES = $(DEPENDENCIES)

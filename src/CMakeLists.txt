@@ -6,20 +6,7 @@ ADD_DEFINITIONS("-D_LARGE_FILES")
 ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
 ADD_DEFINITIONS("-DMYCODESIZE=3")
 ADD_DEFINITIONS("-DDEBUG")
-#ADD_DEFINITIONS("-DTRACE_LEVEL=1")
-
-if (TRACE_LEVEL)
-  ADD_DEFINITIONS("-DTRACE_LEVEL=${TRACE_LEVEL}")
-endif()
-
-if (OPTION)
-  ADD_DEFINITIONS("-DOPTION_${OPTION}")
-endif()
-
-if (SOLUTION)
-  ADD_DEFINITIONS("-DSOLUTION_${SOLUTION}")
-endif()
-
+ADD_DEFINITIONS("-DTRACE_LEVEL=1")
 
 if (CXX0)
   MESSAGE( STATUS "HAVE_CXX0=true; hence, variable HAVE_CXX0 is set" )
@@ -30,14 +17,6 @@ else()
   SET(STD_FLAG "")
   ADD_DEFINITIONS("-UHAVE_CXX0")
 endif() 
-
-if (ASSERT)
-  MESSAGE( STATUS "HAVE_ASSERT=true; hence, variable MY_ASSERT_FLAG is set" )
-  ADD_DEFINITIONS("-DMY_ASSERT_FLAG")
-else()
-  MESSAGE( STATUS "HAVE_ASSERT=false; hence, variable MY_ASSERT_FLAG is unset" )
-  ADD_DEFINITIONS("-UMY_ASSERT_FLAG")
-endif()
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${STD_FLAG} -isystem/usr/include -W -Wall -ffor-scope")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
@@ -55,8 +34,6 @@ SET( LIB_IRSTLM_SRC
         lmmacro.h lmmacro.cpp
         lmtable.h lmtable.cpp
         lmInterpolation.h lmInterpolation.cpp
-        lmContextDependent.h lmContextDependent.cpp
-        context-similarity.h context-similarity.cpp
         mempool.h mempool.cpp 
         mfstream.h mfstream.cpp 
         n_gram.h n_gram.cpp 
@@ -79,7 +56,7 @@ SET( LIB_IRSTLM_SRC
 ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})
 LINK_DIRECTORIES (${LIBRARY_OUTPUT_PATH})
 
-FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm context-dependent-evaluation)
+FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm)
 
 ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
 TARGET_LINK_LIBRARIES (${CMD} irstlm -lm -lz -lpthread)
