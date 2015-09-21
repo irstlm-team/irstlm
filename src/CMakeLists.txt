@@ -6,9 +6,6 @@ ADD_DEFINITIONS("-D_LARGE_FILES")
 ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
 ADD_DEFINITIONS("-DMYCODESIZE=3")
 ADD_DEFINITIONS("-DDEBUG")
-<<<<<<< HEAD
-ADD_DEFINITIONS("-DTRACE_LEVEL=1")
-=======
 #ADD_DEFINITIONS("-DTRACE_LEVEL=1")
 
 if (TRACE_LEVEL)
@@ -22,7 +19,6 @@ endif()
 if (SOLUTION)
   ADD_DEFINITIONS("-DSOLUTION_${SOLUTION}")
 endif()
->>>>>>> 95d5d6f683175a7f0fed8815fd89ca3da3717578
 
 if (CXX0)
   MESSAGE( STATUS "HAVE_CXX0=true; hence, variable HAVE_CXX0 is set" )
@@ -72,7 +68,7 @@ SET( LIB_IRSTLM_SRC
 ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})
 LINK_DIRECTORIES (${LIBRARY_OUTPUT_PATH})
 
-FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm)
+FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching context-dependent-evaluation)
 
 ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
 TARGET_LINK_LIBRARIES (${CMD} irstlm -lm -lz -lpthread)
