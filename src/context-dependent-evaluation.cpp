@@ -184,6 +184,16 @@ int main(int argc, char **argv)
   //use caches to save time (only if PS_CACHE_ENABLE is defined through compilation flags)
   lmt->init_caches(lmt->maxlevel());
 	
+	//read lexicon form file
+	std::multimap< std::string, std::string > lexicon;
+	if (lexiconfile == NULL) {
+		fstream inp(lexiconfile,ios::in|ios::binary);
+		std::string w1, w2;
+		while (inp >> w1 >> w2){
+			lexicon.insert(make_pair(w1,w2));
+		}
+	}
+	
 	if (topicscore == true) {
 		
 		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
@@ -406,11 +416,13 @@ int main(int argc, char **argv)
 					VERBOSE(2,"tmp_word_vec.size:|" << tmp_word_vec.size() << "|" << std::endl);	
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
 					
-					Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+					double current_pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+/*
 					double tot_pr = 0.0;
 					if (context_model_normalization){
 						tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
 					}
+*/
 					
 //					string_vec_t::iterator it=tmp_word_vec.end()-1;
 					int current_pos = tmp_word_vec.size()-1;
@@ -422,10 +434,34 @@ int main(int argc, char **argv)
 					//computation of the oracle probability. i.e. the maximum prob
 					double best_pr = -1000000.0;
 					int best_code = lmt->getlogOOVpenalty();
-					for (int j=0; j<lmt->getDict()->size(); ++j)
+					
+					
+					
+					/*
+					 //loop over all words in the LM
+					 dictionary* current_dict = lmt->getDict();
+					 */
+					
+					//loop over a set of selected alternative words
+					//populate the dictionary with all words associated with the current word
+					dictionary* current_dict = new dictionary((char *)NULL,1000000);
+					current_dict->incflag(1);
+					
+					std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
+					for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
+					{
+						if (current_word != (it->second).c_str()){
+							//exclude the current word from the selected alternative words
+							current_dict->encode((it->second).c_str());
+						}
+					}
+					current_dict->incflag(0);
+					
+					double tot_pr = 0.0;
+					for (int j=0; j<current_dict->size(); ++j)
 					{
 						//loop over all words in the LM
-					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(j);
+					  tmp_word_vec.at(current_pos) = current_dict->decode(j);
 						IFVERBOSE(3){
 							std::cout << "tmp_word_vec j:" << j;
 							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
@@ -440,9 +476,10 @@ int main(int argc, char **argv)
 							best_code = j;
 							VERBOSE(3,"current_best:" << best_code << " current_word:|" << lmt->getDict()->decode(best_code) << "| best_prob:" << pow(10.0,best_pr) << " norm_best_prob:" << pow(10.0,best_pr - tot_pr) << std::endl);
 						}
+						tot_pr += pow(10.0,best_pr);
 					}
 					model_Pr = best_pr;
-					VERBOSE(2,"model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "| model_best_prob:" << pow(10.0,best_pr) << std::endl);
+					VERBOSE(2,"model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "| model_best_prob:" << pow(10.0,best_pr) << " tot_pr:" << tot_pr << std::endl);
 					IFVERBOSE(3){
 						for (int_to_double_and_int_map::const_iterator it3=code_to_prob_and_code_map.begin(); it3!=code_to_prob_and_code_map.end(); ++it3)
 						{
@@ -459,7 +496,7 @@ int main(int argc, char **argv)
 					VERBOSE(2,"tot_pr:" << tot_pr << " oovpenalty:" << oovpenalty << " norm_oovpenalty:" << norm_oovpenalty << std::endl);	
 
 
-					norm_Pr = Pr - tot_pr;
+					norm_Pr = current_pr - tot_pr;
 					model_norm_Pr = model_Pr - tot_pr;
 					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << "| model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
 
@@ -472,7 +509,7 @@ int main(int argc, char **argv)
 					
 					model_logPr+=model_Pr;
 					sent_model_logPr+=model_Pr;
-					logPr+=Pr;
+					logPr+=current_pr;
 					sent_logPr+=Pr;
 					VERBOSE(2,"sent_model_logPr:" << sent_model_logPr << " model_logPr:" << model_logPr << std::endl);	
 					VERBOSE(2,"sent_logPr:" << sent_logPr << " logPr:" << logPr << std::endl);
@@ -746,24 +783,19 @@ int main(int argc, char **argv)
 					
 					double current_pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
 					double tot_pr = 0.0;
+					
+					/*
 					if (context_model_normalization){
 						tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
 						current_pr = current_pr - tot_pr;
 					}
+*/
 					
 					/*
 					 //loop over all words in the LM
 					 dictionary* current_dict = lmt->getDict();
 					*/
 					
-					//read lexicon form file
-					std::multimap< std::string, std::string > lexicon;
-					
-					fstream inp(lexiconfile,ios::in|ios::binary);
-				  std::string w1, w2;
-					while (inp >> w1 >> w2){
-						lexicon.insert(make_pair(w1,w2));
-					}
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
 					dictionary* current_dict = new dictionary((char *)NULL,1000000);
