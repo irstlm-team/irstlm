@@ -20,7 +20,6 @@ if (SOLUTION)
   ADD_DEFINITIONS("-DSOLUTION_${SOLUTION}")
 endif()
 
-
 if (CXX0)
   MESSAGE( STATUS "HAVE_CXX0=true; hence, variable HAVE_CXX0 is set" )
   SET(STD_FLAG "-std=c++0x")
