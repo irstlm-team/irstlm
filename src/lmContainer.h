@@ -41,6 +41,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
+typedef enum {LMT_FIND,    //!< search: find an entry
+	LMT_ENTER,   //!< search: enter an entry
+	LMT_INIT,    //!< scan: start scan
+	LMT_CONT     //!< scan: continue scan
+} LMT_ACTION;
+
 namespace irstlm {
 	typedef std::map< std::string, float > topic_map_t;
 	
@@ -173,6 +179,28 @@ public:
     return NULL;
   }
 
+	
+	
+	virtual inline int get(ngram& ng) {
+		UNUSED(ng);
+		return 0;
+	}
+	
+	virtual int get(ngram& ng,int n,int lev){
+		UNUSED(ng);
+		UNUSED(n);
+		UNUSED(lev);
+		return 0;
+	}
+	
+	virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
+    UNUSED(ng);
+    UNUSED(h);
+    UNUSED(action);
+    UNUSED(lev);
+	  return 0;	
+	}
+	
   virtual void used_caches() {};
   virtual void init_caches(int uptolev) {
     UNUSED(uptolev);

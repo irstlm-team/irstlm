@@ -63,13 +63,8 @@
 #define UNIGRAM_RESOLUTION 10000000.0
 
 typedef enum {INTERNAL,QINTERNAL,LEAF,QLEAF} LMT_TYPE;
-typedef char* node;
 
-typedef enum {LMT_FIND,    //!< search: find an entry
-	LMT_ENTER,   //!< search: enter an entry
-	LMT_INIT,    //!< scan: start scan
-	LMT_CONT     //!< scan: continue scan
-} LMT_ACTION;
+typedef char* node;
 
 typedef unsigned int  table_entry_pos_t; //type for pointing to a full ngram in the table
 typedef unsigned long table_pos_t; // type for pointing to a single char in the table
@@ -340,10 +335,10 @@ public:
 	
 	void checkbounds(int level);
 	
-	inline int get(ngram& ng) {
+	virtual inline int get(ngram& ng) {
 		return get(ng,ng.size,ng.size);
 	}
-	int get(ngram& ng,int n,int lev);
+	virtual int get(ngram& ng,int n,int lev);
 	
 	int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev);
 	
