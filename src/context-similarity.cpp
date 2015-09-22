@@ -274,9 +274,8 @@ namespace irstlm {
 		// ng2[1]=ng[1];
 		ngram ng2(ngt2.getDict());
 		ng2.trans(ng);
-		int topic=*ng.wordp(1);
 		ng2.shift();
-		*ng2.wordp(2)=topic;
+		*ng2.wordp(1)=ng2.dict->encode(ng.dict->decode(*ng.wordp(1)));
 		
 		//ngt2 provides counts c(hk) and c(h) (or c(k) and c())
 		double c_xk2, c_x2;
@@ -324,9 +323,8 @@ namespace irstlm {
 		// ng2[1]=ng[1];
 		ngram ng2(ngt2.getDict());
 		ng2.trans(ng);
-		int topic=*ng.wordp(1);
 		ng2.shift();
-		*ng2.wordp(2)=topic;
+		*ng2.wordp(1)=ng2.dict->encode(ng.dict->decode(*ng.wordp(1)));
 		
 		//ngt2 provides counts c(hk) and c(h) (or c(k) and c())
 		double c_xk2, c_x2;
@@ -459,7 +457,7 @@ namespace irstlm {
 			//return an uninforming score (log(1.0) = 0.0)
 			ret_log10_pr = 0.0;
 		}
-		else if (m_topic_size == 0){
+		else if (topic_weights.size() == 0){
 			//a-priori topic distribution is "empty", i.e. there is no score for any topic
 			//return an uninforming score (log(1.0) = 0.0)
 			ret_log10_pr = 0.0;
