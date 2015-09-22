@@ -63,6 +63,8 @@ SET( LIB_IRSTLM_SRC
         cplsa.h cplsa.cpp 
         cswam.h cswam.cpp 
         doc.h doc.cpp
+	lmContextDependent.h lmContextDependent.cpp
+        context-similarity.h context-similarity.cpp
 )
 
 ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})

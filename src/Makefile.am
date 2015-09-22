@@ -32,7 +32,9 @@ libirstlm_la_HEADERS = \
   shiftlm.h \
   cplsa.h \
   cswam.h \
-  doc.h
+  doc.h \
+  lmContextDependent.h \
+  context-similarity.h
 
 libirstlm_la_SOURCES = \
   cmd.c \
@@ -60,7 +62,9 @@ libirstlm_la_SOURCES = \
   shiftlm.cpp \
   cplsa.cpp \
   cswam.cpp \
-  doc.cpp
+  doc.cpp \
+  src/lmContextDependent.cpp \
+  context-similarity
 
 CLEANFILES = $(BUILT_SOURCES)
 
