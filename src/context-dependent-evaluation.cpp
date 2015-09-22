@@ -94,6 +94,11 @@ int main(int argc, char **argv)
 	bool context_model_normalization = false;
   char *lexiconfile=NULL;
 	
+	bool add_lexicon_words = false;
+	bool add_lm_words = false;
+	bool add_sentence_words = false;
+	int successor_limit=100;
+	
 	int debug = 0;
   int requiredMaxlev = 1000;
   int dub = 10000000;
@@ -111,7 +116,7 @@ int main(int argc, char **argv)
 								"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
                 "contextbasedscore", CMDBOOLTYPE|CMDMSG, &contextbasedscore, "computes context-dependent probabilities and pseudo-perplexity of the text from standard input",
                 "topicscore", CMDBOOLTYPE|CMDMSG, &topicscore, "computes the topic scores of the text from standard input",
-                "rankscore", CMDBOOLTYPE|CMDMSG, &rankscore, "computes the avergae rank position of the text from standard input",
+                "rankscore", CMDBOOLTYPE|CMDMSG, &rankscore, "computes the average rank position of the text from standard input",
 								"debug", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
 								"d", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
                 "level", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
@@ -122,6 +127,9 @@ int main(int argc, char **argv)
                 "ngram_load_factor", CMDFLOATTYPE|CMDMSG, &ngramcache_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is false",
                 "context_model_active", CMDBOOLTYPE|CMDMSG, &context_model_active, "enable/disable context-dependent model (default is true)",
                 "context_model_normalization", CMDBOOLTYPE|CMDMSG, &context_model_normalization, "enable/disable normalization of context-dependent model (default is false)",
+                "add_lm_words", CMDBOOLTYPE|CMDMSG, &add_lm_words, "enable/disable addition of the unigram/bigrmam successors into the alternatives (default is false)",
+                "add_sentence_words", CMDBOOLTYPE|CMDMSG, &add_sentence_words, "enable/disable addition of the words of the current sentence into the alternatives (default is false)",
+								"successor_limit", CMDINTTYPE|CMDMSG, &successor_limit, "threshold to decide whether adding the unigram/bigram successors into the alternatives (default is 100)",
 								
 								"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
 								"h", CMDBOOLTYPE|CMDMSG, &help, "print this help",
@@ -151,19 +159,18 @@ int main(int argc, char **argv)
 		exit_error(IRSTLM_NO_ERROR);
 	}
 	
-  if (lmfile!=NULL) std::cerr << "lmfile: " << lmfile << std::endl;
-  if (testfile!=NULL) std::cerr << "testfile: " << testfile << std::endl;
-  if (contextbasedscore==true) std::cerr << "contextbasedscore: " << contextbasedscore << std::endl;
-  if (topicscore==true) std::cerr << "topicscore: " << topicscore << std::endl;
-  if (rankscore==true){
-		std::cerr << "rankscore: " << rankscore << std::endl;
-		
-		if (lexiconfile == NULL) {
-			usage();
-			exit_error(IRSTLM_ERROR_DATA,"Warning: Please specify a lexicon file to read from");
-		}
-		std::cerr << "lexicon: " << lexiconfile << std::endl;
-	}
+	if (lmfile!=NULL) VERBOSE(1, "lmfile: " << lmfile << std::endl);
+  if (testfile!=NULL) VERBOSE(1, "testfile: " << testfile << std::endl);
+	if (lexiconfile != NULL) VERBOSE(1, "lexicon: " << lexiconfile << std::endl);
+	
+  VERBOSE(1, "contextbasedscore: " << contextbasedscore << std::endl);
+  VERBOSE(1, "topicscore: " << topicscore << std::endl);
+  VERBOSE(1, "rankscore: " << rankscore << std::endl);
+	
+	VERBOSE(1,"add_lexicon_words: " << add_lexicon_words << std::endl);
+	VERBOSE(1,"add_lm_words: " << add_lm_words << " successor_limit:" << successor_limit<< std::endl);
+	VERBOSE(1,"add_sentence_words: " << add_sentence_words << std::endl);
+	
   std::cerr << "loading up to the LM level " << requiredMaxlev << " (if any)" << std::endl;
   std::cerr << "dub: " << dub<< std::endl;
 	
@@ -186,15 +193,18 @@ int main(int argc, char **argv)
 	
 	//read lexicon form file
 	std::multimap< std::string, std::string > lexicon;
-	if (lexiconfile == NULL) {
+	if (lexiconfile != NULL) {
 		fstream inp(lexiconfile,ios::in|ios::binary);
 		std::string w1, w2;
 		while (inp >> w1 >> w2){
 			lexicon.insert(make_pair(w1,w2));
 		}
+		add_lexicon_words=true;
 	}
 	
 	if (topicscore == true) {
+		VERBOSE(0, "NOT SUPPORTED" << std::endl);
+		return 0;
 		
 		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
 			debug = (debug>4)?4:debug;
@@ -328,10 +338,11 @@ int main(int argc, char **argv)
 		std::cout.precision(2);
 		
 		int Nw=0,Noov=0;
-		double logPr=0,PP=0,PPwp=0,Pr;
+		double logPr=0,PP=0,PPwp=0,current_Pr;
 		double norm_logPr=0,norm_PP=0,norm_PPwp=0,norm_Pr;
 		double model_logPr=0,model_PP=0,model_PPwp=0,model_Pr;
 		double model_norm_logPr=0,model_norm_PP=0,model_norm_PPwp=0,model_norm_Pr;
+		int current_dict_alternatives = 0;
 		
 		double bow;
 		int bol=0;
@@ -344,6 +355,7 @@ int main(int argc, char **argv)
 		double sent_norm_logPr=0,sent_norm_PP=0,sent_norm_PPwp=0;		
 		double sent_model_logPr=0,sent_model_PP=0,sent_model_PPwp=0;		
 		double sent_model_norm_logPr=0,sent_model_norm_PP=0,sent_model_norm_PPwp=0;		
+		int sent_current_dict_alternatives = 0;
 		
 		double oovpenalty = lmt->getlogOOVpenalty();
 		double norm_oovpenalty = oovpenalty;
@@ -375,14 +387,18 @@ int main(int argc, char **argv)
 			string_vec_t word_vec;
 			split(sentence, ' ', word_vec);
 			
+			//add the BoS symbol at the beginning
+			string_vec_t::iterator it = word_vec.insert ( word_vec.begin() , lmt->getDict()->BoS() );
+			
 			//first points to the last recent term to take into account
 			//last points to the position after the most recent term to take into account
 			//last could point outside the vector of string; do NOT use word_vec.at(last)
 			size_t last, first;
-			size_t size=0;
 			size_t order = lmt->maxlevel();
 			
-			for (size_t i=0; i< word_vec.size(); ++i){
+			//start the computation from the second word because the first is the BoS symbol,but including BoS in the ngrams
+			size_t size=1;
+			for (size_t i=1; i< word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
 				last=i+1;
@@ -416,7 +432,7 @@ int main(int argc, char **argv)
 					VERBOSE(2,"tmp_word_vec.size:|" << tmp_word_vec.size() << "|" << std::endl);	
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
 					
-					double current_pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+					current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
 /*
 					double tot_pr = 0.0;
 					if (context_model_normalization){
@@ -427,16 +443,7 @@ int main(int argc, char **argv)
 //					string_vec_t::iterator it=tmp_word_vec.end()-1;
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
-					
-					int_to_double_and_int_map code_to_prob_and_code_map;
-					double_and_int_to_double_and_int_map prob_and_code_to_prob_and_rank_map;
-					
-					//computation of the oracle probability. i.e. the maximum prob
-					double best_pr = -1000000.0;
-					int best_code = lmt->getlogOOVpenalty();
-					
-					
-					
+										
 					/*
 					 //loop over all words in the LM
 					 dictionary* current_dict = lmt->getDict();
@@ -447,19 +454,110 @@ int main(int argc, char **argv)
 					dictionary* current_dict = new dictionary((char *)NULL,1000000);
 					current_dict->incflag(1);
 					
-					std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
-					for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
-					{
-						if (current_word != (it->second).c_str()){
-							//exclude the current word from the selected alternative words
+					current_dict->encode(current_word.c_str());
+
+					VERBOSE(2,"after current word current_dict->size:" << current_dict->size() << std::endl);
+					
+					//add words from the lexicon
+					if (add_lexicon_words){
+						std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
+						for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
+						{
 							current_dict->encode((it->second).c_str());
+							/*
+							 //exclude the current word from the selected alternative words
+							 if (current_word != (it->second).c_str()){
+							 current_dict->encode((it->second).c_str());
+							 }
+							 */
+						}
+					}
+					VERBOSE(2,"after add_lexicon_words current_dict->size:" << current_dict->size() << std::endl);
+					
+					if (add_lm_words){
+						bool succ_flag=false;
+						ngram hg(lmt->getDict());
+						
+						if (size==1) {
+							hg.pushw(lmt->getDict()->BoS());
+							hg.pushc(0);
+							
+							lmt->get(hg,hg.size,hg.size-1);
+							VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+							if (hg.succ < successor_limit){
+								succ_flag=true;
+							}else{
+								VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+							}
+						}else if (size>=2) {
+							hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
+							hg.pushc(0);
+							
+							lmt->get(hg,hg.size,hg.size-1);
+							VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+							if (hg.succ < successor_limit){
+								succ_flag=true;
+							}else{
+								VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+							}
+							
+							if (!succ_flag && size>=3){
+								hg.size=0;
+								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-3));
+								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
+								hg.pushc(0);
+								
+								lmt->get(hg,hg.size,hg.size-1);
+								VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+								
+								if (hg.succ < successor_limit){
+									succ_flag=true;
+								}else{
+									VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+								}
+							}
+						}
+						
+						
+						if (succ_flag){
+							ngram ng=hg;
+							lmt->succscan(hg,ng,LMT_INIT,ng.size);	
+							while(lmt->succscan(hg,ng,LMT_CONT,ng.size)) {
+								current_dict->encode(ng.dict->decode(*ng.wordp(1)));
+							}
+						}
+						
+					}
+					
+					VERBOSE(2,"after add_lm_words current_dict->size:" << current_dict->size() << std::endl);
+					
+					if (add_sentence_words){
+						for (string_vec_t::const_iterator it=word_vec.begin(); it!=word_vec.end(); ++it)
+						{
+							current_dict->encode(it->c_str());
 						}
 					}
 					current_dict->incflag(0);
+					VERBOSE(2,"after add_sentence_words current_dict->size:" << current_dict->size() << std::endl);
 					
-					double tot_pr = 0.0;
-					for (int j=0; j<current_dict->size(); ++j)
-					{
+					sent_current_dict_alternatives += current_dict->size();
+					current_dict_alternatives += current_dict->size();
+					
+					 VERBOSE(2,"current_dict->size:" << current_dict->size() << std::endl);
+					 for (int h=0;h<current_dict->size();++h){
+					 VERBOSE(2,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
+					 }
+					
+					//the first word in current_dict is always the current_word; hence we can skip it during the scan 
+					//variables for the computation of the oracle probability, i.e. the maximum prob
+					//double best_pr = -1000000.0;
+					//int best_code = lmt->getlogOOVpenalty();
+					double best_pr = current_Pr;
+					int best_code = 0;
+					//variables for the computation of the mass probability related to the current word, i.e. the sum of the probs for all words associated with the current word
+					double current_tot_pr = pow(10.0,current_Pr);
+//					for (int j=0; j<current_dict->size(); ++j){
+					for (int j=1; j<current_dict->size(); ++j){
 						//loop over all words in the LM
 					  tmp_word_vec.at(current_pos) = current_dict->decode(j);
 						IFVERBOSE(3){
@@ -471,34 +569,25 @@ int main(int argc, char **argv)
 						}				
 						
 						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						current_tot_pr += pow(10.0,pr);
 						if (best_pr < pr){
 							best_pr = pr;
 							best_code = j;
-							VERBOSE(3,"current_best:" << best_code << " current_word:|" << lmt->getDict()->decode(best_code) << "| best_prob:" << pow(10.0,best_pr) << " norm_best_prob:" << pow(10.0,best_pr - tot_pr) << std::endl);
+							VERBOSE(3,"current_best:" << best_code << " current_word:|" << current_dict->decode(best_code) << "| best_prob:" << pow(10.0,best_pr) << " norm_best_prob:" << pow(10.0,best_pr - current_tot_pr) << std::endl);
 						}
-						tot_pr += pow(10.0,best_pr);
+						VERBOSE(3,"current_Pr:" << current_Pr << " current_word:" << current_word << "| ===> code:" << j << " word:|" << tmp_word_vec.at(current_pos) << "| pr:" << pr << " versus best_code:" << best_code << " best_word:|" << current_dict->decode(best_code) << "| best_pr:" << best_pr << std::endl);
 					}
+					current_tot_pr=log10(current_tot_pr);
+					
 					model_Pr = best_pr;
-					VERBOSE(2,"model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "| model_best_prob:" << pow(10.0,best_pr) << " tot_pr:" << tot_pr << std::endl);
-					IFVERBOSE(3){
-						for (int_to_double_and_int_map::const_iterator it3=code_to_prob_and_code_map.begin(); it3!=code_to_prob_and_code_map.end(); ++it3)
-						{
-							VERBOSE(3,"it3: word:" << it3->first << " pr:" << (it3->second).first << " word:" << (it3->second).second << std::endl);
-						}
-						
-						for (double_and_int_to_double_and_int_map::const_iterator it3=prob_and_code_to_prob_and_rank_map.begin(); it3!=prob_and_code_to_prob_and_rank_map.end(); ++it3)
-						{
-							VERBOSE(3,"it3: pr:" << (it3->first).first << " second:" << (it3->first).second << " norm_pr:" << (it3->second).first << " rank:" << (it3->second).second << std::endl);
-						}
-					}
+					VERBOSE(2,"model_best_code:" << best_code << " model_best_word:|" << current_dict->decode(best_code) << "| model_best_prob:" << pow(10.0,best_pr) << " current_tot_pr:" << current_tot_pr << std::endl);
 
 					norm_oovpenalty = oovpenalty;
-					VERBOSE(2,"tot_pr:" << tot_pr << " oovpenalty:" << oovpenalty << " norm_oovpenalty:" << norm_oovpenalty << std::endl);	
+					VERBOSE(2,"current_tot_pr:" << current_tot_pr << " oovpenalty:" << oovpenalty << " norm_oovpenalty:" << norm_oovpenalty << std::endl);	
 
-
-					norm_Pr = current_pr - tot_pr;
-					model_norm_Pr = model_Pr - tot_pr;
-					VERBOSE(1,"Pr:" << Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << "| model_best_code:" << best_code << " model_best_word:|" << lmt->getDict()->decode(best_code) << "|" << std::endl);
+					norm_Pr = current_Pr - current_tot_pr;
+					model_norm_Pr = model_Pr - current_tot_pr;
+					VERBOSE(1,"current_Pr:" << current_Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << "| model_best_code:" << best_code << " model_best_word:|" << current_dict->decode(best_code) << "|" << std::endl);
 
 					model_norm_logPr+=model_norm_Pr;
 					sent_model_norm_logPr+=model_norm_Pr;
@@ -509,12 +598,10 @@ int main(int argc, char **argv)
 					
 					model_logPr+=model_Pr;
 					sent_model_logPr+=model_Pr;
-					logPr+=current_pr;
-					sent_logPr+=Pr;
+					logPr+=current_Pr;
+					sent_logPr+=current_Pr;
 					VERBOSE(2,"sent_model_logPr:" << sent_model_logPr << " model_logPr:" << model_logPr << std::endl);	
-					VERBOSE(2,"sent_logPr:" << sent_logPr << " logPr:" << logPr << std::endl);
-					 
-					
+					VERBOSE(2,"sent_logPr:" << sent_logPr << " current_Pr:" << current_Pr << std::endl);
 				}
 			}
 			
@@ -531,14 +618,19 @@ int main(int argc, char **argv)
 				<< " sent_norm_PPwp=" << sent_norm_PPwp
 				<< " sent_norm_PP_noOOV=" << (sent_norm_PP-sent_norm_PPwp)
 				<< " sent_Noov=" << sent_Noov
-				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
+				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" 
+				<< " sent_avg_alternatives=" << (float) sent_current_dict_alternatives/sent_Nw
+				<< std::endl;
+				
 				std::cout << "%% sent_Nw=" << sent_Nw
 				<< " sent_model_norm_logPr=" << sent_model_norm_logPr
 				<< " sent_model_norm_PP=" << sent_model_norm_PP
 				<< " sent_model_norm_PPwp=" << sent_model_norm_PPwp
 				<< " sent_model_norm_PP_noOOV=" << (sent_model_norm_PP-sent_model_norm_PPwp)
 				<< " sent_Noov=" << sent_Noov
-				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
+				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" 
+				<< " sent_avg_alternatives=" << (float) sent_current_dict_alternatives/sent_Nw
+				<< std::endl;
 				
 				sent_model_PP = exp((-sent_model_logPr * M_LN10) / sent_Nw);
 				sent_model_PPwp = sent_model_PP * (1 - 1/exp(sent_Noov * oovpenalty * M_LN10 / sent_Nw));
@@ -550,7 +642,9 @@ int main(int argc, char **argv)
 				<< " sent_PPwp=" << sent_PPwp
 				<< " sent_PP_noOOV=" << (sent_PP-sent_PPwp)
 				<< " sent_Noov=" << sent_Noov
-				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
+				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" 
+				<< " sent_avg_alternatives=" << (float) sent_current_dict_alternatives/sent_Nw
+				<< std::endl;
 			
 				std::cout << "%% sent_Nw=" << sent_Nw
 				<< " sent_model_logPr=" << sent_model_logPr
@@ -558,7 +652,9 @@ int main(int argc, char **argv)
 				<< " sent_model_PPwp=" << sent_model_PPwp
 				<< " sent_model_PP_noOOV=" << (sent_model_PP-sent_model_PPwp)
 				<< " sent_Noov=" << sent_Noov
-				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" << std::endl;
+				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" 
+				<< " sent_avg_alternatives=" << (float) sent_current_dict_alternatives/sent_Nw
+				<< std::endl;
 				std::cout.flush();
 				//reset statistics for sentence based Perplexity
 				sent_Noov = 0;
@@ -567,6 +663,7 @@ int main(int argc, char **argv)
 				sent_model_logPr = 0.0;
 				sent_norm_logPr = 0.0;
 				sent_logPr = 0.0;
+				sent_current_dict_alternatives = 0;
 			}
 			
 			apriori_topic_map.clear();
@@ -588,35 +685,42 @@ int main(int argc, char **argv)
 		<< " model_PPwp=" << model_PPwp
 		<< " model_PP_noOOV=" << (model_PP-model_PPwp)
 		<< " Noov=" << Noov
-		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
-		std::cout << std::endl;
+		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%" 
+		<< " avg_alternatives=" << (float) current_dict_alternatives/Nw
+		<< std::endl;
 		std::cout.flush();
+		
 		std::cout << "%% Nw=" << Nw
 		<< " model_norm_logPr=" << model_norm_logPr
 		<< " model_norm_PP=" << model_norm_PP
 		<< " model_norm_PPwp=" << model_norm_PPwp
 		<< " model_norm_PP_noOOV=" << (model_norm_PP-model_norm_PPwp)
 		<< " Noov=" << Noov
-		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
-		std::cout << std::endl;
+		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%"
+		<< " avg_alternatives=" << (float) current_dict_alternatives/Nw
+		<< std::endl;
 		std::cout.flush();
+		
 		std::cout << "%% Nw=" << Nw
 		<< " logPr=" << logPr
 		<< " PP=" << PP
 		<< " PPwp=" << PPwp
 		<< " PP_noOOV=" << (PP-PPwp)
 		<< " Noov=" << Noov
-		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
-		std::cout << std::endl;
+		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%"
+		<< " avg_alternatives=" << (float) current_dict_alternatives/Nw
+		<< std::endl;
 		std::cout.flush();
+		
 		std::cout << "%% Nw=" << Nw
 		<< " norm_logPr=" << norm_logPr
 		<< " norm_PP=" << norm_PP
 		<< " norm_PPwp=" << norm_PPwp
 		<< " norm_PP_noOOV=" << (norm_PP-norm_PPwp)
 		<< " Noov=" << Noov
-		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
-		std::cout << std::endl;
+		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%"
+		<< " avg_alternatives=" << (float) current_dict_alternatives/Nw
+		<< std::endl;
 		std::cout.flush();
 		
 		if (debug>1) lmt->used_caches();
@@ -649,53 +753,6 @@ int main(int argc, char **argv)
 		double avgRank;
 		int tot_rank = 0;
 		int max_rank = 0;
-		
-		/*
-		//collect total occurrences of current word in the following intervals
-		// [firs position], [<=1%], [<=2%], [<=5%], [<=10%]
-		int Rank_histogram[5];
-		int Rank_limit[5];
-		*/
-		
-		/*
-		int max_rank = lmt->getDict()->size();
-		double ratio = 0.001;
-		
-		double Rank_perc[5];
-		Rank_perc[0] = 0; Rank_limit[0] = 1;
-		Rank_perc[1] =  1 * ratio; Rank_limit[1] = Rank_perc[1] * max_rank;
-		Rank_perc[2] =  2 * ratio; Rank_limit[2] = Rank_perc[2] * max_rank;
-		Rank_perc[3] =  5 * ratio; Rank_limit[3] = Rank_perc[3] * max_rank;
-		Rank_perc[4] = 10 * ratio; Rank_limit[4] = Rank_perc[4] * max_rank;
-		
-		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 
-						" Rank_[1]=" << Rank_perc[1]*100 <<"%<=" << Rank_limit[1] << 
-						" Rank_[2]=" << Rank_perc[2]*100 <<"%<=" << Rank_limit[2] << 
-						" Rank_[3]=" << Rank_perc[3]*100 <<"%<=" << Rank_limit[3] << 
-						" Rank_[4]=" << Rank_perc[4]*100 <<"%<=" << Rank_limit[4] << 
-						std::endl);
-		*/
-		
-		/*
-		Rank_limit[0] = 1;
-		Rank_limit[1] =  10;
-		Rank_limit[2] =  20;
-		Rank_limit[3] =  50;
-		Rank_limit[4] = 100;
-		
-		VERBOSE(1, "Rank thresholds: Rank_[bst]=1" << 
-						" Rank_[1]=" << Rank_limit[1] << 
-						" Rank_[2]=" << Rank_limit[2] << 
-						" Rank_[3]=" << Rank_limit[3] << 
-						" Rank_[4]=" << Rank_limit[4] << 
-						std::endl);
-		
-		Rank_histogram[0] = 0;
-		Rank_histogram[1] = 0;
-		Rank_histogram[2] = 0;
-		Rank_histogram[3] = 0;
-		Rank_histogram[4] = 0;
-		*/
 		
 		double bow;
 		int bol=0;
@@ -781,37 +838,111 @@ int main(int argc, char **argv)
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
 					
-					double current_pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-					double tot_pr = 0.0;
-					
-					/*
-					if (context_model_normalization){
-						tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
-						current_pr = current_pr - tot_pr;
-					}
-*/
+					double current_pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);				
 					
 					/*
 					 //loop over all words in the LM
 					 dictionary* current_dict = lmt->getDict();
-					*/
+					 */
 					
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
 					dictionary* current_dict = new dictionary((char *)NULL,1000000);
 					current_dict->incflag(1);
 					
-					std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
-					for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
-					{
-						if (current_word != (it->second).c_str()){
-							//exclude the current word from the selected alternative words
+					current_dict->encode(current_word.c_str());
+					
+					VERBOSE(2,"after current word current_dict->size:" << current_dict->size() << std::endl);
+					
+					//add words from the lexicon
+					if (add_lexicon_words){
+						std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
+						for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
+						{
 							current_dict->encode((it->second).c_str());
+							/*
+							 //exclude the current word from the selected alternative words
+							 if (current_word != (it->second).c_str()){
+							 current_dict->encode((it->second).c_str());
+							 }
+							 */
+						}
+					}
+					VERBOSE(2,"after add_lexicon_words current_dict->size:" << current_dict->size() << std::endl);
+					
+					if (add_lm_words){
+						bool succ_flag=false;
+						ngram hg(lmt->getDict());
+						
+						if (size==1) {
+							hg.pushw(lmt->getDict()->BoS());
+							hg.pushc(0);
+							
+							lmt->get(hg,hg.size,hg.size-1);
+							VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+							if (hg.succ < 100){
+								succ_flag=true;
+							}
+						}else if (size==2) {
+							hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
+							hg.pushc(0);
+							
+							lmt->get(hg,hg.size,hg.size-1);
+							VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+							if (hg.succ < 100){
+								succ_flag=true;
+							}
+						}else if(size>=3){
+							hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
+							hg.pushc(0);
+							
+							lmt->get(hg,hg.size,hg.size-1);
+							VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+							
+							
+							if (hg.succ < 100){
+								succ_flag=true;
+							}
+							
+							if (!succ_flag){
+								hg.size=0;
+								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-3));
+								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
+								hg.pushc(0);
+								
+								lmt->get(hg,hg.size,hg.size-1);
+								VERBOSE(1,"add_lm_words hg:|" << hg << "| hg.size:" << hg.size << " hg.succ:" << hg.succ << std::endl);
+								
+								if (hg.succ < 100){
+									succ_flag=true;
+								}
+							}
+						}
+						
+						
+						if (succ_flag){
+							ngram ng=hg;
+							lmt->succscan(hg,ng,LMT_INIT,ng.size);	
+							while(lmt->succscan(hg,ng,LMT_CONT,ng.size)) {
+								current_dict->encode(ng.dict->decode(*ng.wordp(1)));
+							}
+						}
+						
+					}
+					
+					VERBOSE(2,"after add_lm_words current_dict->size:" << current_dict->size() << std::endl);
+					
+					if (add_sentence_words){
+						for (string_vec_t::const_iterator it=word_vec.begin(); it!=word_vec.end(); ++it)
+						{
+							current_dict->encode(it->c_str());
 						}
 					}
 					current_dict->incflag(0);
 					
-					max_rank = current_dict->size()+1; //we add 1, to count for the current word as well, which is not included in the selected alternative words
+					VERBOSE(2,"after add_sentence_words current_dict->size:" << current_dict->size() << std::endl);
+					
+					max_rank = current_dict->size(); //the current word is  included in the selected alternative words
 					int current_rank = 1;
 					for (int i=0; i<current_dict->size(); i++)
 					{
@@ -824,9 +955,7 @@ int main(int argc, char **argv)
 							std::cout << std::endl;
 						}
 						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						if (context_model_normalization){
-							pr = pr - tot_pr;
-						}
+						
 						if (pr > current_pr){
 							++current_rank;	
 						}
@@ -834,120 +963,10 @@ int main(int argc, char **argv)
 						VERBOSE(3," current_pos:" << current_pos << " word:|" << tmp_word_vec.at(current_pos) << "| current_pr:" << current_pr << " pr:" << pr << " current_rank:" << current_rank <<std::endl);
 					}
 					delete current_dict;
-					/* loop over the whole dictionary
-					int current_rank = 1;
-					//computation of the ranking of the current word (among all LM words)
-					for (int i=0; i<lmt->getDict()->size(); i++)
-					{
-						//loop over all words in the LM
-					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(i);
-						//					  *it = lmt->getDict()->decode(i);
-						IFVERBOSE(3){
-							std::cout << "tmp_word_vec i:" << i;
-							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
-								std::cout << " |" << (*it2) << "|";
-							}
-							std::cout << std::endl;
-						}
-						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						if (context_model_normalization){
-							pr = pr - tot_pr;
-						}
-						if (pr > current_pr){
-							++current_rank;	
-						}
-					}
-					 */
-					
-					
-					/*
-					int_to_double_and_int_map code_to_prob_and_code_map;
-					double_and_int_to_double_and_int_map prob_and_code_to_prob_and_rank_map;
-					
-					//computation of the ranking
-					int default_rank=-1;
-					for (int i=0; i<lmt->getDict()->size(); i++)
-					{
-						//loop over all words in the LM
-					  tmp_word_vec.at(current_pos) = lmt->getDict()->decode(i);
-						//					  *it = lmt->getDict()->decode(i);
-						IFVERBOSE(3){
-							std::cout << "tmp_word_vec i:" << i;
-							for (string_vec_t::const_iterator it2=tmp_word_vec.begin(); it2!=tmp_word_vec.end(); ++it2) {
-								std::cout << " |" << (*it2) << "|";
-							}
-							std::cout << std::endl;
-						}
-						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						if (context_model_normalization){
-							pr = pr - tot_pr;
-						}
-						code_to_prob_and_code_map.insert(make_pair(i,make_pair(pr,i)));
-						prob_and_code_to_prob_and_rank_map.insert(make_pair(make_pair(pr,i),make_pair(pr,default_rank)));
-						VERBOSE(3," i:" << i << " word_prob:" << pr << std::endl);
-					}
-					IFVERBOSE(3){
-						
-						for (int_to_double_and_int_map::const_iterator it3=code_to_prob_and_code_map.begin(); it3!=code_to_prob_and_code_map.end();++it3)
-						{
-							VERBOSE(3,"it3: word:" << it3->first << " pr:" << (it3->second).first << " word:" << (it3->second).second << std::endl);
-						}
-						
-						for (double_and_int_to_double_and_int_map::const_iterator it3=prob_and_code_to_prob_and_rank_map.begin(); it3!=prob_and_code_to_prob_and_rank_map.end();++it3)
-						{
-							VERBOSE(3,"it3: pr:" << (it3->first).first << " second:" << (it3->first).second << " norm_pr:" << (it3->second).first << " rank:" << (it3->second).second << std::endl);
-						}
-					}					
-					//set rank of word according to their prob
-					//note that prob are already sorted in the map in ascending order wrt to prob (and secondarily code)
-					int rank=0;
-					for (double_and_int_to_double_and_int_map::reverse_iterator it3=prob_and_code_to_prob_and_rank_map.rbegin(); it3!=prob_and_code_to_prob_and_rank_map.rend();++it3)
-					{
-						(it3->second).second = rank;
-						++rank;
-						IFVERBOSE(3){
-							if (rank < 10){
-								VERBOSE(3,"it3: pr:" << (it3->first).first << " code:" << (it3->first).second << " rank:" << (it3->second).second << std::endl);
-							}
-						}
-					 }
-
-
-					IFVERBOSE(3){
-						int i_tmp=0;
-						for (double_and_int_to_double_and_int_map::const_reverse_iterator it3=prob_and_code_to_prob_and_rank_map.rbegin(); it3!=prob_and_code_to_prob_and_rank_map.rend();++it3)
-						{
-							VERBOSE(3,"it3: pr:" << (it3->first).first << " code:" << (it3->first).second <<" rank:" << (it3->second).second << std::endl);
-							if (++i_tmp==10) break;
-						}
-					}
-					double_and_int_pair current_prob_and_code = (code_to_prob_and_code_map.find(current_code))->second;
-					int current_rank = ((prob_and_code_to_prob_and_rank_map.find(current_prob_and_code))->second).second;
-					VERBOSE(1," current_word:" << current_word << " current_code:" << current_code << " current_rank:" << current_rank << std::endl);
-					 
-					 */
 					
 					sent_tot_rank += current_rank;
 					tot_rank += current_rank;
-					/*
-					if (current_rank <= Rank_limit[0]){
-						++Rank_histogram[0];
-						VERBOSE(1,"HERE 0 current_rank:" << current_rank << " Rank_limit[0]:" << Rank_limit[0] << std::endl);
-					}
-					if (current_rank <= Rank_limit[1]){
-						++Rank_histogram[1]; ++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
-						VERBOSE(1,"HERE 1 current_rank:" << current_rank << " Rank_limit[1]:" << Rank_limit[1] << std::endl);
-					}else if (current_rank <= Rank_limit[2]){
-						++Rank_histogram[2]; ++Rank_histogram[3]; ++Rank_histogram[4];
-						VERBOSE(1,"HERE 2 current_rank:" << current_rank << " Rank_limit[2]:" << Rank_limit[2] << std::endl);
-					}else if (current_rank <= Rank_limit[3]){
-						++Rank_histogram[3]; ++Rank_histogram[4];
-						VERBOSE(1,"HERE 3 current_rank:" << current_rank << " Rank_limit[3]:" << Rank_limit[3] << std::endl);
-					}else if (current_rank <= Rank_limit[4]){
-						++Rank_histogram[4];
-						VERBOSE(1,"HERE 4 current_rank:" << current_rank << " Rank_limit[4]:" << Rank_limit[4] << std::endl);
-					}
-					*/
+					
 					if (debug>1){
 						//output format:
 						//word_pos:current_rank:max_rank
@@ -987,18 +1006,7 @@ int main(int argc, char **argv)
 		<< " avgRank=" << avgRank
 		<< " Noov=" << Noov
 		<< " OOVrate=" << (float)Noov/Nw * 100.0 << "%";
-		/*
-		std::cout << " Rank_[bst]=" << Rank_histogram[0];
-		std::cout << " Rank_[1]=" << Rank_histogram[1];
-		std::cout << " Rank_[2]=" << Rank_histogram[2];
-		std::cout << " Rank_[3]=" << Rank_histogram[3];
-		std::cout << " Rank_[4]=" << Rank_histogram[4];
-		std::cout << " Rank_[bst]=" << (float)Rank_histogram[0]/Nw * 100.0 << "%";
-		std::cout << " Rank_[1]=" << (float)Rank_histogram[1]/Nw * 100.0 << "%";
-		std::cout << " Rank_[2]=" << (float)Rank_histogram[2]/Nw * 100.0 << "%";
-		std::cout << " Rank_[3]=" << (float)Rank_histogram[3]/Nw * 100.0 << "%";
-		std::cout << " Rank_[4]=" << (float)Rank_histogram[4]/Nw * 100.0 << "%";
-		 */
+		
 		std::cout << std::endl;
 		std::cout.flush();
 		
