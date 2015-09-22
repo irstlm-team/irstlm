@@ -158,6 +158,20 @@ namespace irstlm {
 		double total_clprob(string_vec_t& text, topic_map_t& topic_weights);
 		double total_clprob(ngram& ng, topic_map_t& topic_weights);		
 		
+		
+		
+		virtual inline int get(ngram& ng) {
+			return m_lm->get(ng);
+		}
+		
+		virtual int get(ngram& ng,int n,int lev){
+			return m_lm->get(ng,n,lev);
+		}
+		
+		virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
+			return m_lm->succscan(h,ng,action,lev);
+		}
+		
 		int maxlevel() const {
 			return maxlev;
 		};
