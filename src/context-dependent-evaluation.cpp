@@ -559,7 +559,8 @@ int main(int argc, char **argv)
 					//variables for the computation of the mass probability related to the current word, i.e. the sum of the probs for all words associated with the current word
 					double current_tot_pr = pow(10.0,current_Pr);
 //					for (int j=0; j<current_dict->size(); ++j){
-					for (int j=1; j<current_dict->size(); ++j){
+					for (int j=1; j<current_dict->size(); ++j)
+					{
 						//loop over all words in the LM
 					  tmp_word_vec.at(current_pos) = current_dict->decode(j);
 						IFVERBOSE(3){
@@ -579,6 +580,8 @@ int main(int argc, char **argv)
 						}
 						VERBOSE(3,"current_Pr:" << current_Pr << " current_word:" << current_word << "| ===> code:" << j << " word:|" << tmp_word_vec.at(current_pos) << "| pr:" << pr << " versus best_code:" << best_code << " best_word:|" << current_dict->decode(best_code) << "| best_pr:" << best_pr << std::endl);
 					}
+					delete current_dict;
+					
 					current_tot_pr=log10(current_tot_pr);
 					
 					model_Pr = best_pr;
