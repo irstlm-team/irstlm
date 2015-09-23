@@ -435,17 +435,17 @@ int main(int argc, char **argv)
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
 					
 					current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-/*
-					double tot_pr = 0.0;
-					if (context_model_normalization){
-						tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
-					}
-*/
+					/*
+					 double tot_pr = 0.0;
+					 if (context_model_normalization){
+					 tot_pr = ((lmContextDependent*) lmt)->total_clprob(tmp_word_vec, apriori_topic_map);
+					 }
+					 */
 					
-//					string_vec_t::iterator it=tmp_word_vec.end()-1;
+					//					string_vec_t::iterator it=tmp_word_vec.end()-1;
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
-										
+					
 					/*
 					 //loop over all words in the LM
 					 dictionary* current_dict = lmt->getDict();
@@ -457,7 +457,7 @@ int main(int argc, char **argv)
 					current_dict->incflag(1);
 					
 					current_dict->encode(current_word.c_str());
-
+					
 					VERBOSE(2,"after current word current_dict->size:" << current_dict->size() << std::endl);
 					
 					//add words from the lexicon
@@ -545,10 +545,10 @@ int main(int argc, char **argv)
 					sent_current_dict_alternatives += current_dict->size();
 					current_dict_alternatives += current_dict->size();
 					
-					 VERBOSE(2,"current_dict->size:" << current_dict->size() << std::endl);
-					 for (int h=0;h<current_dict->size();++h){
-					 VERBOSE(2,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
-					 }
+					VERBOSE(2,"current_dict->size:" << current_dict->size() << std::endl);
+					for (int h=0;h<current_dict->size();++h){
+						VERBOSE(2,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
+					}
 					
 					//the first word in current_dict is always the current_word; hence we can skip it during the scan 
 					//variables for the computation of the oracle probability, i.e. the maximum prob
@@ -558,7 +558,7 @@ int main(int argc, char **argv)
 					int best_code = 0;
 					//variables for the computation of the mass probability related to the current word, i.e. the sum of the probs for all words associated with the current word
 					double current_tot_pr = pow(10.0,current_Pr);
-//					for (int j=0; j<current_dict->size(); ++j){
+					//					for (int j=0; j<current_dict->size(); ++j){
 					for (int j=1; j<current_dict->size(); ++j)
 					{
 						//loop over all words in the LM
@@ -580,20 +580,19 @@ int main(int argc, char **argv)
 						}
 						VERBOSE(3,"current_Pr:" << current_Pr << " current_word:" << current_word << "| ===> code:" << j << " word:|" << tmp_word_vec.at(current_pos) << "| pr:" << pr << " versus best_code:" << best_code << " best_word:|" << current_dict->decode(best_code) << "| best_pr:" << best_pr << std::endl);
 					}
-					delete current_dict;
 					
 					current_tot_pr=log10(current_tot_pr);
 					
 					model_Pr = best_pr;
 					VERBOSE(2,"model_best_code:" << best_code << " model_best_word:|" << current_dict->decode(best_code) << "| model_best_prob:" << pow(10.0,best_pr) << " current_tot_pr:" << current_tot_pr << std::endl);
-
+					
 					norm_oovpenalty = oovpenalty;
 					VERBOSE(2,"current_tot_pr:" << current_tot_pr << " oovpenalty:" << oovpenalty << " norm_oovpenalty:" << norm_oovpenalty << std::endl);	
-
+					
 					norm_Pr = current_Pr - current_tot_pr;
 					model_norm_Pr = model_Pr - current_tot_pr;
 					VERBOSE(1,"current_Pr:" << current_Pr << " norm_Pr:" << norm_Pr << " model_Pr:" << model_Pr << " model_norm_Pr:" << model_norm_Pr << " current_code:" << lmt->getDict()->encode(word_vec.at(i).c_str()) << " current_word:|" << word_vec.at(i) << "| model_best_code:" << best_code << " model_best_word:|" << current_dict->decode(best_code) << "|" << std::endl);
-
+					
 					model_norm_logPr+=model_norm_Pr;
 					sent_model_norm_logPr+=model_norm_Pr;
 					norm_logPr+=norm_Pr;
@@ -607,6 +606,7 @@ int main(int argc, char **argv)
 					sent_logPr+=current_Pr;
 					VERBOSE(2,"sent_model_logPr:" << sent_model_logPr << " model_logPr:" << model_logPr << std::endl);	
 					VERBOSE(2,"sent_logPr:" << sent_logPr << " current_Pr:" << current_Pr << std::endl);
+					delete current_dict;
 				}
 			}
 			
@@ -973,7 +973,6 @@ int main(int argc, char **argv)
 						
 						VERBOSE(3," current_pos:" << current_pos << " word:|" << tmp_word_vec.at(current_pos) << "| current_Pr:" << current_Pr << " pr:" << pr << " current_rank:" << current_rank <<std::endl);
 					}
-					delete current_dict;
 					
 					sent_tot_rank += current_rank;
 					tot_rank += current_rank;
@@ -983,6 +982,7 @@ int main(int argc, char **argv)
 						//word_pos:current_rank:max_rank
 						rank_outstr << " " << word_pos << ":" << current_rank << ":" << max_rank;
 					}
+					delete current_dict;
 				}
 			}
 			
