@@ -89,17 +89,12 @@ namespace irstlm{
 //extern int tracelevel;
 extern const int tracelevel;
 
-#define TRACE_ERR(str) { std::cerr << str; }
-#define VERBOSE(level,str) { if (tracelevel > level) { TRACE_ERR("DEBUG_LEVEL:" << level << "/" << tracelevel << " "); TRACE_ERR(str); } }
+#define IRSTLM_TRACE_ERR(str) do { std::cerr << str; } while (false)
+//#define IRSTLM_TRACE_ERR(str) { std::cerr << str; }
+
+#define VERBOSE(level,str) { if (tracelevel > level) { IRSTLM_TRACE_ERR("DEBUG_LEVEL:" << level << "/" << tracelevel << " "); IRSTLM_TRACE_ERR(str); } }
 #define IFVERBOSE(level) if (tracelevel > level)
 
-/*
-#define _DEBUG_LEVEL TRACE_LEVEL
-
-#define TRACE_ERR(str) { std::cerr << str; }
-#define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
-#define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
-*/
 
 void MY_ASSERT(bool x);
 
