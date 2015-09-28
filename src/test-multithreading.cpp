@@ -20,6 +20,7 @@
  
  ******************************************************************************/
 
+#define _NGRAM_PER_THREAD_ 100
 
 #include <iostream>
 #include <string>
@@ -52,33 +53,41 @@ struct task {      //basic task info to run task
 	int pos;
 };
 
-
-
 /********************************/
 using namespace std;
 using namespace irstlm;
 
-
-
-
-static void *clprob_helper(void *argv){
+/*
+ static void *clprob_helper(void *argv){
 	task t=*(task *)argv;
 	(t.out)->at(t.pos) = ((lmContainer*) t.ctx)->clprob((t.in)->at(t.pos));
-	/*
+	
+	IFVERBOSE(3){
 	 std::cout << "clprob_helper()" << std::endl;
 	 std::cout << "### (lmContainer*) t.ctx):|" << (void*)((lmContainer*) t.ctx) << "|" << std::endl;
 	 std::cout << "### t.in:|" << (void*) t.in << "|" << std::endl;
 	 std::cout << "### t.out:|" << (void*) t.out << "|" << std::endl;
 	 std::cout << "### ng:|" << (t.in)->at(t.pos) << "|" << std::endl;
 	 std::cout << "### Pr:|" << (t.out)->at(t.pos) << "|" << std::endl;
-	 */
+	}
 	
 	return NULL;
 };
+*/
 
 static void *clprob_array_helper(void *argv){
 	task_array t=*(task_array *)argv;
+	
+	IFVERBOSE(3){
+	std::cout << "clprob_helper()";
+	std::cout << " ### (lmContainer*) t.ctx):|" << (void*)((lmContainer*) t.ctx) << "|";
+	std::cout << " ### t.in:|" << (void*) t.in << "|";
+	std::cout << " ### t.out:|" << (void*) t.out << "|";
+	std::cout << " ### t.start_pos:|" << (int)  t.start_pos << "|";
+	std::cout << " ### t.end_pos:|" << (int) t.end_pos << "|" << std::endl;
+	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
+//		std::cout << "clprob_helper() i:|" << i << "|" << std::endl;
 		(t.out)->at(i) = ((lmContainer*) t.ctx)->clprob((t.in)->at(i));
 	}
 	
@@ -158,12 +167,6 @@ int main(int argc, char **argv)
 		
 		
 		ngram ng(lmt->getDict());
-		
-		ng.dict->incflag(1);
-		/*
-		 int bos=ng.dict->encode(ng.dict->BoS());
-		 int eos=ng.dict->encode(ng.dict->EoS());
-		 */
 		ng.dict->incflag(0);
 		
 		while(inptxt >> ng) {
@@ -182,53 +185,37 @@ int main(int argc, char **argv)
 			Pr = lmt->clprob(ngram_vec.at(i));
 			prob_vec.at(i) = Pr;
 		}
-		/*
-		 for (size_t i=0 ; i<ngram_vec_size; ++i){
-		 std::cout << "prob_vec[" << i << "]=" << prob_vec[i] << " ng:|" << ngram_vec.at(i) << "|" << std::endl;
-		 }
-		 */		
-		
-		
-    threadpool thpool=thpool_init(threads);
-		
-		/*
-    int numtasks=ngram_vec_size;
-    task *t=new task[numtasks];
-		for (size_t i=0 ; i<ngram_vec_size; ++i){
-			//prepare and assign tasks to threads
-			t[i].ctx=lmt;
-			t[i].in=&ngram_vec;
-			t[i].out=&thread_prob_vec;
-			t[i].pos=i;
-			//			std::cout << "creating thread_task .... lmt:" << (void*) lmt << " i:" << i << " ng:|" << ngram_vec.at(i) << "|" << std::endl;
-			thpool_add_work(thpool, &clprob_helper, (void *)&t[i]);
+		IFVERBOSE(1){
+			for (size_t i=0 ; i<ngram_vec_size; ++i){
+				std::cout << "prob_vec[" << i << "]=" << prob_vec[i] << " ng:|" << ngram_vec.at(i) << "|" << std::endl;
+			}
 		}
-		//join all threads
-		thpool_wait(thpool);
-		*/
 		
-//		int step=10;
-//    int numtasks=ceil(ngram_vec_size/step);
+		threadpool thpool=thpool_init(threads);
 		
-		int numtasks=threads * 10;
-		int step=ceil(ngram_vec_size/numtasks);
+		int step=_NGRAM_PER_THREAD_;
+		int numtasks=ceil((float)ngram_vec_size/step);
+		VERBOSE(2, "ngram_vec_size:" << ngram_vec_size  << " threads:" << threads << " numtasks: " << numtasks << " step:" << step << std::endl);
 		
-    task_array *t=new task_array[numtasks];
+		task_array *t=new task_array[numtasks];
 		int thread_i=0;
-		for (size_t j=0 ; j<ngram_vec_size; j+=step){
+		for (size_t j=0 ; j<ngram_vec_size ; j+=step){
 			//prepare and assign tasks to threads
+			
 			t[thread_i].ctx=lmt;
 			t[thread_i].in=&ngram_vec;
 			t[thread_i].out=&thread_prob_vec;
 			t[thread_i].start_pos=j;
 			t[thread_i].end_pos=(j+step<ngram_vec_size)?j+step:ngram_vec_size;
 			thpool_add_work(thpool, &clprob_array_helper, (void *)&t[thread_i]);
-			std::cout << "preparing thread " << thread_i << " start_pos:" << t[thread_i].start_pos<< " end_pos:" << t[thread_i].end_pos << std::endl;
+			
+			VERBOSE(2, "creating thread_task .... lmt:" << (void*) lmt << " thread " << thread_i << " start_pos:" << t[thread_i].start_pos<< " end_pos:" << t[thread_i].end_pos << std::endl);
+			
 			++thread_i;
 		}
-  	std::cout << "ngram_vec_size:" << ngram_vec_size  << " threads:" << threads << " numtasks: " << numtasks << " step:" << step << " thread_i:" << thread_i << std::endl;
 		//join all threads
 		thpool_wait(thpool);
+		
 		
 		
 		int errors=0;
@@ -240,7 +227,6 @@ int main(int argc, char **argv)
 			}
 		}
 		
-  	std::cout << "There are " << errors << " errors in " << ngram_vec_size << " ngram prob queries with " << threads << " threads" << std::endl;
-		
+  	std::cout << "There are " << errors << " errors in " << (int) ngram_vec_size << " ngram prob queries with " << (int) threads << " threads" << std::endl;
 	}
 }
