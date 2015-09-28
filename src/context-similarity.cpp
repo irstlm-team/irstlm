@@ -500,10 +500,11 @@ namespace irstlm {
 				ret_log10_pr = log10(ret_pr);
 			}
 			else{
-				//this word sequence is not reliable enough, because occurrences of base_den_ng are too little
-				//return an uninforming score (log(1.0) = 0.0)
-				ret_log10_pr = 0.0;
-				VERBOSE(3, "CURRENT ret_pr:" << 1.0 << std::endl);
+				//this word sequence is not reliable enough, because occurrences of ng are too little
+				//return an uninforming score (log10(1/K) = -log10(K))
+				ret_log10_pr = -log(m_topic_size)/M_LN10;
+//				ret_log10_pr = 0.0;
+				VERBOSE(3, "CURRENT ret_pr:" << pow(10.0,ret_log10_pr) << std::endl);
 			}
 			
 		}
