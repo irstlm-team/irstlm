@@ -63,8 +63,8 @@ libirstlm_la_SOURCES = \
   cplsa.cpp \
   cswam.cpp \
   doc.cpp \
-  src/lmContextDependent.cpp \
-  context-similarity
+  lmContextDependent.cpp \
+  context-similarity.cpp
 
 CLEANFILES = $(BUILT_SOURCES)
 
