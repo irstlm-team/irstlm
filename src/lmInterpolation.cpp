@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include "lmContainer.h"
@@ -31,11 +32,6 @@
 
 using namespace std;
 	
-inline void error(const char* message)
-{
-  std::cerr << message << "\n";
-  throw std::runtime_error(message);
-}
 
 namespace irstlm {
 lmInterpolation::lmInterpolation(float nlf, float dlf)
@@ -69,11 +65,21 @@ void lmInterpolation::load(const std::string &filename,int mmap)
   inp.getline(line,MAX_LINE,'\n');
   tokenN = parseWords(line,words,LMINTERPOLATION_MAX_TOKEN);
 	
-  if (tokenN != 2 || ((strcmp(words[0],"LMINTERPOLATION") != 0) && (strcmp(words[0],"lminterpolation")!=0)))
-    error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1\nweight_of_LM_2 filename_of_LM_2");
-	
+  if (tokenN != 2 || ((strcmp(words[0],"LMINTERPOLATION") != 0) && (strcmp(words[0],"lminterpolation")!=0))){
+		std::stringstream ss_msg;
+		ss_msg << "ERROR: wrong header format of configuration file" << std::endl;
+		ss_msg << "correct format: LMINTERPOLATION number_of_models" << std::endl;
+		ss_msg << "weight_of_LM_1 filename_of_LM_1" << std::endl;
+		ss_msg << "weight_of_LM_2 filename_of_LM_2" << std::endl;
+		exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+	}
   m_number_lm = atoi(words[1]);
 	
+	/*
+	 Although the weights can assume any real value from a computational point of view,
+	 the model assumes that the weights must be larger than or equal to 0.0.
+	 Moreover, if the weight is 0.0, the probability of the corresponding LM is not computed for improve efficiency
+	*/
   m_weight.resize(m_number_lm);
   m_file.resize(m_number_lm);
   m_isinverted.resize(m_number_lm);
@@ -87,7 +93,12 @@ void lmInterpolation::load(const std::string &filename,int mmap)
     tokenN = parseWords(line,words,3);
 		
     if(tokenN < 2 || tokenN >3) {
-      error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1\nweight_of_LM_2 filename_of_LM_2");
+			std::stringstream ss_msg;
+			ss_msg << "ERROR: wrong header format of configuration file" << std::endl;
+			ss_msg << "correct format: LMINTERPOLATION number_of_models" << std::endl;
+			ss_msg << "weight_of_LM_1 filename_of_LM_1" << std::endl;
+			ss_msg << "weight_of_LM_2 filename_of_LM_2" << std::endl;
+			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
     }
 		
 		//check whether the (textual) LM has to be loaded as inverted
@@ -98,7 +109,14 @@ void lmInterpolation::load(const std::string &filename,int mmap)
     }
     VERBOSE(2,"i:" << i << " m_isinverted[i]:" << m_isinverted[i] << endl);
 		
+		//The model requires that the weights must be larger than or equal to 0.0.
     m_weight[i] = (float) atof(words[0]);
+    if(m_weight[i] < 0.0) {
+			std::stringstream ss_msg;
+			ss_msg << "ERROR: weight for the LM " << i << " is negative" << std::endl;
+			exit_error(IRSTLM_ERROR_MODEL,ss_msg.str());
+    }
+		
     m_file[i] = words[1];
     VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_file:"<< words[1] << std::endl;);
 		
@@ -162,43 +180,44 @@ double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,
   bool actualextendible=false;
 	
   for (size_t i=0; i<m_lm.size(); i++) {
-		
-    ngram _ng(m_lm[i]->getDict());
-    _ng.trans(ng);
-    _logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);
-		
-    /*
-		 cerr.precision(10);
-		 std::cerr << " LM " << i << " weight:" << m_weight[i] << std::endl;
-		 std::cerr << " LM " << i << " log10 logpr:" << _logpr<< std::endl;
-		 std::cerr << " LM " << i << " pr:" << pow(10.0,_logpr) << std::endl;
-		 std::cerr << " _statesize:" << _statesize << std::endl;
-		 std::cerr << " _bow:" << _bow << std::endl;
-		 std::cerr << " _bol:" << _bol << std::endl;
-		 */
-		
-    //TO CHECK the following claims
-    //What is the statesize of a LM interpolation? The largest _statesize among the submodels
-    //What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
-    //What is the bol of a LM interpolation? The smallest _bol among the submodels
-    //What is the bow of a LM interpolation? The weighted sum of the bow of the submodels
-    //What is the prob of a LM interpolation? The weighted sum of the prob of the submodels
-    //What is the extendible flag of a LM interpolation? true if the extendible flag is one for any LM
-		
-    pr+=m_weight[i]*pow(10.0,_logpr);
-    actualbow+=m_weight[i]*pow(10.0,_bow);
-		
-    if(_statesize > actualstatesize || i == 0) {
-      actualmaxsuffptr = _maxsuffptr;
-      actualstatesize = _statesize;
-    }
-    if (_bol < actualbol) {
-      actualbol=_bol; //backoff limit of LM[i]
-    }
-    if (_extendible) {
-      actualextendible=true; //set extendible flag to true if the ngram is extendible for any LM
-    }
-  }
+		if (m_weight[i] > 0.0){//the probability of the corresponding LM is computed only if the weight is larger than 0.0, otherwise it is skipped for efficiency
+			ngram _ng(m_lm[i]->getDict());
+			_ng.trans(ng);
+			_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);
+			
+			/*
+			 cerr.precision(10);
+			 std::cerr << " LM " << i << " weight:" << m_weight[i] << std::endl;
+			 std::cerr << " LM " << i << " log10 logpr:" << _logpr<< std::endl;
+			 std::cerr << " LM " << i << " pr:" << pow(10.0,_logpr) << std::endl;
+			 std::cerr << " _statesize:" << _statesize << std::endl;
+			 std::cerr << " _bow:" << _bow << std::endl;
+			 std::cerr << " _bol:" << _bol << std::endl;
+			 */
+			
+			//TO CHECK the following claims
+			//What is the statesize of a LM interpolation? The largest _statesize among the submodels
+			//What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
+			//What is the bol of a LM interpolation? The smallest _bol among the submodels
+			//What is the bow of a LM interpolation? The weighted sum of the bow of the submodels
+			//What is the prob of a LM interpolation? The weighted sum of the prob of the submodels
+			//What is the extendible flag of a LM interpolation? true if the extendible flag is one for any LM
+			
+			pr+=m_weight[i]*pow(10.0,_logpr);
+			actualbow+=m_weight[i]*pow(10.0,_bow);
+			
+			if(_statesize > actualstatesize || i == 0) {
+				actualmaxsuffptr = _maxsuffptr;
+				actualstatesize = _statesize;
+			}
+			if (_bol < actualbol) {
+				actualbol=_bol; //backoff limit of LM[i]
+			}
+			if (_extendible) {
+				actualextendible=true; //set extendible flag to true if the ngram is extendible for any LM
+			}
+		}
+	}
   if (bol) *bol=actualbol;
   if (bow) *bow=log(actualbow);
   if (maxsuffptr) *maxsuffptr=actualmaxsuffptr;
