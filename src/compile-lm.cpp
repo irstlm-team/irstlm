@@ -291,12 +291,9 @@ int main(int argc, char **argv)
       int sent_Nbo=0, sent_Nw=0,sent_Noov=0;
       double sent_logPr=0,sent_PP=0,sent_PPwp=0;
 
-
-      ng.dict->incflag(1);
-      int bos=ng.dict->encode(ng.dict->BoS());
-      int eos=ng.dict->encode(ng.dict->EoS());
-      ng.dict->incflag(0);
-
+      int bos=lmt->addWord(lmt->getDict()->BoS());
+      int eos=lmt->addWord(lmt->getDict()->EoS());
+			
       double bow;
       int bol=0;
       char *msp;

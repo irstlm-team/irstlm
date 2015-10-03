@@ -189,7 +189,13 @@ public:
   inline static bool is_cache_enabled(){
     return is_lmt_cache_enabled() && is_ps_cache_enabled();
   }
-
+	
+	virtual int addWord(const char *w){
+		getDict()->incflag(1);
+		int c=getDict()->encode(w);
+		getDict()->incflag(0);
+		return c;
+	}
 };
 
 }//namespace irstlm
