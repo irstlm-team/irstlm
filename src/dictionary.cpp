@@ -33,7 +33,11 @@
 #include "dictionary.h"
 #include "mfstream.h"
 
+#include <pthread.h>
+pthread_mutex_t dictionary_mut1;
+
 using namespace std;
+
 
 dictionary::dictionary(char *filename,int size, float lf)
 {
@@ -279,15 +283,17 @@ void dictionary::load(char* filename)
 	
 	cerr << "dict:";
 	
+//	pthread_mutex_init(&dictionary_mut1, NULL);
+
+//	pthread_mutex_lock(&dictionary_mut1);
+	
 	inp.getline(header,100);
-	if (strncmp(header,"DICT",4)==0)
-		freqflag=1;
+	if (strncmp(header,"DICT",4)==0){ freqflag=1; }
 	else if (strncmp(header,"dict",4)!=0) {
 		std::stringstream ss_msg;
 		ss_msg << "dictionary file " << filename << " has a wrong header";
 		exit_error(IRSTLM_ERROR_DATA, ss_msg.str());
 	}
-	
 	
 	while (getword(inp,buffer)) {
 		
@@ -317,16 +323,21 @@ void dictionary::load(char* filename)
 		
 	}
 	
+//	pthread_mutex_unlock(&dictionary_mut1);
+	
 	inp.close();
 }
 
 
 void dictionary::load(std::istream& inp)
 {
-	
 	char buffer[MAX_WORD];
 	char *addr;
 	int size;
+	
+//	pthread_mutex_init(&dictionary_mut1, NULL);
+	
+//	pthread_mutex_lock(&dictionary_mut1);
 	
 	inp >> size;
 	
@@ -354,6 +365,8 @@ void dictionary::load(std::istream& inp)
 		if (++n==lim) grow();
 	}
 	inp.getline(buffer,MAX_WORD-1);
+	
+//	pthread_mutex_unlock(&dictionary_mut1);
 }
 
 
@@ -378,7 +391,11 @@ int cmpdictentry(const void *a,const void *b)
 
 
 dictionary::dictionary(dictionary* d,bool prune, int prunethresh)
-{
+{	
+//	pthread_mutex_init(&dictionary_mut1, NULL);
+	
+//	pthread_mutex_lock(&dictionary_mut1);
+	
 	MY_ASSERT(d!=NULL);
 	//transfer values
 	n=0;        //total entries
@@ -409,10 +426,14 @@ dictionary::dictionary(dictionary* d,bool prune, int prunethresh)
 			N+=tb[n].freq;
 			n++;
 		}			
+	
+//	pthread_mutex_unlock(&dictionary_mut1);
 };
 
 void dictionary::sort()
 {
+//	pthread_mutex_lock(&dictionary_mut1);
+	
 	if (htb != NULL )  delete htb;
 	
 	htb = new HASHTABLE_t((int) (lim/load_factor));
@@ -427,15 +448,18 @@ void dictionary::sort()
 		tb[i].code=i;
 		//always insert without checking whether the word is already in
 		htb->insert((char*)&tb[i].word);
-	};
+	}
 	
+//	pthread_mutex_unlock(&dictionary_mut1);
 }
 
 dictionary::~dictionary()
 {
+//	pthread_mutex_lock(&dictionary_mut1);
 	delete htb;
 	delete st;
 	delete [] tb;
+//	pthread_mutex_unlock(&dictionary_mut1);
 }
 
 void dictionary::stat() const
@@ -450,6 +474,7 @@ void dictionary::stat() const
 
 void dictionary::grow()
 {
+//	pthread_mutex_lock(&dictionary_mut1);
 	delete htb;
 	
 	cerr << "+\b";
@@ -471,6 +496,7 @@ void dictionary::grow()
 	for (int i=lim; i<newlim; i++) tb[i].freq=0;
 	
 	lim=newlim;
+//	pthread_mutex_unlock(&dictionary_mut1);
 }
 
 void dictionary::save(char *filename,int freqflag)
@@ -514,14 +540,15 @@ int dictionary::encode(const char *w)
 		cerr << "0";
 		w=OOV();
 	}
-	
-	
+
 	dict_entry* ptr;
 	
-	if ((ptr=(dict_entry *)htb->find((char *)&w))!=NULL)
+	if ((ptr=(dict_entry *)htb->find((char *)&w))!=NULL){
 		return ptr->code;
-	else {
+	} else {
 		if (!ifl) { //do not extend dictionary
+			
+//			pthread_mutex_lock(&dictionary_mut1);
 			if (oov_code==-1) { //did not use OOV yet
 				cerr << "starting to use OOV words [" << w << "]\n";
 				tb[n].word=st->push(OOV());
@@ -541,15 +568,16 @@ int dictionary::encode(const char *w)
 			if (++n==lim) grow();
 			return n-1;
 		}
+//		pthread_mutex_unlock(&dictionary_mut1);
 	}
 }
 
 
 const char *dictionary::decode(int c) const
 {
-	if (c>=0 && c < n)
+	if (c>=0 && c < n){
 		return tb[c].word;
-	else {
+	} else {
 		cerr << "decode: code out of boundary\n";
 		return OOV();
 	}
