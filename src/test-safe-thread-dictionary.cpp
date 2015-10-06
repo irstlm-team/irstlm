@@ -203,14 +203,13 @@ int main(int argc, char **argv)
 //			std::cout << "thread_code_vec[" << (int) i << "]=" << (int) thread_code_vec[i] << std::endl;
 			int thread_c=thread_code_vec[i];
 			int c=code_vec[i];
-			if (thread_dict->freq(thread_c) != thread_dict->freq(thread_c)){
+			if (thread_dict->freq(thread_c) != dict->freq(c)){
 				std::cout << "word:|" << word_vec.at(i) << "|";
 				std::cout << " thread_c=" << thread_c << " thread_dict->freq(thread_c)=" << thread_dict->freq(thread_c);
-				std::cout << " vs thread_c=" << thread_c << " c=" << c << " dict->freq(c)=" << dict->freq(c);
+				std::cout << " vs c=" << c << " dict->freq(c)=" << dict->freq(c);
 				std::cout << " ERROR" << std::endl;
 				++errors;
-			}
-		}
+			}		}
 		
   	std::cout << "There are " << (int)  errors << " errors in " << (int) word_vec_size << " ngram prob queries with " << (int) threads << " threads" << std::endl;
 	}
