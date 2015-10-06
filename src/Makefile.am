@@ -69,8 +69,7 @@ libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB)
 LDADD = -lirstlm -lpthread
 DEPENDENCIES = libirstlm.la
 
-bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa test-multithreading
-
+bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa
 dict_SOURCES = dict.cpp
 dict_DEPENDENCIES = $(DEPENDENCIES)
 ngt_SOURCES = ngt.cpp
@@ -95,5 +94,3 @@ verify_caching_SOURCES = verify-caching.cpp
 verify_caching_DEPENDENCIES = $(DEPENDENCIES)
 cswa_SOURCES = cswa.cpp
 cswa_DEPENDENCIES = $(DEPENDENCIES)
-test_multithreading_SOURCES = test-multithreading.cpp
-test_multithreading_DEPENDENCIES = $(DEPENDENCIES)

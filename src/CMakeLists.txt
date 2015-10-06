@@ -60,7 +60,7 @@ SET( LIB_IRSTLM_SRC
 ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})
 LINK_DIRECTORIES (${LIBRARY_OUTPUT_PATH})
 
-FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching test-multithreading)
+FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching)
 
 ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
 TARGET_LINK_LIBRARIES (${CMD} irstlm -lm -lz -lpthread)
