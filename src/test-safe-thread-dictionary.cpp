@@ -61,8 +61,8 @@ static void *encode_array_helper(void *argv){
 	std::cout << " ### t.end_pos:|" << (int) t.end_pos << "|" << std::endl;
 	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
-//		std::cout << "encode_array_helper() i:|" << i << "|" << std::endl;
 		(t.out)->at(i) = ((dictionary*) t.ctx)->encode((t.in)->at(i).c_str());
+		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " (t.out)->at(i):|" << (t.out)->at(i) << "|" << std::endl);
 	}
 	
 	return NULL;
@@ -90,6 +90,8 @@ void usage(const char *msg = 0)
 
 int main(int argc, char **argv)
 {	
+	std::cout.setf(ios::dec);
+	std::cerr.setf(ios::dec);
 	bool help=false;
 	char *testfile=NULL;
 	int threads=1;
@@ -120,8 +122,6 @@ int main(int argc, char **argv)
 		exit_error(IRSTLM_NO_ERROR);
 	}
 	
-	dictionary* dict = new dictionary((char*) NULL);
-	dict->incflag(1);
 	
   if (testfile != NULL) {
 		
@@ -130,6 +130,8 @@ int main(int argc, char **argv)
 		std::vector<std::string> word_vec;
 		std::vector<int> code_vec;
 		std::vector<int> thread_code_vec;
+		std::vector<int> freq_vec;
+		std::vector<int> thread_freq_vec;
 		
 		std::string str;
 		while(inptxt >> str) {
@@ -141,19 +143,26 @@ int main(int argc, char **argv)
 		code_vec.resize(word_vec_size);
 		thread_code_vec.resize(word_vec_size);
 		
+		dictionary* dict = new dictionary((char*) NULL);
+		dict->incflag(1);
 		int c = -1000;
 		for (size_t i=0 ; i<word_vec_size; ++i){
 			c = dict->encode(word_vec.at(i).c_str());
 			code_vec.at(i) = c;
 		}
-		IFVERBOSE(1){
+/*
+ IFVERBOSE(1){
 			for (size_t i=0 ; i<word_vec_size; ++i){
 				std::cout << "code_vec[" << i << "]=" << code_vec[i] << " str:|" << word_vec.at(i) << "|" << std::endl;
 			}
 		}
 		
+*/
 		threadpool thpool=thpool_init(threads);
 		
+		
+		dictionary* thread_dict = new dictionary((char*) NULL);
+		thread_dict->incflag(1);
 		int step=_NGRAM_PER_THREAD_;
 		int numtasks=ceil((float)word_vec_size/step);
 		VERBOSE(2, "word_vec_size:" << word_vec_size  << " threads:" << threads << " numtasks: " << numtasks << " step:" << step << std::endl);
@@ -163,14 +172,14 @@ int main(int argc, char **argv)
 		for (size_t j=0 ; j<word_vec_size ; j+=step){
 			//prepare and assign tasks to threads
 			
-			t[thread_i].ctx=dict;
+			t[thread_i].ctx=thread_dict;
 			t[thread_i].in=&word_vec;
 			t[thread_i].out=&thread_code_vec;
 			t[thread_i].start_pos=j;
 			t[thread_i].end_pos=(j+step<word_vec_size)?j+step:word_vec_size;
 			thpool_add_work(thpool, &encode_array_helper, (void *)&t[thread_i]);
 			
-			VERBOSE(2, "creating thread_task .... dict:" << (void*) dict << " thread " << thread_i << " start_pos:" << t[thread_i].start_pos<< " end_pos:" << t[thread_i].end_pos << std::endl);
+			VERBOSE(2, "creating thread_task .... dict:|" << (void*) dict << "| thread " << thread_i << " start_pos:" << t[thread_i].start_pos<< " end_pos:" << t[thread_i].end_pos << " in thread:|" << pthread_self()<< "|" << std::endl);
 			
 			++thread_i;
 		}
@@ -181,10 +190,23 @@ int main(int argc, char **argv)
 		std::cout.setf(_S_dec);
 		
 		int errors=0;
+		if (thread_dict->size() != dict->size()){
+			std::cout << "thread_dict->size():" << thread_dict->size();
+			std::cout << " vs dict->size():" << dict->size();
+			std::cout << " ERROR" << std::endl;
+		}else{
+		std::cout << "thread_dict->size():" << thread_dict->size();
+		std::cout << " vs dict->size():" << dict->size();
+		std::cout << " OK" << std::endl;
+		}
 		for (size_t i=0 ; i<word_vec_size; ++i){
 //			std::cout << "thread_code_vec[" << (int) i << "]=" << (int) thread_code_vec[i] << std::endl;
-			if (thread_code_vec[i] != code_vec[i]){
-				std::cout << "thread_code_vec[" << i << "]=" << (int) thread_code_vec[i];
+			int thread_c=thread_code_vec[i];
+			int c=code_vec[i];
+			if (thread_dict->freq(thread_c) != thread_dict->freq(thread_c)){
+				std::cout << "word:|" << word_vec.at(i) << "|";
+				std::cout << " thread_c=" << thread_c << " thread_dict->freq(thread_c)=" << thread_dict->freq(thread_c);
+				std::cout << " vs thread_c=" << thread_c << " c=" << c << " dict->freq(c)=" << dict->freq(c);
 				std::cout << " ERROR" << std::endl;
 				++errors;
 			}
