@@ -76,21 +76,15 @@ namespace irstlm{
 	void* reallocf(void *ptr, size_t size);
 }
 
-//extern int tracelevel;
-extern const int tracelevel;
+#ifdef TRACE_LEVEL
+const int tracelevel=TRACE_LEVEL;
+#else
+const int tracelevel=0;
+#endif
 
 #define TRACE_ERR(str) { std::cerr << str; }
 #define VERBOSE(level,str) { if (tracelevel > level) { TRACE_ERR("DEBUG_LEVEL:" << level << "/" << tracelevel << " "); TRACE_ERR(str); } }
 #define IFVERBOSE(level) if (tracelevel > level)
-
-/*
-#define _DEBUG_LEVEL TRACE_LEVEL
-
-#define TRACE_ERR(str) { std::cerr << str; }
-#define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
-#define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
-*/
-
 void MY_ASSERT(bool x);
 
 #endif

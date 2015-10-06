@@ -338,18 +338,6 @@ void MY_ASSERT(bool x) { UNUSED(x); }
 #endif
 
 
-/** trace macros and functions**/
-/** verbose macros and functions**/
-
-#ifdef TRACE_LEVEL
-//int tracelevel=TRACE_LEVEL;
-const int tracelevel=TRACE_LEVEL;
-#else
-//int tracelevel=0;
-const int tracelevel=0;
-#endif
-
-
 namespace irstlm {
 	void* reallocf(void *ptr, size_t size){
 		void *p=realloc(ptr,size);
