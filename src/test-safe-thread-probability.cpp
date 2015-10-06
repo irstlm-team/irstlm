@@ -54,7 +54,7 @@ static void *clprob_array_helper(void *argv){
 	task_array t=*(task_array *)argv;
 	
 	IFVERBOSE(3){
-	std::cout << "clprob_helper()";
+	std::cout << "clprob_array_helper()";
 	std::cout << " ### (lmContainer*) t.ctx):|" << (void*)((lmContainer*) t.ctx) << "|";
 	std::cout << " ### t.in:|" << (void*) t.in << "|";
 	std::cout << " ### t.out:|" << (void*) t.out << "|";
@@ -62,7 +62,7 @@ static void *clprob_array_helper(void *argv){
 	std::cout << " ### t.end_pos:|" << (int) t.end_pos << "|" << std::endl;
 	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
-//		std::cout << "clprob_helper() i:|" << i << "|" << std::endl;
+//		std::cout << "clprob_array_helper() i:|" << i << "|" << std::endl;
 		(t.out)->at(i) = ((lmContainer*) t.ctx)->clprob((t.in)->at(i));
 	}
 	
