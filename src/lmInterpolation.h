@@ -114,7 +114,7 @@ public:
   }
 
   inline virtual void dictionary_incflag(const bool flag) {
-    dict->incflag(flag);
+		dict->incflag(flag);
   };
 
   inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
@@ -124,6 +124,19 @@ public:
     }
     return true;
   }
+	
+	virtual int addWord(const char *w){
+		for (int i=0; i<m_number_lm; i++) {
+			m_lm[i]->getDict()->incflag(1);
+			m_lm[i]->getDict()->encode(w);
+			m_lm[i]->getDict()->incflag(0);
+		}
+		getDict()->incflag(1);
+		int c=getDict()->encode(w);
+		getDict()->incflag(0);
+		return c;
+	}
+	
 };
 }//namespace irstlm
 
