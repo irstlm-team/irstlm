@@ -62,7 +62,8 @@ static void *encode_array_helper(void *argv){
 	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
 		(t.out)->at(i) = ((dictionary*) t.ctx)->encode((t.in)->at(i).c_str());
-		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " (t.out)->at(i):|" << (t.out)->at(i) << "|" << std::endl);
+		((dictionary*) t.ctx)->incfreq((t.out)->at(i),1);
+		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " code:" << (int) (t.out)->at(i) << " freq:|" << ((dictionary*) t.ctx)->freq((t.out)->at(i)) << "|" << std::endl);
 	}
 	
 	return NULL;
@@ -148,7 +149,9 @@ int main(int argc, char **argv)
 		int c = -1000;
 		for (size_t i=0 ; i<word_vec_size; ++i){
 			c = dict->encode(word_vec.at(i).c_str());
+			dict->incfreq(c,1);
 			code_vec.at(i) = c;
+			VERBOSE(2, "word:|" << word_vec.at(i) << "| i:" << i << " dict->size():" << dict->size() << " c:" << c << " dict->freq(c):" << dict->freq(c) << std::endl);
 		}
 /*
  IFVERBOSE(1){
@@ -195,9 +198,9 @@ int main(int argc, char **argv)
 			std::cout << " vs dict->size():" << dict->size();
 			std::cout << " ERROR" << std::endl;
 		}else{
-		std::cout << "thread_dict->size():" << thread_dict->size();
-		std::cout << " vs dict->size():" << dict->size();
-		std::cout << " OK" << std::endl;
+			std::cout << "thread_dict->size():" << thread_dict->size();
+			std::cout << " vs dict->size():" << dict->size();
+			std::cout << " OK" << std::endl;
 		}
 		for (size_t i=0 ; i<word_vec_size; ++i){
 //			std::cout << "thread_code_vec[" << (int) i << "]=" << (int) thread_code_vec[i] << std::endl;
@@ -209,7 +212,8 @@ int main(int argc, char **argv)
 				std::cout << " vs c=" << c << " dict->freq(c)=" << dict->freq(c);
 				std::cout << " ERROR" << std::endl;
 				++errors;
-			}		}
+			}
+			}
 		
   	std::cout << "There are " << (int)  errors << " errors in " << (int) word_vec_size << " ngram prob queries with " << (int) threads << " threads" << std::endl;
 	}
