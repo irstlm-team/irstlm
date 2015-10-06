@@ -20,7 +20,7 @@
  
  ******************************************************************************/
 
-#define _NGRAM_PER_THREAD_ 100
+#define _WORD_PER_THREAD_ 100
 
 #include <iostream>
 #include <string>
@@ -35,6 +35,10 @@
 #include "thpool.h"
 
 #include <math.h>  //for ceil function
+
+#include <pthread.h>
+
+pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 struct task_array {      //basic task info to run task
 	void *ctx;
@@ -61,9 +65,11 @@ static void *encode_array_helper(void *argv){
 	std::cout << " ### t.end_pos:|" << (int) t.end_pos << "|" << std::endl;
 	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
+		pthread_rwlock_wrlock(&rwlock);
 		(t.out)->at(i) = ((dictionary*) t.ctx)->encode((t.in)->at(i).c_str());
 		((dictionary*) t.ctx)->incfreq((t.out)->at(i),1);
 		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " code:" << (int) (t.out)->at(i) << " freq:|" << ((dictionary*) t.ctx)->freq((t.out)->at(i)) << "|" << std::endl);
+		pthread_rwlock_rdlock(&rwlock);
 	}
 	
 	return NULL;
@@ -166,7 +172,7 @@ int main(int argc, char **argv)
 		
 		dictionary* thread_dict = new dictionary((char*) NULL);
 		thread_dict->incflag(1);
-		int step=_NGRAM_PER_THREAD_;
+		int step=_WORD_PER_THREAD_;
 		int numtasks=ceil((float)word_vec_size/step);
 		VERBOSE(2, "word_vec_size:" << word_vec_size  << " threads:" << threads << " numtasks: " << numtasks << " step:" << step << std::endl);
 		
@@ -198,9 +204,11 @@ int main(int argc, char **argv)
 			std::cout << " vs dict->size():" << dict->size();
 			std::cout << " ERROR" << std::endl;
 		}else{
-			std::cout << "thread_dict->size():" << thread_dict->size();
-			std::cout << " vs dict->size():" << dict->size();
-			std::cout << " OK" << std::endl;
+			IFVERBOSE(2){
+				std::cout << "thread_dict->size():" << thread_dict->size();
+				std::cout << " vs dict->size():" << dict->size();
+				std::cout << " OK" << std::endl;
+			}
 		}
 		for (size_t i=0 ; i<word_vec_size; ++i){
 //			std::cout << "thread_code_vec[" << (int) i << "]=" << (int) thread_code_vec[i] << std::endl;
@@ -215,6 +223,6 @@ int main(int argc, char **argv)
 			}
 			}
 		
-  	std::cout << "There are " << (int)  errors << " errors in " << (int) word_vec_size << " ngram prob queries with " << (int) threads << " threads" << std::endl;
+  	std::cout << "There are " << (int)  errors << " errors in " << (int) word_vec_size << " word entries with " << (int) threads << " threads" << std::endl;
 	}
 }
