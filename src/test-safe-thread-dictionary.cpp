@@ -68,8 +68,8 @@ static void *encode_array_helper(void *argv){
 		pthread_rwlock_wrlock(&rwlock);
 		(t.out)->at(i) = ((dictionary*) t.ctx)->encode((t.in)->at(i).c_str());
 		((dictionary*) t.ctx)->incfreq((t.out)->at(i),1);
-		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " code:" << (int) (t.out)->at(i) << " freq:|" << ((dictionary*) t.ctx)->freq((t.out)->at(i)) << "|" << std::endl);
-		pthread_rwlock_rdlock(&rwlock);
+		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " code:" << (int) (t.out)->at(i) << " freq:|" << (int) ((dictionary*) t.ctx)->freq((t.out)->at(i)) << "|" << std::endl);
+		pthread_rwlock_unlock(&rwlock);
 	}
 	
 	return NULL;
@@ -96,9 +96,7 @@ void usage(const char *msg = 0)
 }
 
 int main(int argc, char **argv)
-{	
-	std::cout.setf(ios::dec);
-	std::cerr.setf(ios::dec);
+{
 	bool help=false;
 	char *testfile=NULL;
 	int threads=1;
@@ -116,8 +114,7 @@ int main(int argc, char **argv)
 	
   GetParams(&argc, &argv, (char*) NULL);
 	
-	VERBOSE(1, "threads:" << threads << std::endl);
-	VERBOSE(1, "testfile:" << testfile << std::endl);
+	VERBOSE(1, "threads:" << threads << " testfile:" << testfile << std::endl);
 	
 	if (threads == 0){
 		threads = 1;
@@ -137,14 +134,14 @@ int main(int argc, char **argv)
 		std::vector<std::string> word_vec;
 		std::vector<int> code_vec;
 		std::vector<int> thread_code_vec;
-		std::vector<int> freq_vec;
-		std::vector<int> thread_freq_vec;
 		
+		//step 1: reading input data
 		std::string str;
 		while(inptxt >> str) {
 			word_vec.push_back(str);
 		}
 		
+		//step 2: generating results with one single thread
 		size_t word_vec_size = word_vec.size();
 		
 		code_vec.resize(word_vec_size);
@@ -157,18 +154,12 @@ int main(int argc, char **argv)
 			c = dict->encode(word_vec.at(i).c_str());
 			dict->incfreq(c,1);
 			code_vec.at(i) = c;
-			VERBOSE(2, "word:|" << word_vec.at(i) << "| i:" << i << " dict->size():" << dict->size() << " c:" << c << " dict->freq(c):" << dict->freq(c) << std::endl);
 		}
-/*
- IFVERBOSE(1){
-			for (size_t i=0 ; i<word_vec_size; ++i){
-				std::cout << "code_vec[" << i << "]=" << code_vec[i] << " str:|" << word_vec.at(i) << "|" << std::endl;
-			}
-		}
+		dict->incflag(0);
 		
-*/
+		
+		//step 3: creating threads and generating results with multi-threading
 		threadpool thpool=thpool_init(threads);
-		
 		
 		dictionary* thread_dict = new dictionary((char*) NULL);
 		thread_dict->incflag(1);
@@ -194,24 +185,18 @@ int main(int argc, char **argv)
 		}
 		//join all threads
 		thpool_wait(thpool);
+		thread_dict->incflag(0);
 		
 		
-		std::cout.setf(_S_dec);
-		
+		//step 4: checking correctness of results
 		int errors=0;
 		if (thread_dict->size() != dict->size()){
 			std::cout << "thread_dict->size():" << thread_dict->size();
 			std::cout << " vs dict->size():" << dict->size();
 			std::cout << " ERROR" << std::endl;
-		}else{
-			IFVERBOSE(2){
-				std::cout << "thread_dict->size():" << thread_dict->size();
-				std::cout << " vs dict->size():" << dict->size();
-				std::cout << " OK" << std::endl;
-			}
 		}
+		
 		for (size_t i=0 ; i<word_vec_size; ++i){
-//			std::cout << "thread_code_vec[" << (int) i << "]=" << (int) thread_code_vec[i] << std::endl;
 			int thread_c=thread_code_vec[i];
 			int c=code_vec[i];
 			if (thread_dict->freq(thread_c) != dict->freq(c)){
@@ -221,7 +206,7 @@ int main(int argc, char **argv)
 				std::cout << " ERROR" << std::endl;
 				++errors;
 			}
-			}
+		}
 		
   	std::cout << "There are " << (int)  errors << " errors in " << (int) word_vec_size << " word entries with " << (int) threads << " threads" << std::endl;
 	}

@@ -110,9 +110,7 @@ int main(int argc, char **argv)
 	
   GetParams(&argc, &argv, (char*) NULL);
 	
-	VERBOSE(1, "threads:" << threads << std::endl);
-	VERBOSE(1, "lmfile:" << lmfile << std::endl);
-	VERBOSE(1, "testfile:" << testfile << std::endl);
+	VERBOSE(1, "threads:" << threads << " lmfile:" << lmfile << " testfile:" << testfile << std::endl);
 	
 	if (threads == 0){
 		threads = 1;
@@ -128,8 +126,8 @@ int main(int argc, char **argv)
 		exit_error(IRSTLM_ERROR_DATA,"The LM file (-lm) is not specified");
 	}
 	
+	//loading training data
   lmContainer* lmt = lmContainer::CreateLanguageModel(lmfile);
-	
   lmt->load(lmfile);
 	
   if (testfile != NULL) {
@@ -140,7 +138,7 @@ int main(int argc, char **argv)
 		std::vector<double> prob_vec;
 		std::vector<double> thread_prob_vec;
 		
-		
+		//step 1: reading input data
 		ngram ng(lmt->getDict());
 		ng.dict->incflag(0);
 		
@@ -150,6 +148,7 @@ int main(int argc, char **argv)
 			}
 		}
 		
+		//step 2: generating results with one single thread
 		size_t ngram_vec_size = ngram_vec.size();
 		
 		prob_vec.resize(ngram_vec_size);
@@ -166,6 +165,7 @@ int main(int argc, char **argv)
 			}
 		}
 		
+		//step 3: creating threads and generating results with multi-threading
 		threadpool thpool=thpool_init(threads);
 		
 		int step=_NGRAM_PER_THREAD_;
@@ -190,18 +190,20 @@ int main(int argc, char **argv)
 		}
 		//join all threads
 		thpool_wait(thpool);
-		
-		
-		
+
+
+		//step 4: checking correctness of results
 		int errors=0;
 		for (size_t i=0 ; i<ngram_vec_size; ++i){
 			if (thread_prob_vec[i] != prob_vec[i]){
-				std::cout << "thread_prob_vec[" << i << "]=" << thread_prob_vec[i];
+				std::cout << "i:" << i;
+				std::cout << " thread_prob_vec[" << i << "]=" << thread_prob_vec[i];
+				std::cout << " vs prob_vec[" << i << "]=" << prob_vec[i];
 				std::cout << " ERROR" << std::endl;
 				++errors;
 			}
 		}
 		
-  	std::cout << "There are " << errors << " errors in " << (int) ngram_vec_size << " ngram prob queries with " << (int) threads << " threads" << std::endl;
+  	std::cout << "There are " << errors << " errors in " << ngram_vec_size << " ngram prob queries with " << threads << " threads" << std::endl;
 	}
 }
