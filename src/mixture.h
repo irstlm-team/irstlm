@@ -56,11 +56,11 @@ public:
     return dict->dub();
   }
 	
-  inline int dub(int value) {
+  inline void dub(int value) {
     for (int i=0; i<numslm; i++) {
       sublm[i]->dub(value);
     }
-    return dict->dub(value);
+    dict->dub(value);
   }
 
   void settying(int a,int b) {
