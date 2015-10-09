@@ -69,7 +69,7 @@ libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB)
 LDADD = -lirstlm -lpthread
 DEPENDENCIES = libirstlm.la
 
-bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa test-safe-thread-probability test-safe-thread-dictionary
+bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa test-safe-thread-probability test-safe-thread-dictionary test-safe-thread-dictionary-augment
 
 dict_SOURCES = dict.cpp
 dict_DEPENDENCIES = $(DEPENDENCIES)
@@ -99,3 +99,6 @@ test_safe_thread_probability_SOURCES = test-safe-thread-probability.cpp
 test_safe_thread_probability_DEPENDENCIES = $(DEPENDENCIES)
 test_safe_thread_dictionary_SOURCES = test-safe-thread-dictionary.cpp
 test_safe_thread_dictionary_DEPENDENCIES = $(DEPENDENCIES)
+test_safe_thread_dictionary_augment_SOURCES = test-safe-thread-dictionary-augment.cpp
+test_safe_thread_dictionary_augment_DEPENDENCIES = $(DEPENDENCIES)
+

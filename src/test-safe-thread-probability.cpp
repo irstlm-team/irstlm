@@ -136,7 +136,6 @@ int main(int argc, char **argv)
 		
 		std::vector<ngram> ngram_vec;
 		std::vector<double> prob_vec;
-		std::vector<double> thread_prob_vec;
 		
 		//step 1: reading input data
 		ngram ng(lmt->getDict());
@@ -152,12 +151,10 @@ int main(int argc, char **argv)
 		size_t ngram_vec_size = ngram_vec.size();
 		
 		prob_vec.resize(ngram_vec_size);
-		thread_prob_vec.resize(ngram_vec_size);
 		
 		double Pr = -1000;
 		for (size_t i=0 ; i<ngram_vec_size; ++i){
-			Pr = lmt->clprob(ngram_vec.at(i));
-			prob_vec.at(i) = Pr;
+			prob_vec.at(i) = lmt->clprob(ngram_vec.at(i));
 		}
 		IFVERBOSE(1){
 			for (size_t i=0 ; i<ngram_vec_size; ++i){
@@ -168,6 +165,8 @@ int main(int argc, char **argv)
 		//step 3: creating threads and generating results with multi-threading
 		threadpool thpool=thpool_init(threads);
 		
+		std::vector<double> thread_prob_vec;
+		thread_prob_vec.resize(ngram_vec_size);
 		int step=_NGRAM_PER_THREAD_;
 		int numtasks=ceil((float)ngram_vec_size/step);
 		VERBOSE(2, "ngram_vec_size:" << ngram_vec_size  << " threads:" << threads << " numtasks: " << numtasks << " step:" << step << std::endl);

@@ -38,8 +38,6 @@
 
 #include <pthread.h>
 
-pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
-
 struct task_array {      //basic task info to run task
 	void *ctx;
 	std::vector<std::string> *in;
@@ -65,11 +63,9 @@ static void *encode_array_helper(void *argv){
 	std::cout << " ### t.end_pos:|" << (int) t.end_pos << "|" << std::endl;
 	}
 	for (int i=t.start_pos; i<t.end_pos; ++i){
-		pthread_rwlock_wrlock(&rwlock);
 		(t.out)->at(i) = ((dictionary*) t.ctx)->encode((t.in)->at(i).c_str());
 		((dictionary*) t.ctx)->incfreq((t.out)->at(i),1);
 		VERBOSE(2, "encode_array_helper() in thread:|" << pthread_self()<< "| i:" << (int) i << " code:" << (int) (t.out)->at(i) << " freq:|" << (int) ((dictionary*) t.ctx)->freq((t.out)->at(i)) << "|" << std::endl);
-		pthread_rwlock_unlock(&rwlock);
 	}
 	
 	return NULL;
@@ -133,7 +129,6 @@ int main(int argc, char **argv)
 		
 		std::vector<std::string> word_vec;
 		std::vector<int> code_vec;
-		std::vector<int> thread_code_vec;
 		
 		//step 1: reading input data
 		std::string str;
@@ -145,7 +140,6 @@ int main(int argc, char **argv)
 		size_t word_vec_size = word_vec.size();
 		
 		code_vec.resize(word_vec_size);
-		thread_code_vec.resize(word_vec_size);
 		
 		dictionary* dict = new dictionary((char*) NULL);
 		dict->incflag(1);
@@ -160,6 +154,9 @@ int main(int argc, char **argv)
 		
 		//step 3: creating threads and generating results with multi-threading
 		threadpool thpool=thpool_init(threads);
+		
+		std::vector<int> thread_code_vec;
+		thread_code_vec.resize(word_vec_size);
 		
 		dictionary* thread_dict = new dictionary((char*) NULL);
 		thread_dict->incflag(1);
