@@ -28,6 +28,8 @@
 #include <cstring>
 #include <iostream>
 
+#include <pthread.h>
+
 
 using namespace std;
 
@@ -82,6 +84,8 @@ class strstack;
 
 class dictionary
 {
+	pthread_rwlock_t dictionary_rwlock;  //read-and-write lock for implementing thread-safety
+	
 	strstack   *st;  //!< stack of strings
 	dict_entry *tb;  //!< entry table
 	HASHTABLE_t  *htb;  //!< hash table
@@ -106,8 +110,10 @@ public:
 		return dubv;
 	}
 	
-	inline int dub(int value) {
-		return dubv=value;
+	inline void dub(int value) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
+		dubv=value;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
 	inline static const char *OOV() {
@@ -130,16 +136,20 @@ public:
 		return (char*) EOD_;
 	}
 	
-	inline int oovcode(int v=-1) {
-		return oov_code=(v>=0?v:oov_code);
+	inline int oovcode() {
+		return oov_code;
 	}
 	
-	inline int incflag() const {
-		return ifl;
+	inline void oovcode(int v) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
+		oov_code=v;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
-	inline int incflag(int v) {
-		return ifl=v;
+	inline void incflag(int v) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
+		ifl=v;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
 	int getword(fstream& inp , char* buffer) const;
@@ -153,8 +163,6 @@ public:
 	inline void genoovcode() {
 		int c=encode(OOV());
 		std::cerr << "OOV code is "<< c << std::endl;
-		cerr << "OOV code is "<< c << std::endl;
-		oovcode(c);
 	}
 	
 	inline void genBoScode() {
@@ -167,37 +175,46 @@ public:
 		std::cerr << "EoS code is "<< c << std::endl;
 	}
 	
-	inline long long setoovrate(double oovrate) {
+	inline void setoovrate(double oovrate) {
 		encode(OOV()); //be sure OOV code exists
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		long long oovfreq=(long long)(oovrate * totfreq());
 		std::cerr << "setting OOV rate to: " << oovrate << " -- freq= " << oovfreq << std::endl;
-		return freq(oovcode(),oovfreq);
-	}
+		pthread_rwlock_unlock(&dictionary_rwlock);	}
 	
-	inline long long incfreq(int code,long long value) {
+	inline void incfreq(int code,long long value) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		N+=value;
-		return tb[code].freq+=value;
+		tb[code].freq+=value;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
-	inline long long multfreq(int code,double value) {
+	inline void multfreq(int code,double value) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		N+=(long long)(value * tb[code].freq)-tb[code].freq;
-		return tb[code].freq=(long long)(value * tb[code].freq);
+		tb[code].freq=(long long)(value * tb[code].freq);
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
-	inline long long freq(int code,long long value=-1) {
-		if (value>=0) {
-			N+=value-tb[code].freq;
-			tb[code].freq=value;
-		}
+	inline long long freq(int code) {
 		return tb[code].freq;
+	}
+	
+	inline void freq(int code,long long value) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
+		N+=value-tb[code].freq;
+		tb[code].freq=value;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
 	inline long long totfreq() const {
 		return N;
 	}
 	
-	inline float set_load_factor(float value) {
-		return load_factor=value;
+	inline void set_load_factor(float value) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
+		load_factor=value;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
 	void grow();
@@ -215,7 +232,7 @@ public:
 	
 	void augment(dictionary *d);
 	
-	int size() const {
+	inline int size() const {
 		return n;
 	}
 	int getcode(const char *w);
@@ -228,8 +245,10 @@ public:
 	void print_curve_oov(int curvesize, const char *filename, int listflag=0);
 	
 	void cleanfreq() {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		for (int i=0; i<n; ++i){ tb[i].freq=0; };
 		N=0;
+		pthread_rwlock_unlock(&dictionary_rwlock);
 	}
 	
 	inline dict_entry* scan(HT_ACTION action) {

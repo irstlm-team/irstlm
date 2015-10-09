@@ -33,14 +33,12 @@
 #include "dictionary.h"
 #include "mfstream.h"
 
-#include <pthread.h>
-pthread_mutex_t dictionary_mut1;
-
 using namespace std;
-
 
 dictionary::dictionary(char *filename,int size, float lf)
 {
+	pthread_rwlock_init(&dictionary_rwlock, 0);
+	
 	if (lf<=0.0) lf=DICTIONARY_LOAD_FACTOR;
 	load_factor=lf;
 	
@@ -81,7 +79,6 @@ dictionary::dictionary(char *filename,int size, float lf)
 		generate(filename);
 	
 	cerr << "loaded \n";
-	
 }
 
 
@@ -110,7 +107,6 @@ int dictionary::getword(fstream& inp , char* buffer) const
 
 void dictionary::generate(char *filename,bool header)
 {
-	
 	char buffer[MAX_WORD];
 	int counter=0;
 	
@@ -124,9 +120,9 @@ void dictionary::generate(char *filename,bool header)
 	
 	cerr << "dict:";
 	
-	ifl=1;
-
-        //skip header
+	incflag(1);
+	
+  //skip header
 	if (header) inp.getline(buffer,MAX_WORD);
 	
 	while (getword(inp,buffer)) {
@@ -136,18 +132,18 @@ void dictionary::generate(char *filename,bool header)
 		if (!(++counter % 1000000)) cerr << ".";
 	}
 	
-	ifl=0;
+	incflag(0);
 	
 	cerr << "\n";
 	
 	inp.close();
-	
 }
 
 void dictionary::augment(dictionary *d)
 {
 	incflag(1);
-	for (int i=0; i<d->n; i++)
+	int current_n=d->n;
+	for (int i=0; i<current_n; i++)
 		encode(d->decode(i));
 	incflag(0);
 	encode(OOV());
@@ -157,59 +153,59 @@ void dictionary::augment(dictionary *d)
 // print_curve: show statistics on dictionary growth
 void dictionary::print_curve_growth(int curvesize) const
 {
-        int* curve = new int[curvesize];
-        for (int i=0; i<curvesize; i++) curve[i]=0;
-
-        // filling the curve
-        for (int i=0; i<n; i++) {
-                if(tb[i].freq > curvesize-1)
-                        curve[curvesize-1]++;
-                else
-                        curve[tb[i].freq-1]++;
-        }
-
-        //cumulating results
-        for (int i=curvesize-2; i>=0; i--) {
-                curve[i] = curve[i] + curve[i+1];
-        }
-
-        cout.setf(ios::fixed);
-        cout << "Dict size: " << n << "\n";
-        cout << "**************** DICTIONARY GROWTH CURVE ****************\n";
-        cout << "Freq\tEntries\tPercent";
-        cout << "\n";
-
-        for (int i=0; i<curvesize; i++) {
-                cout << ">" << i << "\t" << curve[i] << "\t" << setprecision(2) << (float)curve[i]/n * 100.0 << "%";
-                cout << "\n";
-        }
-        cout << "*********************************************************\n";
-        delete []curve;
+	int* curve = new int[curvesize];
+	for (int i=0; i<curvesize; i++) curve[i]=0;
+	
+	// filling the curve
+	for (int i=0; i<n; i++) {
+		if(tb[i].freq > curvesize-1)
+			curve[curvesize-1]++;
+		else
+			curve[tb[i].freq-1]++;
+	}
+	
+	//cumulating results
+	for (int i=curvesize-2; i>=0; i--) {
+		curve[i] = curve[i] + curve[i+1];
+	}
+	
+	cout.setf(ios::fixed);
+	cout << "Dict size: " << n << "\n";
+	cout << "**************** DICTIONARY GROWTH CURVE ****************\n";
+	cout << "Freq\tEntries\tPercent";
+	cout << "\n";
+	
+	for (int i=0; i<curvesize; i++) {
+		cout << ">" << i << "\t" << curve[i] << "\t" << setprecision(2) << (float)curve[i]/n * 100.0 << "%";
+		cout << "\n";
+	}
+	cout << "*********************************************************\n";
+	delete []curve;
 }
 
 // print_curve_oov: show OOV amount and OOV rates computed on test corpus
 void dictionary::print_curve_oov(int curvesize, const char *filename, int listflag)
 {
-    int *OOVchart=new int[curvesize];
+	int *OOVchart=new int[curvesize];
 	int NwTest;
-
-        test(OOVchart, &NwTest, curvesize, filename, listflag);
-
+	
+	test(OOVchart, &NwTest, curvesize, filename, listflag);
+	
 	cout.setf(ios::fixed);
-        cout << "Dict size: " << n << "\n";
-        cout << "Words of test: " << NwTest << "\n";
-        cout << "**************** OOV RATE STATISTICS ****************\n";
-        cout << "Freq\tOOV_Entries\tOOV_Rate";
-        cout << "\n";
-
-        for (int i=0; i<curvesize; i++) {
-
-                // display OOV iamount and OOV rates on test
-                cout << "<" << i+1 << "\t" << OOVchart[i] << "\t" << setprecision(2) << (float)OOVchart[i]/NwTest * 100.0 << "%";
-                cout << "\n";
-        }
-        cout << "*********************************************************\n";
-        delete []OOVchart;
+	cout << "Dict size: " << n << "\n";
+	cout << "Words of test: " << NwTest << "\n";
+	cout << "**************** OOV RATE STATISTICS ****************\n";
+	cout << "Freq\tOOV_Entries\tOOV_Rate";
+	cout << "\n";
+	
+	for (int i=0; i<curvesize; i++) {
+		
+		// display OOV iamount and OOV rates on test
+		cout << "<" << i+1 << "\t" << OOVchart[i] << "\t" << setprecision(2) << (float)OOVchart[i]/NwTest * 100.0 << "%";
+		cout << "\n";
+	}
+	cout << "*********************************************************\n";
+	delete []OOVchart;
 }
 
 //
@@ -217,53 +213,53 @@ void dictionary::print_curve_oov(int curvesize, const char *filename, int listfl
 //
 void dictionary::test(int* OOVchart, int* NwTest, int curvesize, const char *filename, int listflag)
 {
-        MY_ASSERT(OOVchart!=NULL);
-
-        int m_NwTest=0;
-        for (int j=0; j<curvesize; j++) OOVchart[j]=0;
-        char buffer[MAX_WORD];
-
-        const char* bos = BoS();
-
-        mfstream inp(filename,ios::in);
-
-        if (!inp) {
-                std::stringstream ss_msg;
-                ss_msg << "cannot open " << filename << "\n";
-                exit_error(IRSTLM_ERROR_IO, ss_msg.str());
-        }
-        cerr << "test:";
-
-        int k = 0;
-        while (getword(inp,buffer)) {
-
-                // skip 'beginning of sentence' symbol
-                if (strcmp(buffer,bos)==0)
-                        continue;
-
-                int freq = 0;
-                int wCode = getcode(buffer);
-                if(wCode!=-1) freq = tb[wCode].freq;
-
-                if(freq==0) {
-                        OOVchart[0]++;
-                        if(listflag) {
-                                cerr << "<OOV>" << buffer << "</OOV>\n";
-                        }
-                } else {
-                        if(freq < curvesize) OOVchart[freq]++;
-                }
-                m_NwTest++;
-                if (!(++k % 1000000)) cerr << ".";
-        }
-        cerr << "\n";
-        inp.close();
-
-        // cumulating results
-        for (int i=1; i<curvesize; i++){
-                OOVchart[i] = OOVchart[i] + OOVchart[i-1];
-        }
-        *NwTest=m_NwTest;
+	MY_ASSERT(OOVchart!=NULL);
+	
+	int m_NwTest=0;
+	for (int j=0; j<curvesize; j++) OOVchart[j]=0;
+	char buffer[MAX_WORD];
+	
+	const char* bos = BoS();
+	
+	mfstream inp(filename,ios::in);
+	
+	if (!inp) {
+		std::stringstream ss_msg;
+		ss_msg << "cannot open " << filename << "\n";
+		exit_error(IRSTLM_ERROR_IO, ss_msg.str());
+	}
+	cerr << "test:";
+	
+	int k = 0;
+	while (getword(inp,buffer)) {
+		
+		// skip 'beginning of sentence' symbol
+		if (strcmp(buffer,bos)==0)
+			continue;
+		
+		int freq = 0;
+		int wCode = getcode(buffer);
+		if(wCode!=-1) freq = tb[wCode].freq;
+		
+		if(freq==0) {
+			OOVchart[0]++;
+			if(listflag) {
+				cerr << "<OOV>" << buffer << "</OOV>\n";
+			}
+		} else {
+			if(freq < curvesize) OOVchart[freq]++;
+		}
+		m_NwTest++;
+		if (!(++k % 1000000)) cerr << ".";
+	}
+	cerr << "\n";
+	inp.close();
+	
+	// cumulating results
+	for (int i=1; i<curvesize; i++){
+		OOVchart[i] = OOVchart[i] + OOVchart[i-1];
+	}
+	*NwTest=m_NwTest;
 }
 
 void dictionary::load(char* filename)
@@ -283,12 +279,10 @@ void dictionary::load(char* filename)
 	
 	cerr << "dict:";
 	
-//	pthread_mutex_init(&dictionary_mut1, NULL);
-
-//	pthread_mutex_lock(&dictionary_mut1);
-	
 	inp.getline(header,100);
-	if (strncmp(header,"DICT",4)==0){ freqflag=1; }
+	if (strncmp(header,"DICT",4)==0){
+		freqflag=1; 
+	}
 	else if (strncmp(header,"dict",4)!=0) {
 		std::stringstream ss_msg;
 		ss_msg << "dictionary file " << filename << " has a wrong header";
@@ -296,14 +290,10 @@ void dictionary::load(char* filename)
 	}
 	
 	while (getword(inp,buffer)) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		
 		tb[n].word=st->push(buffer);
 		tb[n].code=n;
-		
-		if (freqflag)
-			inp >> tb[n].freq;
-		else
-			tb[n].freq=0;
 		
 		//always insert without checking whether the word is already in
 		if ((addr=htb->insert((char*)&tb[n].word))) {
@@ -315,15 +305,23 @@ void dictionary::load(char* filename)
 			}
 		}
 		
-		N+=tb[n].freq;
 		
-		if (strcmp(buffer,OOV())==0) oov_code=n;
+		if (freqflag){
+			inp >> tb[n].freq;
+			N+=tb[n].freq;
+		}
+		else{
+			tb[n].freq=0;
+		}
 		
-		if (++n==lim) grow();
+		if (strcmp(buffer,OOV())==0)
+			oov_code=n;
+		
+		++n;
+		pthread_rwlock_unlock(&dictionary_rwlock);
+		if (n==lim) grow();
 		
 	}
-	
-//	pthread_mutex_unlock(&dictionary_mut1);
 	
 	inp.close();
 }
@@ -331,17 +329,15 @@ void dictionary::load(char* filename)
 
 void dictionary::load(std::istream& inp)
 {
+	pthread_rwlock_wrlock(&dictionary_rwlock);
 	char buffer[MAX_WORD];
 	char *addr;
 	int size;
 	
-//	pthread_mutex_init(&dictionary_mut1, NULL);
-	
-//	pthread_mutex_lock(&dictionary_mut1);
-	
 	inp >> size;
 	
 	for (int i=0; i<size; i++) {
+		pthread_rwlock_wrlock(&dictionary_rwlock);
 		
 		inp >> setw(MAX_WORD) >> buffer;
 		
@@ -362,11 +358,11 @@ void dictionary::load(std::istream& inp)
 		if (strcmp(tb[n].word,OOV())==0)
 			oov_code=n;
 		
-		if (++n==lim) grow();
+		++n;
+		pthread_rwlock_unlock(&dictionary_rwlock);
+		if (n==lim) grow();
 	}
 	inp.getline(buffer,MAX_WORD-1);
-	
-//	pthread_mutex_unlock(&dictionary_mut1);
 }
 
 
@@ -392,10 +388,9 @@ int cmpdictentry(const void *a,const void *b)
 
 dictionary::dictionary(dictionary* d,bool prune, int prunethresh)
 {	
-//	pthread_mutex_init(&dictionary_mut1, NULL);
+	pthread_rwlock_init(&dictionary_rwlock, 0);
 	
-//	pthread_mutex_lock(&dictionary_mut1);
-	
+	pthread_rwlock_wrlock(&dictionary_rwlock);
 	MY_ASSERT(d!=NULL);
 	//transfer values
 	n=0;        //total entries
@@ -425,15 +420,13 @@ dictionary::dictionary(dictionary* d,bool prune, int prunethresh)
 			
 			N+=tb[n].freq;
 			n++;
-		}			
-	
-//	pthread_mutex_unlock(&dictionary_mut1);
+		}
+	pthread_rwlock_unlock(&dictionary_rwlock);
 };
 
 void dictionary::sort()
 {
-//	pthread_mutex_lock(&dictionary_mut1);
-	
+	pthread_rwlock_wrlock(&dictionary_rwlock);
 	if (htb != NULL )  delete htb;
 	
 	htb = new HASHTABLE_t((int) (lim/load_factor));
@@ -449,17 +442,15 @@ void dictionary::sort()
 		//always insert without checking whether the word is already in
 		htb->insert((char*)&tb[i].word);
 	}
-	
-//	pthread_mutex_unlock(&dictionary_mut1);
+	pthread_rwlock_unlock(&dictionary_rwlock);
 }
 
 dictionary::~dictionary()
 {
-//	pthread_mutex_lock(&dictionary_mut1);
 	delete htb;
 	delete st;
 	delete [] tb;
-//	pthread_mutex_unlock(&dictionary_mut1);
+	pthread_rwlock_destroy(&dictionary_rwlock);
 }
 
 void dictionary::stat() const
@@ -474,7 +465,7 @@ void dictionary::stat() const
 
 void dictionary::grow()
 {
-//	pthread_mutex_lock(&dictionary_mut1);
+	pthread_rwlock_wrlock(&dictionary_rwlock);
 	delete htb;
 	
 	cerr << "+\b";
@@ -496,7 +487,7 @@ void dictionary::grow()
 	for (int i=lim; i<newlim; i++) tb[i].freq=0;
 	
 	lim=newlim;
-//	pthread_mutex_unlock(&dictionary_mut1);
+	pthread_rwlock_unlock(&dictionary_rwlock);
 }
 
 void dictionary::save(char *filename,int freqflag)
@@ -528,7 +519,9 @@ void dictionary::save(char *filename,int freqflag)
 
 int dictionary::getcode(const char *w)
 {
+	pthread_rwlock_rdlock(&dictionary_rwlock);
 	dict_entry* ptr=(dict_entry *)htb->find((char *)&w);
+	pthread_rwlock_unlock(&dictionary_rwlock);
 	if (ptr==NULL) return -1;
 	return ptr->code;
 }
@@ -540,42 +533,52 @@ int dictionary::encode(const char *w)
 		cerr << "0";
 		w=OOV();
 	}
-
-	dict_entry* ptr;
 	
-	if ((ptr=(dict_entry *)htb->find((char *)&w))!=NULL){
+	
+	pthread_rwlock_rdlock(&dictionary_rwlock);
+	dict_entry* ptr=(dict_entry *)htb->find((char *)&w);
+	pthread_rwlock_unlock(&dictionary_rwlock);
+	
+	if (ptr!=NULL){
 		return ptr->code;
 	} else {
+		int c=0;
 		if (!ifl) { //do not extend dictionary
 			
-//			pthread_mutex_lock(&dictionary_mut1);
+			//			pthread_mutex_lock(&dictionary_mut1);
 			if (oov_code==-1) { //did not use OOV yet
+				pthread_rwlock_wrlock(&dictionary_rwlock);
 				cerr << "starting to use OOV words [" << w << "]\n";
 				tb[n].word=st->push(OOV());
 				htb->insert((char  *)&tb[n].word);
 				tb[n].code=n;
 				tb[n].freq=0;
 				oov_code=n;
-				if (++n==lim) grow();
+				++n;
+				pthread_rwlock_unlock(&dictionary_rwlock);
+				if (n>=lim) grow();
 			}
-			
-			return encode(OOV());
+			c=oov_code;
 		} else { //extend dictionary
+			pthread_rwlock_wrlock(&dictionary_rwlock);
 			tb[n].word=st->push((char *)w);
 			htb->insert((char*)&tb[n].word);
 			tb[n].code=n;
 			tb[n].freq=0;
-			if (++n==lim) grow();
-			return n-1;
+			++n;
+			c=n-1;
+			pthread_rwlock_unlock(&dictionary_rwlock);
+			if (n>=lim) grow();
 		}
-//		pthread_mutex_unlock(&dictionary_mut1);
+		return c;
 	}
 }
 
 
 const char *dictionary::decode(int c) const
 {
-	if (c>=0 && c < n){
+	int current_n=n;
+	if (c>=0 && c<current_n){
 		return tb[c].word;
 	} else {
 		cerr << "decode: code out of boundary\n";
