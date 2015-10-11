@@ -442,7 +442,9 @@ namespace irstlm {
 #else
 		UNUSED(text);
 		UNUSED(topic_weights);
-		exit(IRSTLM_CMD_ERROR_GENERIC);
+		VERBOSE(3, "This solution type is not defined; forced to default solution 1" << std::endl);
+		return context_similarity_solution1(text, topic_weights);
+//		exit(IRSTLM_CMD_ERROR_GENERIC);
 #endif
 	}
 	
