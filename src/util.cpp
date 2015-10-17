@@ -228,7 +228,7 @@ int parseWords(char *sentence, const char **words, int max)
 	}
 	
 	if (i < max) {
-		words[i] = 0;
+		words[i] = NULL;
 	}
 	
 	return i;
