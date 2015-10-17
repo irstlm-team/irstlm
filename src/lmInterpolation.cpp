@@ -41,6 +41,7 @@ namespace irstlm {
 		order=0;
 		memmap=0;
 		isInverted=false;
+		m_name_flag=false;
 	}
 	
 	void lmInterpolation::load(const std::string &filename,int mmap)
@@ -60,13 +61,40 @@ namespace irstlm {
 		
 		char line[MAX_LINE];
 		const char* words[LMINTERPOLATION_MAX_TOKEN];
-		int tokenN;
+		size_t tokenN;
 		inp.getline(line,MAX_LINE,'\n');
 		tokenN = parseWords(line,words,LMINTERPOLATION_MAX_TOKEN);
+		bool error=false;
 		
-		if (tokenN != 2 || ((strcmp(words[0],"LMINTERPOLATION") != 0) && (strcmp(words[0],"lminterpolation")!=0))){
-			exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format: LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1\nweight_of_LM_2 filename_of_LM_2");
+		if ((tokenN<2) || (tokenN>3)){
+			error=true;	
+		}else if ((strcmp(words[0],"LMINTERPOLATION") != 0) && (strcmp(words[0],"lminterpolation")!=0)) {
+			error=true;
+		}else if ((tokenN==3) && ((strcmp(words[2],"MAP") != 0) && (strcmp(words[2],"map") != 0))){
+			error=true;
 		}
+		
+		if (error){
+			exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format:\nLMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2\nor\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2");
+			
+		}
+		
+		size_t idx_weight, idx_file, idx_name, idx_inverted, idx_size;
+		if (tokenN==2){
+			m_name_flag=false;
+			idx_weight=0;
+			idx_file=1;
+			idx_inverted=2;
+			idx_size=3;
+		}else{
+			m_name_flag=true;
+			idx_weight=0;
+			idx_name=1;
+			idx_file=2;
+			idx_inverted=3;
+			idx_size=4;
+		}
+		
 		m_number_lm = atoi(words[1]);
 		
 		m_weight.resize(m_number_lm);
@@ -79,22 +107,23 @@ namespace irstlm {
 		dict->incflag(1);
 		for (int i=0; i<m_number_lm; i++) {
 			inp.getline(line,BUFSIZ,'\n');
-			tokenN = parseWords(line,words,3);
+			tokenN = parseWords(line,words,idx_size);
 			
-			if(tokenN < 2 || tokenN >3) {
-				exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format: LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1\nweight_of_LM_2 filename_of_LM_2");
+			if(tokenN < idx_file || tokenN > idx_inverted) {
+				exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format:\nLMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2\nor\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2");
 			}
 			
 			//check whether the (textual) LM has to be loaded as inverted
 			m_isinverted[i] = false;
-			if(tokenN == 3) {
-				if (strcmp(words[2],"inverted") == 0)
+			if(tokenN == idx_size) {
+				if (strcmp(words[idx_inverted],"inverted") == 0)
 					m_isinverted[i] = true;
 			}
 			VERBOSE(2,"i:" << i << " m_isinverted[i]:" << m_isinverted[i] << endl);
 			
-			m_weight[i] = (float) atof(words[0]);
-			m_file[i] = words[1];
+			m_weight[i] = atof(words[idx_weight]);
+			m_name[words[idx_name]] = i;
+			m_file[i] = words[idx_file];
 			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_file:"<< words[1] << std::endl;);
 			
 			m_lm[i] = load_lm(i,memmap,ngramcache_load_factor,dictionary_load_factor);
@@ -138,6 +167,98 @@ namespace irstlm {
 		
 		lmt->init_caches(lmt->maxlevel());
 		return lmt;
+	}
+	
+	
+	void lmInterpolation::set_weight(const lm_map_t& map, std::vector<double>& weight){
+		for (lm_map_t::const_iterator it=map.begin(); it!=map.end();++it){
+			weight[m_name[it->first]] = it->second;
+		}
+	}
+	
+	//return log10 prob of an ngram
+	double lmInterpolation::clprob(ngram ng, lm_map_t& lm_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		
+		double pr=0.0;
+		double _logpr;
+		
+		char* _maxsuffptr=NULL,*actualmaxsuffptr=NULL;
+		unsigned int _statesize=0,actualstatesize=0;
+		int _bol=0,actualbol=MAX_NGRAM;
+		double _bow=0.0,actualbow=0.0; 
+		bool _extendible=false;
+		bool actualextendible=false;
+
+		std::vector<double> weight(m_number_lm);
+		set_weight(lm_weights,weight);
+		
+		for (size_t i=0; i<m_lm.size(); i++) {
+			
+			if (weight[i]>0.0){
+				ngram _ng(m_lm[i]->getDict());
+				_ng.trans(ng);
+				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);
+				
+				IFVERBOSE(3){
+					//cerr.precision(10);
+					VERBOSE(3," LM " << i << " weight:" << weight[i] << std::endl);
+					VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
+					VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
+					VERBOSE(3," _statesize:" << _statesize << std::endl);
+					VERBOSE(3," _bow:" << _bow << std::endl);
+					VERBOSE(3," _bol:" << _bol << std::endl);
+				}
+				
+				/*
+				 //TO CHECK the following claims
+				 //What is the statesize of a LM interpolation? The largest _statesize among the submodels
+				 //What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
+				 //What is the bol of a LM interpolation? The smallest _bol among the submodels
+				 //What is the bow of a LM interpolation? The weighted sum of the bow of the submodels
+				 //What is the prob of a LM interpolation? The weighted sum of the prob of the submodels
+				 //What is the extendible flag of a LM interpolation? true if the extendible flag is one for any LM
+				 */
+				
+				pr+=weight[i]*pow(10.0,_logpr);
+				actualbow+=m_weight[i]*pow(10.0,_bow);
+				
+				if(_statesize > actualstatesize || i == 0) {
+					actualmaxsuffptr = _maxsuffptr;
+					actualstatesize = _statesize;
+				}
+				if (_bol < actualbol) {
+					actualbol=_bol; //backoff limit of LM[i]
+				}
+				if (_extendible) {
+					actualextendible=true; //set extendible flag to true if the ngram is extendible for any LM
+				}
+			}
+		}
+		if (bol) *bol=actualbol;
+		if (bow) *bow=log(actualbow);
+		if (maxsuffptr) *maxsuffptr=actualmaxsuffptr;
+		if (statesize) *statesize=actualstatesize;
+		if (extendible) {
+			*extendible=actualextendible;
+			//    delete _extendible;
+		}
+		
+		if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
+		if (bow) VERBOSE(3, " bow:" << *bow << std::endl);
+		if (bol) VERBOSE(3, " bol:" << *bol << std::endl);
+		
+		return log10(pr);
+	}
+	double lmInterpolation::clprob(int* codes, int sz, lm_map_t& lm_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		
+		//create the actual ngram
+		ngram ong(dict);
+		ong.pushc(codes,sz);
+		MY_ASSERT (ong.size == sz);
+		
+		return clprob(ong, lm_weights, bow, bol, maxsuffptr, statesize, extendible);
 	}
 	
 	//return log10 prob of an ngram

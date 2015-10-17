@@ -48,7 +48,10 @@ typedef enum {LMT_FIND,    //!< search: find an entry
 } LMT_ACTION;
 
 namespace irstlm {
+	
+	
 	typedef std::map< std::string, float > topic_map_t;
+	typedef std::map< std::string, double > lm_map_t;
 	
 class lmContainer
 {
@@ -152,17 +155,30 @@ public:
     UNUSED(topic_weights);
     return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
   };
-
   virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
     UNUSED(topic_weights);
     return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
   }
-	
 	virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
 		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
     UNUSED(topic_weights);
     return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
   }
+	
+  virtual double clprob(ngram ng, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(lm_weights);
+    return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+  };
+  virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(lm_weights);
+    return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
+  }
+	virtual double clprob(string_vec_t& text, lm_map_t& lm_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
+    UNUSED(lm_weights);
+    return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
+  }
+	
 	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
@@ -170,11 +186,16 @@ public:
     UNUSED(statesize);
     return NULL;
   }
-
   virtual const char *cmaxsuffptr(int* ng, int ngsize, unsigned int* statesize=NULL)
   {
     UNUSED(ng);
     UNUSED(ngsize);
+    UNUSED(statesize);
+    return NULL;
+  }
+  virtual const char *cmaxsuffptr(string_vec_t& text, unsigned int* statesize=NULL)
+  {
+    UNUSED(text);
     UNUSED(statesize);
     return NULL;
   }
