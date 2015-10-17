@@ -26,8 +26,6 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <stdlib.h>
-#include <string>
-#include <math.h>
 #include "util.h"
 #include "dictionary.h"
 #include "n_gram.h"
