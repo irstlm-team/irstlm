@@ -42,8 +42,6 @@ namespace irstlm {
 #define topic_map_delimiter2 ','
 #define SIMILARITY_LOWER_BOUND -10000
 	
-	typedef std::map< std::string, float > topic_map_t;
-	
 	class ContextSimilarity
 	{
 	private:

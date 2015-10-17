@@ -41,6 +41,7 @@ inline void error(const char* message)
 }
 
 namespace irstlm {
+	
 	ContextSimilarity::ContextSimilarity(const std::string &k_modelfile, const std::string &hk_modelfile, const std::string &hwk_modelfile)
 	{
 		m_hwk_order=3;
