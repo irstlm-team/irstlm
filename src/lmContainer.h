@@ -180,6 +180,24 @@ public:
   }
 	
 	
+  virtual double clprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(lm_weights);
+    UNUSED(topic_weights);
+    return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+  };
+  virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+    UNUSED(lm_weights);
+    UNUSED(topic_weights);
+    return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
+  }
+	virtual double clprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
+    UNUSED(lm_weights);
+    UNUSED(topic_weights);
+    return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
+  }
+	
+	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
     UNUSED(ng);

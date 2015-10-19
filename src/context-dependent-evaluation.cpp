@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 				
 				// reset ngram at begin of sentence
 				if (word_vec.at(i) == lmt->getDict()->BoS()) {
-					size=0;
+					size=1;
 					continue;
 				}
 				first = last - size;
@@ -389,9 +389,6 @@ int main(int argc, char **argv)
 			string_vec_t word_vec;
 			split(sentence, ' ', word_vec);
 			
-			//add the BoS symbol at the beginning
-			string_vec_t::iterator it = word_vec.insert ( word_vec.begin() , lmt->getDict()->BoS() );
-			
 			//first points to the last recent term to take into account
 			//last points to the position after the most recent term to take into account
 			//last could point outside the vector of string; do NOT use word_vec.at(last)
@@ -399,21 +396,21 @@ int main(int argc, char **argv)
 			size_t order = lmt->maxlevel();
 			
 			//start the computation from the second word because the first is the BoS symbol,but including BoS in the ngrams
-			size_t size=1;
-			for (size_t i=1; i< word_vec.size(); ++i){
+			size_t size=0;
+			for (size_t i=0; i< word_vec.size(); ++i){
 				++size;
 				size=(size<order)?size:order;
 				last=i+1;
 				
 				// reset ngram at begin of sentence
 				if (word_vec.at(i) == lmt->getDict()->BoS()) {
-					size=0;
+					size=1;
 					continue;
 				}
 				first = last - size;
 				
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
-				
+			
 				if (size>=1) {
 					VERBOSE(2,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);
 					
@@ -813,7 +810,7 @@ int main(int argc, char **argv)
 				
 				// reset ngram at begin of sentence
 				if (word_vec.at(word_pos) == lmt->getDict()->BoS()) {
-					size=0;
+					size=1;
 					continue;
 				}
 				first = last - size;

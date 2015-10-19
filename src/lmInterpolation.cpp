@@ -109,7 +109,7 @@ namespace irstlm {
 			inp.getline(line,BUFSIZ,'\n');
 			tokenN = parseWords(line,words,idx_size);
 			
-			if(tokenN < idx_file || tokenN > idx_inverted) {
+			if(tokenN < idx_file || tokenN > idx_size) {
 				exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format:\nLMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2\nor\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2");
 			}
 			
@@ -179,6 +179,7 @@ namespace irstlm {
 	//return log10 prob of an ngram
 	double lmInterpolation::clprob(ngram ng, lm_map_t& lm_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
+		VERBOSE(1,"double lmInterpolation::clprob(ngram ng, lm_map_t& lm_weights,...)"  << std::endl);
 		
 		double pr=0.0;
 		double _logpr;
@@ -264,6 +265,7 @@ namespace irstlm {
 	//return log10 prob of an ngram
 	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
+		VERBOSE(1,"double lmInterpolation::clprob(ngram ng, ...)"  << std::endl);
 		
 		double pr=0.0;
 		double _logpr;

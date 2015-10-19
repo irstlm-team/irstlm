@@ -115,7 +115,6 @@ namespace irstlm {
 			UNUSED(extendible);
 			assert(false);
 		};
-		
 		virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 			VERBOSE(0, "virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
 			UNUSED(ng);
@@ -126,7 +125,6 @@ namespace irstlm {
 			UNUSED(extendible);
 			assert(false);
 		};
-		
 		virtual double clprob(string_vec_t& text, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
 			VERBOSE(0, "virtual double clprob(string_vec_t& text, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL)" << std::endl << "This LM type (lmContextDependent) does not support this function" << std::endl);
 			UNUSED(text);
@@ -148,11 +146,27 @@ namespace irstlm {
 			return lprob(text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		};
 		
+		virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			return lprob(ng, ngsize, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
+		};
+		virtual double clprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			return lprob(ng, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
+		};
+		virtual double clprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
+			return lprob(text, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
+		};
+		
 		virtual double lprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		virtual double lprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		virtual double lprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		
+		virtual double lprob(int* ng, int ngsize, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		virtual double lprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		virtual double lprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		
 		double lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible);
+		double lprob(ngram& ng, string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible);
+		
 		double total_clprob(string_vec_t& text, topic_map_t& topic_weights);
 		double total_clprob(ngram& ng, topic_map_t& topic_weights);		
 		
