@@ -90,8 +90,8 @@ namespace irstlm {
 		void modify_context_map(string_vec_t& text, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight, topic_map_t& topic_weights, topic_map_t& mod_topic_weights);
 		void modify_context_map(ngram& ng, ngramtable& ngt, ngramtable& ngt2, dictionary& dict, lmContainer& lm, double weight, topic_map_t& topic_weights, topic_map_t& mod_topic_weights);
 		
-		double context_similarity_solution1(string_vec_t& text, topic_map_t& topic_weights);
-		double context_similarity_solution2(string_vec_t& text, topic_map_t& topic_weights);
+		double context_similarity_solution1(string_vec_t& text, topic_map_t const& topic_weights);
+		double context_similarity_solution2(string_vec_t& text, topic_map_t const& topic_weights);
 		
 		bool reliable(ngram& ng, ngramtable* ngt);
 		
@@ -111,7 +111,7 @@ namespace irstlm {
 
 		void normalize_topic_scores(topic_map_t& map);
 		
-		double context_similarity(string_vec_t& text, topic_map_t& topic_weights);
+		double context_similarity(string_vec_t& text, topic_map_t const& topic_weights);
 		
 		int get_Threshold_on_H(){
 			return  m_threshold_on_h;
