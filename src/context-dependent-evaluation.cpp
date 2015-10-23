@@ -37,6 +37,12 @@ using namespace irstlm;
 
 typedef std::pair<double,int> double_and_int_pair;
 
+void transform(topic_map_t& topic_map, lm_map_t& lm_map){
+	for (topic_map_t::const_iterator it=topic_map.begin(); it!=topic_map.end(); ++it){
+		lm_map[it->first] = topic_map[it->first];
+	}
+}
+
 struct cmp_double_and_int_pair {
 	//order first by the first field (double), and in case of equality by the second field (int)
 	bool operator()(const double_and_int_pair& a, const double_and_int_pair& b) const {
@@ -245,6 +251,8 @@ int main(int argc, char **argv)
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
 			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
+			lm_map_t apriori_lm_map;
+			transform(apriori_topic_map,apriori_lm_map);
 			
 			// computation using std::string
 			// loop over ngrams of the sentence
@@ -382,7 +390,9 @@ int main(int argc, char **argv)
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
-			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context); 
+			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
+			lm_map_t apriori_lm_map;
+			transform(apriori_topic_map,apriori_lm_map);
 			
 			// computation using std::string
 			// loop over ngrams of the sentence
@@ -431,7 +441,8 @@ int main(int argc, char **argv)
 					VERBOSE(2,"tmp_word_vec.size:|" << tmp_word_vec.size() << "|" << std::endl);	
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
 					
-					current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+//					current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);		
+					current_Pr = lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
 					/*
 					 double tot_pr = 0.0;
 					 if (context_model_normalization){
@@ -568,7 +579,8 @@ int main(int argc, char **argv)
 							std::cout << std::endl;
 						}				
 						
-						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+//						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						double pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
 						current_tot_pr += pow(10.0,pr);
 						if (best_pr < pr){
 							best_pr = pr;
@@ -787,7 +799,9 @@ int main(int argc, char **argv)
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
-			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context); 
+			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
+			lm_map_t apriori_lm_map;
+			transform(apriori_topic_map,apriori_lm_map);
 			
 			// computation using std::string
 			// loop over ngrams of the sentence
@@ -842,7 +856,8 @@ int main(int argc, char **argv)
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
 					
-					double current_Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);				
+//					double current_Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);	
+					double current_Pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);				
 					
 					/*
 					 //loop over all words in the LM
@@ -962,7 +977,8 @@ int main(int argc, char **argv)
 							}
 							std::cout << std::endl;
 						}
-						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+//						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						double pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
 						
 						if (pr > current_Pr){
 							++current_rank;	
