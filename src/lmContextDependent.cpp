@@ -234,7 +234,12 @@ namespace irstlm {
 	double lmContextDependent::lprob(ngram& ng, string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, lm_map_t& lm_weights, topic_map_t& topic_weights, ...)" << std::endl);
-		double lm_logprob = m_lm->clprob(ng, lm_weights, bow, bol, maxsuffptr, statesize, extendible);
+		double lm_logprob;
+		if (lm_weights.size() == 0){
+			lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		}else{
+			lm_logprob = m_lm->clprob(ng, lm_weights, bow, bol, maxsuffptr, statesize, extendible);
+		}
 		double similarity_score = m_similaritymodel->context_similarity(text, topic_weights);
 		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
 		VERBOSE(2, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
