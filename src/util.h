@@ -50,6 +50,8 @@ using namespace std;
 #define SSEED 50
 
 typedef std::vector< std::string > string_vec_t;
+typedef std::vector< double > double_vec_t;
+typedef std::vector< float > float_vec_t;
 
 class ngram;
 class mfstream;

@@ -50,15 +50,17 @@ class lmInterpolation: public lmContainer
   int dictionary_upperbound; //set by user
   double  logOOVpenalty; //penalty for OOV words (default 0)
   bool      isInverted;
-	bool m_name_flag; //flag for the presence of a map between name and lm
+	bool m_map_flag; //flag for the presence of a map between name and lm
   int memmap;  //level from which n-grams are accessed via mmap
 
   std::vector<double> m_weight;
   std::vector<std::string> m_file;
   std::vector<bool> m_isinverted;
   std::vector<lmContainer*> m_lm;
-	lm_map_t m_name;
-
+	
+	std::map< std::string, size_t > m_idx;
+	std::map< size_t, std::string > m_name;
+	
   int               maxlev; //maximun order of sub LMs;
 
   float ngramcache_load_factor;
@@ -66,13 +68,13 @@ class lmInterpolation: public lmContainer
 
   dictionary *dict; // dictionary for all interpolated LMs
 
+	void set_weight(const lm_map_t& map, std::vector<double>& weight);
+	
 public:
 
   lmInterpolation(float nlf=0.0, float dlfi=0.0);
   virtual ~lmInterpolation() {};
 
-	void set_weight(const lm_map_t& map, std::vector<double>& weight);
-	
   void load(const std::string &filename,int mmap=0);
   lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 

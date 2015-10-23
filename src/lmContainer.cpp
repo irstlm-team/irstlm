@@ -169,6 +169,6 @@ namespace irstlm {
 			return res;
 		}
 		return false;
-	};
+	}
 	
 }//namespace irstlm

@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include "lmContainer.h"
@@ -41,7 +42,7 @@ namespace irstlm {
 		order=0;
 		memmap=0;
 		isInverted=false;
-		m_name_flag=false;
+		m_map_flag=false;
 	}
 	
 	void lmInterpolation::load(const std::string &filename,int mmap)
@@ -81,13 +82,13 @@ namespace irstlm {
 		
 		size_t idx_weight, idx_file, idx_name, idx_inverted, idx_size;
 		if (tokenN==2){
-			m_name_flag=false;
+			m_map_flag=false;
 			idx_weight=0;
 			idx_file=1;
 			idx_inverted=2;
 			idx_size=3;
 		}else{
-			m_name_flag=true;
+			m_map_flag=true;
 			idx_weight=0;
 			idx_name=1;
 			idx_file=2;
@@ -122,9 +123,18 @@ namespace irstlm {
 			VERBOSE(2,"i:" << i << " m_isinverted[i]:" << m_isinverted[i] << endl);
 			
 			m_weight[i] = atof(words[idx_weight]);
-			m_name[words[idx_name]] = i;
+			if (m_map_flag){
+				m_idx[words[idx_name]] = i;
+				m_name[i] = words[idx_name];
+			}else{
+				std::stringstream name;
+				name << i;
+				m_idx[name.str()] = i;
+				m_name[i] = name.str();
+			}
 			m_file[i] = words[idx_file];
-			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_file:"<< words[1] << std::endl;);
+			
+			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) i:" << i << " m_name:|"<< m_name[i] << "|" " m_file:|"<< m_file[i] << "|" << std::endl);
 			
 			m_lm[i] = load_lm(i,memmap,ngramcache_load_factor,dictionary_load_factor);
 			//set the actual value for inverted flag, which is known only after loading the lM
@@ -169,13 +179,6 @@ namespace irstlm {
 		return lmt;
 	}
 	
-	
-	void lmInterpolation::set_weight(const lm_map_t& map, std::vector<double>& weight){
-		for (lm_map_t::const_iterator it=map.begin(); it!=map.end();++it){
-			weight[m_name[it->first]] = it->second;
-		}
-	}
-	
 	//return log10 prob of an ngram
 	double lmInterpolation::clprob(ngram ng, lm_map_t& lm_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
@@ -191,11 +194,10 @@ namespace irstlm {
 		bool _extendible=false;
 		bool actualextendible=false;
 
-		std::vector<double> weight(m_number_lm);
+		double_vec_t weight(m_number_lm);
 		set_weight(lm_weights,weight);
 		
 		for (size_t i=0; i<m_lm.size(); i++) {
-			
 			if (weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
 				_ng.trans(ng);
@@ -361,5 +363,14 @@ namespace irstlm {
 		//  logOOVpenalty=log(OOVpenalty);
 		logOOVpenalty=log10(OOVpenalty);
 		return logOOVpenalty;
+	}
+	
+	void lmInterpolation::set_weight(const lm_map_t& map, double_vec_t& weight){
+		VERBOSE(4,"void lmInterpolation::set_weight" << std::endl);
+		VERBOSE(4,"map.size:" << map.size() << std::endl);
+		for (lm_map_t::const_iterator it=map.begin(); it!=map.end();++it){
+			weight[m_idx[it->first]] = it->second;
+		  VERBOSE(4,"it->first:|" << it->first << "| it->second:|" << it->second << "| m_idx[it->first]:|" << m_idx[it->first] << "| weight[m_idx[it->first]]:|" <<weight[m_idx[it->first]] << "|" << std::endl);
+		}
 	}
 }//namespace irstlm
