@@ -434,7 +434,7 @@ namespace irstlm {
 	}
 	
 	
-	double ContextSimilarity::context_similarity(string_vec_t& text, topic_map_t& topic_weights)
+	double ContextSimilarity::context_similarity(string_vec_t& text, topic_map_t const& topic_weights)
 	{
 #ifdef SOLUTION_1
 		return context_similarity_solution1(text, topic_weights);
@@ -450,7 +450,7 @@ namespace irstlm {
 	}
 	
 	//return the log10 of the similarity score
-	double ContextSimilarity::context_similarity_solution1(string_vec_t& text, topic_map_t& topic_weights)
+	double ContextSimilarity::context_similarity_solution1(string_vec_t& text, topic_map_t const& topic_weights)
 	{
 		VERBOSE(2, "double ContextSimilarity::context_similarity_solution1(string_vec_t& text, topic_map_t& topic_weights)" << std::endl);
 		double ret_log10_pr = 0.0;
@@ -488,7 +488,7 @@ namespace irstlm {
 				//this word sequence is reliable
 				
 				double ret_pr = 0.0;
-				for (topic_map_t::iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
+				for (topic_map_t::const_iterator it = topic_weights.begin(); it!= topic_weights.end(); ++it)
 				{
 					ngram current_ng = ng;
 					modify_topic(it->first, current_ng);
@@ -516,7 +516,7 @@ namespace irstlm {
 	}
 	
 	//return the log10 of the similarity score
-	double ContextSimilarity::context_similarity_solution2(string_vec_t& text, topic_map_t& topic_weights)
+	double ContextSimilarity::context_similarity_solution2(string_vec_t& text, topic_map_t const& topic_weights)
 	{
 		return context_similarity_solution1(text, topic_weights);
 	}
