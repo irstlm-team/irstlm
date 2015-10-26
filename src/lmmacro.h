@@ -43,7 +43,6 @@ class lmmacro: public lmtable
 {
 
   dictionary     *dict;
-  int             maxlev; //max level of table
   int             selectedField;
 
   bool            collapseFlag; //flag for the presence of collapse
@@ -112,9 +111,6 @@ public:
   inline dictionary* getDict() const {
     return dict;
   }
-  inline int maxlevel() const {
-    return maxlev;
-  };
 
   inline virtual void dictionary_incflag(const bool flag) {
     dict->incflag(flag);

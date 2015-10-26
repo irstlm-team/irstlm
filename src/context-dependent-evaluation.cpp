@@ -37,12 +37,6 @@ using namespace irstlm;
 
 typedef std::pair<double,int> double_and_int_pair;
 
-void transform(topic_map_t& topic_map, lm_map_t& lm_map){
-	for (topic_map_t::const_iterator it=topic_map.begin(); it!=topic_map.end(); ++it){
-		lm_map[it->first] = topic_map[it->first];
-	}
-}
-
 struct cmp_double_and_int_pair {
 	//order first by the first field (double), and in case of equality by the second field (int)
 	bool operator()(const double_and_int_pair& a, const double_and_int_pair& b) const {
@@ -103,6 +97,7 @@ int main(int argc, char **argv)
 	bool add_lexicon_words = false;
 	bool add_lm_words = false;
 	bool add_sentence_words = false;
+	bool add_full_dictionary = false;
 	int successor_limit=100;
 	
 	int debug = 0;
@@ -135,6 +130,7 @@ int main(int argc, char **argv)
                 "context_model_normalization", CMDBOOLTYPE|CMDMSG, &context_model_normalization, "enable/disable normalization of context-dependent model (default is false)",
                 "add_lm_words", CMDBOOLTYPE|CMDMSG, &add_lm_words, "enable/disable addition of the unigram/bigrmam successors into the alternatives (default is false)",
                 "add_sentence_words", CMDBOOLTYPE|CMDMSG, &add_sentence_words, "enable/disable addition of the words of the current sentence into the alternatives (default is false)",
+                "add_full_dictionary", CMDBOOLTYPE|CMDMSG, &add_full_dictionary, "enable/disable addition of all words of the dictionary into the alternatives (default is false)",
 								"successor_limit", CMDINTTYPE|CMDMSG, &successor_limit, "threshold to decide whether adding the unigram/bigram successors into the alternatives (default is 100)",
 								
 								"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
@@ -214,6 +210,9 @@ int main(int argc, char **argv)
 	}
 	
 	if (topicscore == true) {
+		if (lmt->getLanguageModelType() != _IRSTLM_LMCONTEXTDEPENDENT) {
+			exit_error(IRSTLM_ERROR_DATA, "This type of score is not available for the LM loaded");
+		}
 		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
 			debug = (debug>4)?4:debug;
 			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
@@ -246,14 +245,13 @@ int main(int argc, char **argv)
 			std::string sentence;
 			std::string context;
 			
-			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
+			bool withContext = lmt->GetSentenceAndContext(sentence,context,line_str);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
-			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
-			lm_map_t apriori_lm_map;
-			transform(apriori_topic_map,apriori_lm_map);
-			
+			if (withContext){
+				lmt->setContextMap(apriori_topic_map,context);
+			}
 			// computation using std::string
 			// loop over ngrams of the sentence
 			string_vec_t word_vec;
@@ -299,29 +297,18 @@ int main(int argc, char **argv)
 					
 					((lmContextDependent*) lmt)->getContextSimilarity()->add_topic_scores(sentence_topic_map, tmp_topic_map);
 					IFVERBOSE(2){
-						//						VERBOSE(2,"word-based topic-distribution:");
-						//						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map);
 						VERBOSE(2,"word-based topic-distribution:");
 						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(tmp_topic_map,apriori_topic_map,1);
 					}
 					tmp_topic_map.clear();
-					//					IFVERBOSE(2){
-					//						VERBOSE(2,"sentence-based topic-distribution:");
-					//						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);
-					//						VERBOSE(2,"sentence-based topic-distribution:");
-					//						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map,apriori_topic_map);
-					//					}
 				}
 			}
 			IFVERBOSE(2){
-				//						VERBOSE(2,"sentence-based topic-distribution:");
-				//						((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);
 				VERBOSE(2,"sentence-based topic-distribution:");
 				((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map,apriori_topic_map,last);
 			}
 			std::cout << sentence << ((lmContextDependent*) lmt)->getContextDelimiter();
-			((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);
-			//			((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map,apriori_topic_map);			
+			((lmContextDependent*) lmt)->getContextSimilarity()->print_topic_scores(sentence_topic_map);	
 			apriori_topic_map.clear();
 		}
 		
@@ -385,15 +372,13 @@ int main(int argc, char **argv)
 			//getting sentence string;
 			std::string sentence;
 			std::string context;
-			
-			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
-			
+
+			bool withContext = lmt->GetSentenceAndContext(sentence,context,line_str);
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
-			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
-			lm_map_t apriori_lm_map;
-			transform(apriori_topic_map,apriori_lm_map);
-			
+			if (withContext){
+				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
+			}
 			// computation using std::string
 			// loop over ngrams of the sentence
 			string_vec_t word_vec;
@@ -440,9 +425,12 @@ int main(int argc, char **argv)
 					
 					VERBOSE(2,"tmp_word_vec.size:|" << tmp_word_vec.size() << "|" << std::endl);	
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
-					
-//					current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);		
-					current_Pr = lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						
+					if (withContext){
+						current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+					}else{
+						current_Pr = lmt->clprob(tmp_word_vec, &bow, &bol, &msp, &statesize);
+					}
 					/*
 					 double tot_pr = 0.0;
 					 if (context_model_normalization){
@@ -454,14 +442,16 @@ int main(int argc, char **argv)
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
 					
-					/*
-					 //loop over all words in the LM
-					 dictionary* current_dict = lmt->getDict();
-					 */
-					
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
-					dictionary* current_dict = new dictionary((char *)NULL,1000000);
+					
+					dictionary* current_dict;
+					if (add_full_dictionary){
+						//loop over all words in the LM
+						current_dict = lmt->getDict();
+					}else{
+						current_dict = new dictionary((char *)NULL,1000000);
+					}
 					current_dict->incflag(1);
 					
 					current_dict->encode(current_word.c_str());
@@ -538,7 +528,6 @@ int main(int argc, char **argv)
 						}
 						
 					}
-					
 					VERBOSE(2,"after add_lm_words current_dict->size:" << current_dict->size() << std::endl);
 					
 					if (add_sentence_words){
@@ -555,7 +544,7 @@ int main(int argc, char **argv)
 					
 					VERBOSE(2,"current_dict->size:" << current_dict->size() << std::endl);
 					for (int h=0;h<current_dict->size();++h){
-						VERBOSE(2,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
+						VERBOSE(3,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
 					}
 					
 					//the first word in current_dict is always the current_word; hence we can skip it during the scan 
@@ -579,8 +568,12 @@ int main(int argc, char **argv)
 							std::cout << std::endl;
 						}				
 						
-//						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						double pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						double pr;
+						if (withContext){
+							pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						}else{
+							pr=lmt->clprob(tmp_word_vec, &bow, &bol, &msp, &statesize);
+						}
 						current_tot_pr += pow(10.0,pr);
 						if (best_pr < pr){
 							best_pr = pr;
@@ -682,8 +675,7 @@ int main(int argc, char **argv)
 			
 			apriori_topic_map.clear();
 		}
-		
-		
+
 		model_norm_PP = exp((-model_norm_logPr * M_LN10) / Nw);
 		model_norm_PPwp = model_norm_PP * (1 - 1/exp(Noov *  norm_oovpenalty * M_LN10 / Nw));
 		model_PP = exp((-model_logPr * M_LN10) / Nw);
@@ -795,13 +787,13 @@ int main(int argc, char **argv)
 			std::string sentence;
 			std::string context;
 			
-			((lmContextDependent*) lmt)->GetSentenceAndContext(sentence,context,line_str);
+			bool withContext=lmt->GetSentenceAndContext(sentence,context,line_str);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
-			((lmContextDependent*) lmt)->getContextSimilarity()->setContextMap(apriori_topic_map,context);
-			lm_map_t apriori_lm_map;
-			transform(apriori_topic_map,apriori_lm_map);
+			if (withContext){
+				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
+			}
 			
 			// computation using std::string
 			// loop over ngrams of the sentence
@@ -856,16 +848,23 @@ int main(int argc, char **argv)
 					int current_pos = tmp_word_vec.size()-1;
 					std::string current_word = tmp_word_vec.at(current_pos);
 					
-//					double current_Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);	
-					double current_Pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);				
+					double current_Pr;
+					if (withContext){
+						current_Pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);				
+					}else{
+						current_Pr=lmt->clprob(tmp_word_vec, &bow, &bol, &msp, &statesize);				
+					}
 					
-					/*
-					 //loop over all words in the LM
-					 dictionary* current_dict = lmt->getDict();
-					 */
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
-					dictionary* current_dict = new dictionary((char *)NULL,1000000);
+					
+					dictionary* current_dict;
+					if (add_full_dictionary){
+						//loop over all words in the LM
+						current_dict = lmt->getDict();
+					}else{
+						current_dict = new dictionary((char *)NULL,1000000);
+					}
 					current_dict->incflag(1);
 					
 					current_dict->encode(current_word.c_str());
@@ -977,9 +976,13 @@ int main(int argc, char **argv)
 							}
 							std::cout << std::endl;
 						}
-//						double pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
-						double pr=lmt->clprob(tmp_word_vec, apriori_lm_map, apriori_topic_map, &bow, &bol, &msp, &statesize);
 						
+						double pr;
+						if (withContext){
+							pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msp, &statesize);
+						}else{
+							pr=lmt->clprob(tmp_word_vec, &bow, &bol, &msp, &statesize);
+						}
 						if (pr > current_Pr){
 							++current_rank;	
 						}

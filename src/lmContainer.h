@@ -48,10 +48,10 @@ typedef enum {LMT_FIND,    //!< search: find an entry
 } LMT_ACTION;
 
 namespace irstlm {
-	
-	
+      
+      
 	typedef std::map< std::string, float > topic_map_t;
-	typedef std::map< std::string, double > lm_map_t;
+//	typedef std::map< std::string, double > lm_map_t;
 	
 class lmContainer
 {
@@ -63,6 +63,9 @@ protected:
   int          lmtype; //auto reference to its own type
   int          maxlev; //maximun order of sub LMs;
   int  requiredMaxlev; //max loaded level, i.e. load up to requiredMaxlev levels
+	bool m_isadaptive; //flag is true if the LM can be adapted by means of any external context
+	void isAdaptive(bool val){ m_isadaptive = val; }
+	bool isAdaptive(){ return m_isadaptive;}
 
 public:
 
@@ -131,7 +134,6 @@ public:
     return 0.0;
   };
   virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-		VERBOSE(0,"lmContainer::clprob(string_vec_t& text, double* bow,...." << std::endl);
     UNUSED(text);
     UNUSED(bow);
     UNUSED(bol);
@@ -160,43 +162,9 @@ public:
     return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
   }
 	virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
-		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
     UNUSED(topic_weights);
     return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
   }
-	
-  virtual double clprob(ngram ng, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-    UNUSED(lm_weights);
-    return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-  };
-  virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-    UNUSED(lm_weights);
-    return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
-  }
-	virtual double clprob(string_vec_t& text, lm_map_t& lm_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
-		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
-    UNUSED(lm_weights);
-    return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
-  }
-	
-	
-  virtual double clprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-    UNUSED(lm_weights);
-    UNUSED(topic_weights);
-    return clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-  };
-  virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-    UNUSED(lm_weights);
-    UNUSED(topic_weights);
-    return clprob(ng, ngsize, bow, bol, maxsuffptr, statesize, extendible);
-  }
-	virtual double clprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
-		VERBOSE(3,"lmContainer::clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow,...." << std::endl);
-    UNUSED(lm_weights);
-    UNUSED(topic_weights);
-    return clprob(text, bow, bol, maxsuffptr, statesize, extendible);
-  }
-	
 	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
@@ -285,6 +253,10 @@ public:
   inline static bool is_cache_enabled(){
     return is_lmt_cache_enabled() && is_ps_cache_enabled();
   }
+	
+	bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
+	
+	void setContextMap(topic_map_t& topic_map, const std::string& context);
 
 };
 

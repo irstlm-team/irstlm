@@ -62,17 +62,12 @@ namespace irstlm {
 	bool lmContainer::lmt_cache_enabled=false;
 #endif
 	
-	inline void error(const char* message)
-	{
-		std::cerr << message << "\n";
-		throw std::runtime_error(message);
-	}
-	
 	lmContainer::lmContainer()
 	{
 		requiredMaxlev=1000;
 		lmtype=_IRSTLM_LMUNKNOWN;
 		maxlev=0;
+		m_isadaptive=false;
 	}
 	
 	int lmContainer::getLanguageModelType(std::string filename)
@@ -111,43 +106,53 @@ namespace irstlm {
 	lmContainer* lmContainer::CreateLanguageModel(const std::string infile, float nlf, float dlf)
 	{
 		int type = lmContainer::getLanguageModelType(infile);
-		std::cerr << "Language Model Type of " << infile << " is " << type << std::endl;
+		
+		VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(...) Language Model Type of " << infile << " is " << type << std::endl);
 		
 		return lmContainer::CreateLanguageModel(type, nlf, dlf);
 	}
 	
 	lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf)
 	{
+		std::cerr << "lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf)" << std::endl;
 		
-		std::cerr << "Language Model Type is " << type << std::endl;
+		VERBOSE(1,"Language Model Type is " << type << std::endl);
 		
 		lmContainer* lm=NULL;
 		
 		switch (type) {
 				
 			case _IRSTLM_LMTABLE:
+				VERBOSE(1,"_IRSTLM_LMTABLE" << std::endl);
 				lm = new lmtable(nlf, dlf);
 				break;
 				
 			case _IRSTLM_LMMACRO:
+				VERBOSE(1,"_IRSTLM_LMMACRO" << std::endl);
 				lm = new lmmacro(nlf, dlf);
 				break;
 				
 			case _IRSTLM_LMCLASS:
+				VERBOSE(1,"_IRSTLM_LMCLASS" << std::endl);
 				lm = new lmclass(nlf, dlf);
 				break;
 				
 			case _IRSTLM_LMINTERPOLATION:
+				VERBOSE(1,"_IRSTLM_LMINTERPOLATION" << std::endl);
 				lm = new lmInterpolation(nlf, dlf);
 				break;
 				
 			case _IRSTLM_LMCONTEXTDEPENDENT:
+				VERBOSE(1,"_IRSTLM_LMCONTEXTDEPENDENT" << std::endl);
 				lm = new lmContextDependent(nlf, dlf);
 				break;
 				
 			default:
+				VERBOSE(1,"UNKNOWN" << std::endl);
 				exit_error(IRSTLM_ERROR_DATA, "This language model type is unknown!");
 		}
+		VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf) lm:|" << (void*) lm << "|" << std::endl);
+		VERBOSE(1,"lm->getLanguageModelType:|" << lm->getLanguageModelType() << "|" << std::endl);
 		
 		lm->setLanguageModelType(type);
 		
@@ -169,6 +174,49 @@ namespace irstlm {
 			return res;
 		}
 		return false;
+	}
+	
+	
+	bool lmContainer::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
+	{
+		VERBOSE(2,"bool lmContextDependent::GetSentenceAndContext" << std::endl);
+		VERBOSE(2,"line:|" << line << "|" << std::endl);
+		bool ret;
+		size_t pos = line.find(context_delimiter);	
+		if (pos != std::string::npos){ // context_delimiter is found
+			sentence = line.substr(0, pos);
+			line.erase(0, pos + context_delimiter.length());
+			
+			//getting context string;
+			context = line;
+			ret=true;
+		}else{
+			sentence = line;
+			context = "";
+			ret=false;
+		}	
+		VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);	
+		VERBOSE(2,"context:|" << context << "|" << std::endl);
+		return ret;
+	}
+	
+	
+	void lmContainer::setContextMap(topic_map_t& topic_map, const std::string& context){
+		
+		string_vec_t topic_weight_vec;
+		string_vec_t topic_weight;
+		
+		// context is supposed in this format
+		// topic-name1,topic-value1:topic-name2,topic-value2:...:topic-nameN,topic-valueN
+		
+		//first-level split the context in a vector of 	topic-name1,topic-value1, using the first separator ':'
+		split(context, topic_map_delimiter1, topic_weight_vec);
+		for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
+			//first-level split the context in a vector of 	topic-name1 and ,topic-value1, using the second separator ','
+			split(*it, topic_map_delimiter2, topic_weight);
+			topic_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
+			topic_weight.clear();
+		}
 	}
 	
 }//namespace irstlm

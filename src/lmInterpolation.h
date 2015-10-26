@@ -45,7 +45,7 @@ interpolation of several sub LMs
 class lmInterpolation: public lmContainer
 {
   static const bool debug=true;
-  int m_number_lm;
+  size_t m_number_lm;
   int order;
   int dictionary_upperbound; //set by user
   double  logOOVpenalty; //penalty for OOV words (default 0)
@@ -53,22 +53,20 @@ class lmInterpolation: public lmContainer
 	bool m_map_flag; //flag for the presence of a map between name and lm
   int memmap;  //level from which n-grams are accessed via mmap
 
-  std::vector<double> m_weight;
+  double_vec_t m_weight;
   std::vector<std::string> m_file;
   std::vector<bool> m_isinverted;
   std::vector<lmContainer*> m_lm;
 	
 	std::map< std::string, size_t > m_idx;
 	std::map< size_t, std::string > m_name;
-	
-  int               maxlev; //maximun order of sub LMs;
 
   float ngramcache_load_factor;
   float dictionary_load_factor;
 
   dictionary *dict; // dictionary for all interpolated LMs
 
-	void set_weight(const lm_map_t& map, std::vector<double>& weight);
+	void set_weight(const topic_map_t& map, double_vec_t& weight);
 	
 public:
 
@@ -81,12 +79,8 @@ public:
   virtual double clprob(ngram ng,            double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
   virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 	
-  virtual double clprob(ngram ng, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL);
-  virtual double clprob(int* ng, int ngsize, lm_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL);
-	
-  int maxlevel() const {
-    return maxlev;
-  };
+  virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL);
+  virtual double clprob(int* ng, int ngsize, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL);
 
   virtual inline void setDict(dictionary* d) {
 		if (dict) delete dict;
@@ -116,7 +110,7 @@ public:
 //for an interpolation LM this variable does not make sense
 //for compatibility, we return true if all subLM return true
   inline bool is_inverted() {
-    for (int i=0; i<m_number_lm; i++) {
+    for (size_t i=0; i<m_number_lm; i++) {
       if (m_isinverted[i] == false) return false;
     }
     return true;
@@ -127,7 +121,7 @@ public:
   };
 
   inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
-    for (int i=0; i<m_number_lm; i++) {
+    for (size_t i=0; i<m_number_lm; i++) {
       int _code=m_lm[i]->getDict()->encode(getDict()->decode(code));
       if (m_lm[i]->is_OOV(_code) == false) return false;
     }
@@ -135,7 +129,7 @@ public:
   }
 	
 	virtual int addWord(const char *w){
-		for (int i=0; i<m_number_lm; i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			m_lm[i]->getDict()->incflag(1);
 			m_lm[i]->getDict()->encode(w);
 			m_lm[i]->getDict()->incflag(0);

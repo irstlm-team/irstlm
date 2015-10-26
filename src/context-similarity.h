@@ -99,8 +99,6 @@ namespace irstlm {
 		ContextSimilarity(const std::string &dictfile, const std::string &num_modelfile, const std::string &den_modelfile);
 		~ContextSimilarity();
 		
-		void setContextMap(topic_map_t& topic_map, const std::string& context);
-		
 		void get_topic_scores(string_vec_t& text, topic_map_t& topic_map);
 		void get_topic_scores(ngram& ng, ngramtable& ngt, ngramtable& ngt2, topic_map_t& topic_map);
 		

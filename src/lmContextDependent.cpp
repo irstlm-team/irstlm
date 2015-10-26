@@ -49,7 +49,10 @@ namespace irstlm {
 		order=0;
 		memmap=0;
 		isInverted=false;
+		m_isadaptive=true;
 		
+		
+		VERBOSE(2,"lmContextDependent::lmContextDependent(const std::string &filename,int mmap) isadaptive:|" << m_isadaptive << "|" << std::endl);
 	}
 	
 	lmContextDependent::~lmContextDependent()
@@ -127,26 +130,54 @@ namespace irstlm {
 		VERBOSE(0, "topic_threshold_on_h:|" << m_similaritymodel->get_Threshold_on_H() << "|" << std::endl);
 		VERBOSE(0, "shift-beta smoothing on counts:|" << m_similaritymodel->get_SmoothingValue() << "|" << std::endl);
 	}
-
-	void lmContextDependent::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
+	
+	double lmContextDependent::lprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		VERBOSE(2,"lmContextDependent::GetSentenceAndContext" << std::endl);
-		VERBOSE(2,"line:|" << line << "|" << std::endl);
-		size_t pos = line.find(context_delimiter);	
-		if (pos != std::string::npos){ // context_delimiter is found
-			sentence = line.substr(0, pos);
-			line.erase(0, pos + context_delimiter.length());
-			
-			//getting context string;
-			context = line;
-		}else{
-			sentence = line;
-			context = "";
-		}	
-		VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);	
-		VERBOSE(2,"context:|" << context << "|" << std::endl);	
+		VERBOSE(2,"lmContextDependent::lprob(ngram ng, ...)" << std::endl);
+		string_vec_t text;
+		if (ng.size>1){
+			text.push_back(ng.dict->decode(*ng.wordp(2)));
+		}
+		text.push_back(ng.dict->decode(*ng.wordp(1)));
+		
+		return lprob(ng, text, bow, bol, maxsuffptr, statesize, extendible);
 	}
-
+		
+	double lmContextDependent::lprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		VERBOSE(3,"lmContextDependent::lprob(int* codes, int sz, " << std::endl);
+		//create the actual ngram
+		ngram ong(dict);
+		ong.pushc(codes,sz);
+		MY_ASSERT (ong.size == sz);
+		
+		return lprob(ong, bow, bol, maxsuffptr, statesize, extendible);	
+	}
+	
+	double lmContextDependent::lprob(string_vec_t& text, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		VERBOSE(2,"lmContextDependent::lprob(string_vec_t& text, ...)" << std::endl);
+		
+		//create the actual ngram
+		ngram ng(dict);
+		ng.pushw(text);
+		VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
+		
+		MY_ASSERT (ng.size == (int) text.size());
+		return lprob(ng, text, bow, bol, maxsuffptr, statesize, extendible);
+	}
+	
+	double lmContextDependent::lprob(ngram& ng, string_vec_t& text, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	{
+		UNUSED(text);
+		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, string_vec_t& text, ...)" << std::endl);
+		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double ret_logprob = lm_logprob;
+		VERBOSE(2, "lm_log10_pr:" << lm_logprob << " similarity_score:_undef_ m_similaritymodel_weight:_undef_ ret_log10_pr:" << ret_logprob << std::endl);
+		
+		return ret_logprob;
+	}
+	
 	double lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		VERBOSE(2,"lmContextDependent::lprob(ngram ng, topic_map_t& topic_weights, ...)" << std::endl);
@@ -183,63 +214,11 @@ namespace irstlm {
 		return lprob(ng, text, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 	}
 	
-	
-	double lmContextDependent::lprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+		double lmContextDependent::lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
-		VERBOSE(2,"lmContextDependent::lprob(ngram ng, lm_map_t& lm_weights, topic_map_t& topic_weights, ...)" << std::endl);
-		string_vec_t text;
-		if (ng.size>1){
-			text.push_back(ng.dict->decode(*ng.wordp(2)));
-		}
-		text.push_back(ng.dict->decode(*ng.wordp(1)));
-		
-		return lprob(ng, text, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
-	}
-	
-	double lmContextDependent::lprob(int* codes, int sz, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	{
-		VERBOSE(3,"lmContextDependent::lprob(int* codes, int sz, lm_map_t& lm_weights, topic_map_t& topic_weights, " << std::endl);
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		
-		return lprob(ong, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);	
-	}
-	
-	double lmContextDependent::lprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	{
-		VERBOSE(2,"lmContextDependent::lprob(string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, ...)" << std::endl);
-		
-		//create the actual ngram
-		ngram ng(dict);
-		ng.pushw(text);
-		VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
-		
-		MY_ASSERT (ng.size == (int) text.size());
-		return lprob(ng, text, lm_weights, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
-	}
-	
-	double lmContextDependent::lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	{
-		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, topic_map_t& topic_weights, ...)" << std::endl);
-		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		double similarity_score = m_similaritymodel->context_similarity(text, topic_weights);
-		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
-		VERBOSE(2, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);
-		
-		return ret_logprob;
-	}
-	
-	double lmContextDependent::lprob(ngram& ng, string_vec_t& text, lm_map_t& lm_weights, topic_map_t& topic_weights, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	{
-		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, lm_map_t& lm_weights, topic_map_t& topic_weights, ...)" << std::endl);
-		double lm_logprob;
-		if (lm_weights.size() == 0){
-			lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
-		}else{
-			lm_logprob = m_lm->clprob(ng, lm_weights, bow, bol, maxsuffptr, statesize, extendible);
-		}
+		VERBOSE(2,"lmContextDependent::lprob(ngram& ng, string_vec_t& text, topic_map_t& topic_weights, ...)" << std::endl);
+//		double lm_logprob = m_lm->clprob(ng, bow, bol, maxsuffptr, statesize, extendible);
+		double lm_logprob = m_lm->clprob(ng, topic_weights, bow, bol, maxsuffptr, statesize, extendible);
 		double similarity_score = m_similaritymodel->context_similarity(text, topic_weights);
 		double ret_logprob = lm_logprob + m_similaritymodel_weight * similarity_score;
 		VERBOSE(2, "lm_log10_pr:" << lm_logprob << " similarity_score:" << similarity_score << " m_similaritymodel_weight:" << m_similaritymodel_weight << " ret_log10_pr:" << ret_logprob << std::endl);

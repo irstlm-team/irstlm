@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 
   //checking the language model type
   lmContainer* lmt = lmContainer::CreateLanguageModel(infile,ngramcache_load_factor,dictionary_load_factor);
-	
+
   //let know that table has inverted n-grams
   if (invert) lmt->is_inverted(invert);
 
@@ -191,6 +191,7 @@ int main(int argc, char **argv)
 
   lmt->load(infile);
 
+	VERBOSE(1,"after load" << std::endl);
   //CHECK this part for sfilter to make it possible only for LMTABLE
   if (sfilter != NULL) {
     lmContainer* filtered_lmt = NULL;
@@ -212,8 +213,9 @@ int main(int argc, char **argv)
   if (dub) lmt->setlogOOVpenalty((int)dub);
 
   //use caches to save time (only if PS_CACHE_ENABLE is defined through compilation flags)
+	;
   lmt->init_caches(lmt->maxlevel());
-
+	
   if (seval != NULL) {
     if (randcalls>0) {
 
@@ -301,9 +303,8 @@ int main(int argc, char **argv)
       int bol=0;
       char *msp;
       unsigned int statesize;
-
       lmt->dictionary_incflag(1);
-
+			
       while(inptxt >> ng) {
 
         if (ng.size>lmt->maxlevel()) ng.size=lmt->maxlevel();
@@ -369,6 +370,7 @@ int main(int argc, char **argv)
           }
           Nw++;
           sent_Nw++;
+					
           if (sent_PP_flag && (*ng.wordp(1)==eos)) {
             sent_PP=exp((-sent_logPr * M_LN10) / sent_Nw);
             sent_PPwp= sent_PP * (1 - 1/exp(sent_Noov * ( lmt->getlogOOVpenalty() * M_LN10 ) / sent_Nw));

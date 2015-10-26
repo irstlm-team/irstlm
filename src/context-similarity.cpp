@@ -147,24 +147,6 @@ namespace irstlm {
 		std::cout << std::endl;
 	}
 	
-	void ContextSimilarity::setContextMap(topic_map_t& topic_map, const std::string& context){
-		
-		string_vec_t topic_weight_vec;
-		string_vec_t topic_weight;
-		
-		// context is supposed in this format
-		// topic-name1,topic-value1:topic-name2,topic-value2:...:topic-nameN,topic-valueN
-		
-		//first-level split the context in a vector of 	topic-name1,topic-value1, using the first separator ':'
-		split(context, topic_map_delimiter1, topic_weight_vec);
-		for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
-			//first-level split the context in a vector of 	topic-name1 and ,topic-value1, using the second separator ','
-			split(*it, topic_map_delimiter2, topic_weight);
-			topic_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
-			topic_weight.clear();
-		}
-	}
-	
 	void ContextSimilarity::create_ngram(const string_vec_t& text, ngram& ng)
 	{
 		//text is a vector of strings with w in the last position and the history in the previous positions
