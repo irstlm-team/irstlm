@@ -48,10 +48,11 @@ typedef enum {LMT_FIND,    //!< search: find an entry
 } LMT_ACTION;
 
 namespace irstlm {
-      
+
+	static const std::string context_delimiter="___CONTEXT___";
+	static const std::string lexicon_delimiter="___LEXICON___";
       
 	typedef std::map< std::string, float > topic_map_t;
-//	typedef std::map< std::string, double > lm_map_t;
 	
 class lmContainer
 {
@@ -253,6 +254,9 @@ public:
   inline static bool is_cache_enabled(){
     return is_lmt_cache_enabled() && is_ps_cache_enabled();
   }
+	
+	
+	inline std::string getContextDelimiter() const{ return context_delimiter; }
 	
 	bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
 	

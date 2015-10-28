@@ -60,8 +60,6 @@ namespace irstlm {
 	
 #define LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN 6
 	
-	static const std::string context_delimiter="___CONTEXT___";
-	
 	class lmContextDependent: public lmContainer
 	{
 	private:
@@ -96,10 +94,9 @@ namespace irstlm {
 		virtual ~lmContextDependent();
 		
 		void load(const std::string &filename,int mmap=0);
-		
-		
-		inline std::string getContextDelimiter() const{
-			return context_delimiter;
+
+		inline std::string getLexiconDelimiter() const{
+			return lexicon_delimiter;
 		}
 		
 		virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL){
@@ -214,6 +211,8 @@ namespace irstlm {
 		void set_Normalized(bool val){
 			m_normalization = val;
 		}
+		
+		bool GetSentenceAndLexicon(std::string& sentence, std::string& lexiconfile, std::string& line);
 		
 	};
 }//namespace irstlm

@@ -71,13 +71,22 @@ void print_help(int TypeFlag=0){
 	FullPrintParams(TypeFlag, 0, 1, stderr);
 }
 
-void usage(const char *msg = 0)
-{
+void usage(const char *msg = 0){
   if (msg) {
     std::cerr << msg << std::endl;
   }
 	if (!msg){
 		print_help();
+	}
+}
+
+void load_lexicon(const char* lexfile, std::multimap< std::string, std::string >& lexicon){
+	if (lexfile!= NULL) {
+		fstream inp(lexfile,ios::in|ios::binary);
+		std::string w1, w2;
+		while (inp >> w1 >> w2){
+			lexicon.insert(make_pair(w1,w2));
+		}
 	}
 }
 
@@ -128,9 +137,10 @@ int main(int argc, char **argv)
                 "ngram_load_factor", CMDFLOATTYPE|CMDMSG, &ngramcache_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is false",
                 "context_model_active", CMDBOOLTYPE|CMDMSG, &context_model_active, "enable/disable context-dependent model (default is true)",
                 "context_model_normalization", CMDBOOLTYPE|CMDMSG, &context_model_normalization, "enable/disable normalization of context-dependent model (default is false)",
+                "add_lexicon_words", CMDBOOLTYPE|CMDMSG, &add_lexicon_words, "enable/disable addition of the words in the lexicon into the alternatives (default is false)",
                 "add_lm_words", CMDBOOLTYPE|CMDMSG, &add_lm_words, "enable/disable addition of the unigram/bigrmam successors into the alternatives (default is false)",
                 "add_sentence_words", CMDBOOLTYPE|CMDMSG, &add_sentence_words, "enable/disable addition of the words of the current sentence into the alternatives (default is false)",
-                "add_full_dictionary", CMDBOOLTYPE|CMDMSG, &add_full_dictionary, "enable/disable addition of all words of the dictionary into the alternatives (default is false)",
+                "add_full_dictionary", CMDBOOLTYPE|CMDMSG, &add_full_dictionary, "enable/disable addition of all words of the LM dictionary into the alternatives (default is false)",
 								"successor_limit", CMDINTTYPE|CMDMSG, &successor_limit, "threshold to decide whether adding the unigram/bigram successors into the alternatives (default is 100)",
 								
 								"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
@@ -163,8 +173,9 @@ int main(int argc, char **argv)
 	
 	if (lmfile!=NULL) VERBOSE(1, "lmfile: " << lmfile << std::endl);
   if (testfile!=NULL) VERBOSE(1, "testfile: " << testfile << std::endl);
-	if (lexiconfile != NULL) VERBOSE(1, "lexicon: " << lexiconfile << std::endl);
-	
+	if (lexiconfile != NULL){
+		VERBOSE(1, "lexicon: " << lexiconfile << std::endl);
+	}
   VERBOSE(1, "contextbasedscore: " << contextbasedscore << std::endl);
   VERBOSE(1, "topicscore: " << topicscore << std::endl);
   VERBOSE(1, "rankscore: " << rankscore << std::endl);
@@ -199,8 +210,19 @@ int main(int argc, char **argv)
   lmt->init_caches(lmt->maxlevel());
 	
 	//read lexicon form file
+	
 	std::multimap< std::string, std::string > lexicon;
-	if (lexiconfile != NULL) {
+	if (add_lexicon_words){
+		if (lexiconfile != NULL) {
+			load_lexicon(lexiconfile, lexicon);
+		}else{
+			VERBOSE(1, "You did not set any lexicon, but you activated parameter \"--add_lexicon_words\". This is formally correct; maybe you want to pass the lexicon through the input; Please check whether your setting is correct." << std::endl);			
+		}
+	}else{
+		VERBOSE(1, "You set a lexicon, but you did not activate parameter \"--add_lexicon_words\". Hence, words in he lexicon are not used as alternatives" << std::endl);
+	}
+	/*
+	if (std::string lexiconfile!= NULL) {
 		fstream inp(lexiconfile,ios::in|ios::binary);
 		std::string w1, w2;
 		while (inp >> w1 >> w2){
@@ -208,6 +230,7 @@ int main(int argc, char **argv)
 		}
 		add_lexicon_words=true;
 	}
+	*/
 	
 	if (topicscore == true) {
 		if (lmt->getLanguageModelType() != _IRSTLM_LMCONTEXTDEPENDENT) {
@@ -242,10 +265,14 @@ int main(int argc, char **argv)
 			VERBOSE(2,"input_line:|" << line_str << "|" << std::endl);
 			
 			//getting sentence string;
+			std::string tmp_sentence;
 			std::string sentence;
 			std::string context;
+			std::string sentence_lexiconfile;
 			
-			bool withContext = lmt->GetSentenceAndContext(sentence,context,line_str);
+			//remove lexicon string from the input, even if it is not used at all for this type of score
+			((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+			bool withContext = lmt->GetSentenceAndContext(sentence,context,tmp_sentence);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
@@ -370,10 +397,14 @@ int main(int argc, char **argv)
 			VERBOSE(1,"input_line:|" << line_str << "|" << std::endl);	
 			
 			//getting sentence string;
+			std::string tmp_sentence;
 			std::string sentence;
 			std::string context;
-
-			bool withContext = lmt->GetSentenceAndContext(sentence,context,line_str);
+			std::string sentence_lexiconfile;
+			
+			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+			bool withContext = lmt->GetSentenceAndContext(sentence,context,tmp_sentence);
+			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
 			if (withContext){
@@ -460,6 +491,12 @@ int main(int argc, char **argv)
 					
 					//add words from the lexicon
 					if (add_lexicon_words){
+						
+						if (withLexicon){
+							lexicon.clear();
+							load_lexicon(sentence_lexiconfile.c_str(), lexicon);
+						}
+												
 						std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
 						for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
 						{
@@ -784,10 +821,13 @@ int main(int argc, char **argv)
 			VERBOSE(1,"input_line:|" << line_str << "|" << std::endl);	
 			
 			//getting sentence string;
+			std::string tmp_sentence;
 			std::string sentence;
 			std::string context;
+			std::string sentence_lexiconfile;
 			
-			bool withContext=lmt->GetSentenceAndContext(sentence,context,line_str);
+			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+			bool withContext = lmt->GetSentenceAndContext(sentence,context,tmp_sentence);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
@@ -873,6 +913,12 @@ int main(int argc, char **argv)
 					
 					//add words from the lexicon
 					if (add_lexicon_words){
+						
+						if (withLexicon){
+							lexicon.clear();
+							load_lexicon(sentence_lexiconfile.c_str(), lexicon);
+						}
+						
 						std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
 						for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
 						{
