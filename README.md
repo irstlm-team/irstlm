@@ -1,6 +1,7 @@
 # irstlm
 IRSTLM Toolkit 
 
+
 CONTENT:
 
 - src: source code
@@ -10,12 +11,15 @@ CONTENT:
 - lib: libraries (to be generated)
 - readme: this file
 
+
 DOCUMENTATION
 
 A User Manual is available under https://sourceforge.net/projects/irstlm
 The data for the examples described in the User Manual are available under http://sourceforge.net/projects/irstlm/files/irstlm/sampledata/
 
+
 HOW TO INSTALL WITH AUTOMAKE
+
 
 Step 0: 
 
@@ -40,18 +44,21 @@ To enable/disable assert for debugging purpose, please add parameter '--enable-a
 
 To modify debugging level, please add parameter '--with-tracelevel=<val>' (default is 0)
 
+
 Step 2: 
 
 $> make
+
 
 Step 3: 
 
 $> make install
 
-These steps will generate the irstlm library and commands, respectively,
-under the specified path where to install.
+These steps will generate the irstlm library and commands, respectively, under the specified path where to install.
+
 
 HOW TO INSTALL WITH CMAKE
+
 
 Step 0: 
 
@@ -67,13 +74,16 @@ To enable/disable assert for debugging purpose, please add parameter '-DASSERT:B
 
 To modify debugging level, please add parameter '-DTRACE_LEVEL=<val>' (default is 0)
 
+
 Step 2: 
 
 $> make
 
+
 Step 3: 
 
 $> make install
+
 
 HOW TO CONTRIBUTE
 
