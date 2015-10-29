@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libirstlm.la
 
-AM_CXXFLAGS = -isystem/usr/include -W -Wall -ffor-scope -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES $(BOOST_CPPFLAGS) -DMYCODESIZE=3
+AM_CXXFLAGS = -static -isystem/usr/include -W -Wall -ffor-scope -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES $(BOOST_CPPFLAGS) -DMYCODESIZE=3
 
 libirstlm_ladir = ${includedir}
 
