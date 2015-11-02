@@ -59,8 +59,8 @@ void usage(const char *msg = 0)
 int main(int argc, char **argv)
 {
   int mmap = 0;
-  int dub = 10000000;
-  int requiredMaxlev = 1000;
+  int dub = IRSTLM_DUB_DEFAULT;
+  int requiredMaxlev = IRSTLM_REQUIREDMAXLEV_DEFAULT;
   char *lm = NULL;
 
   bool help=false;

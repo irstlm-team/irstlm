@@ -73,8 +73,8 @@ int main(int argc, char **argv)
 	
 	int debug = 0;
   bool memmap = false;
-  int requiredMaxlev = 1000;
-  int dub = 10000000;
+  int requiredMaxlev = IRSTLM_REQUIREDMAXLEV_DEFAULT;
+  int dub = IRSTLM_DUB_DEFAULT;
   int randcalls = 0;
   float ngramcache_load_factor = 0.0;
   float dictionary_load_factor = 0.0;

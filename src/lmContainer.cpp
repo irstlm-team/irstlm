@@ -69,7 +69,7 @@ inline void error(const char* message)
 
 lmContainer::lmContainer()
 {
-  requiredMaxlev=1000;
+  requiredMaxlev=IRSTLM_REQUIREDMAXLEV_DEFAULT;
 	lmtype=_IRSTLM_LMUNKNOWN;
 	maxlev=0;
 }

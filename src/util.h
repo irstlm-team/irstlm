@@ -21,6 +21,8 @@ using namespace std;
 
 #define LMTMAXLEV  20
 #define MAX_LINE  100000
+#define IRSTLM_DUB_DEFAULT  10000000
+#define IRSTLM_REQUIREDMAXLEV_DEFAULT  1000
 
 //0.000001 = 10^(-6)
 //0.000000000001 = 10^(-12)

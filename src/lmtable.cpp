@@ -100,7 +100,7 @@ namespace irstlm {
 #endif
 		
 		memmap=0;
-		requiredMaxlev=1000;
+		requiredMaxlev=IRSTLM_REQUIREDMAXLEV_DEFAULT;
 		
 		isPruned=false;
 		isInverted=false;

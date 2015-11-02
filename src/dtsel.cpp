@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
 	int minfreq=2;          //frequency threshold for dictionary pruning (optional)
 	int ngsz=0;             // n-gram size 
-	int dub=10000000;      //upper bound of true vocabulary
+	int dub=IRSTLM_DUB_DEFAULT;      //upper bound of true vocabulary
 	int model=2;           //data selection model: 1 only in-domain cross-entropy, 
 	                       //2 cross-entropy difference. 	
 	int cv=1;              //cross-validation parameter: 1 only in-domain cross-entropy, 
