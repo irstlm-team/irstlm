@@ -65,12 +65,6 @@
 typedef enum {INTERNAL,QINTERNAL,LEAF,QLEAF} LMT_TYPE;
 typedef char* node;
 
-typedef enum {LMT_FIND,    //!< search: find an entry
-	LMT_ENTER,   //!< search: enter an entry
-	LMT_INIT,    //!< scan: start scan
-	LMT_CONT     //!< scan: continue scan
-} LMT_ACTION;
-
 typedef unsigned int  table_entry_pos_t; //type for pointing to a full ngram in the table
 typedef unsigned long table_pos_t; // type for pointing to a single char in the table
 typedef unsigned char qfloat_t; //type for quantized probabilities
@@ -339,16 +333,16 @@ public:
 	
 	void checkbounds(int level);
 	
-	inline int get(ngram& ng) {
+	virtual inline int get(ngram& ng) {
 		return get(ng,ng.size,ng.size);
 	}
-	int get(ngram& ng,int n,int lev);
+	virtual int get(ngram& ng,int n,int lev);
 	
 	int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev);
 	
 	virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
 	virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
-  virtual const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
+        virtual const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
 	
 	inline void putmem(char* ptr,int value,int offs,int size) {
 		MY_ASSERT(ptr!=NULL);
