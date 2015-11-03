@@ -109,41 +109,50 @@ int lmContainer::getLanguageModelType(std::string filename)
 lmContainer* lmContainer::CreateLanguageModel(const std::string infile, float nlf, float dlf)
 {
   int type = lmContainer::getLanguageModelType(infile);
-  std::cerr << "Language Model Type of " << infile << " is " << type << std::endl;
+                
+  VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(...) Language Model Type of " << infile << " is " << type << std::endl);
 
   return lmContainer::CreateLanguageModel(type, nlf, dlf);
 }
 
 lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf)
 {
-
   std::cerr << "Language Model Type is " << type << std::endl;
+  VERBOSE(1,"Language Model Type is " << type << std::endl);
 
   lmContainer* lm=NULL;
 
   switch (type) {
 			
 		case _IRSTLM_LMTABLE:
+                        VERBOSE(1,"_IRSTLM_LMTABLE" << std::endl);
 			lm = new lmtable(nlf, dlf);
 			break;
 			
 		case _IRSTLM_LMMACRO:
+                        VERBOSE(1,"_IRSTLM_LMMACRO" << std::endl);
 			lm = new lmmacro(nlf, dlf);
 			break;
 			
 		case _IRSTLM_LMCLASS:
+                        VERBOSE(1,"_IRSTLM_LMCLASS" << std::endl);
 			lm = new lmclass(nlf, dlf);
 			break;
 			
 		case _IRSTLM_LMINTERPOLATION:
+                        VERBOSE(1,"_IRSTLM_LMINTERPOLATION" << std::endl);
 			lm = new lmInterpolation(nlf, dlf);
 			break;
 			
 		default:
+			VERBOSE(1,"UNKNOWN" << std::endl);
 			exit_error(IRSTLM_ERROR_DATA, "This language model type is unknown!");
   }
+  VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf) lm:|" << (void*) lm << "|" << std::endl);
 
   lm->setLanguageModelType(type);
+
+  VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf) lm->getLanguageModelType:|" << lm->getLanguageModelType() << "|" << std::endl)
   return lm;
 }
 

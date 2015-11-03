@@ -39,6 +39,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 typedef enum {BINARY,TEXT,YRANIB,NONE} OUTFILE_TYPE;
 
+typedef enum {LMT_FIND,    //!< search: find an entry
+        LMT_ENTER,   //!< search: enter an entry
+        LMT_INIT,    //!< scan: start scan
+        LMT_CONT     //!< scan: continue scan
+} LMT_ACTION;
+
 namespace irstlm {
 class lmContainer
 {
@@ -109,6 +115,7 @@ public:
     return false;
   };
   virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
     UNUSED(ng);
     UNUSED(bow);
     UNUSED(bol);
@@ -118,6 +125,7 @@ public:
     return 0.0;
   };
   virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
     UNUSED(ng);
     UNUSED(ngsize);
     UNUSED(bow);
@@ -143,6 +151,27 @@ public:
     UNUSED(statesize);
     return NULL;
   }
+
+  virtual inline int get(ngram& ng) {
+    UNUSED(ng);
+    return 0;
+  }
+        
+  virtual int get(ngram& ng,int n,int lev){
+    UNUSED(ng);
+    UNUSED(n);
+    UNUSED(lev);
+    return 0;
+  }
+        
+  virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
+    UNUSED(ng);
+    UNUSED(h);
+    UNUSED(action);
+    UNUSED(lev);
+    return 0;     
+  }
+
 
   virtual void used_caches() {};
   virtual void init_caches(int uptolev) {
