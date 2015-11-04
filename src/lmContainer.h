@@ -113,23 +113,31 @@ public:
   };
   virtual bool is_inverted() {
     return false;
-  };
-  virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
+  };	
+	
+//virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+	virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+//		VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
+		VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
     UNUSED(ng);
     UNUSED(bow);
     UNUSED(bol);
+    UNUSED(maxsuffidx);
     UNUSED(maxsuffptr);
     UNUSED(statesize);
     UNUSED(extendible);
     return 0.0;
   };
-  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
+
+//  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+//	VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
+	VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
     UNUSED(ng);
     UNUSED(ngsize);
     UNUSED(bow);
     UNUSED(bol);
+    UNUSED(maxsuffidx);
     UNUSED(maxsuffptr);
     UNUSED(statesize);
     UNUSED(extendible);
@@ -225,6 +233,11 @@ VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=N
 		getDict()->incflag(0);
 		return c;
 	}
+	
+	virtual void print_table_stat(){
+    VERBOSE(3,"virtual void lmContainer::print_table_stat() "<< std::endl);
+	};
+	
 };
 
 }//namespace irstlm

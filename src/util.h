@@ -50,6 +50,8 @@ using namespace std;
 #define SSEED 50
 
 class ngram;
+typedef unsigned int  ngram_state_t; //type for pointing to a full ngram in the table
+
 class mfstream;
 
 std::string gettempfolder();

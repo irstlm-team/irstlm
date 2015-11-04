@@ -140,25 +140,30 @@ namespace irstlm {
 	}
 	
 	//return log10 prob of an ngram
-	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+//	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		
 		double pr=0.0;
 		double _logpr;
 		
 		char* _maxsuffptr=NULL,*actualmaxsuffptr=NULL;
+		ngram_state_t _maxsuffidx=NULL,actualmaxsuffidx=NULL;
 		unsigned int _statesize=0,actualstatesize=0;
 		int _bol=0,actualbol=MAX_NGRAM;
 		double _bow=0.0,actualbow=0.0; 
 		bool _extendible=false;
 		bool actualextendible=false;
 		
+//		ngram_state_t* maxsuffidx = new ngram_state_t;
+		
 		for (size_t i=0; i<m_lm.size(); i++) {
 			
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
 				_ng.trans(ng);
-				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);
+//				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);				
+				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible);
 				
 				IFVERBOSE(3){
 					//cerr.precision(10);
@@ -185,6 +190,7 @@ namespace irstlm {
 				
 				if(_statesize > actualstatesize || i == 0) {
 					actualmaxsuffptr = _maxsuffptr;
+					actualmaxsuffidx = _maxsuffidx;
 					actualstatesize = _statesize;
 				}
 				if (_bol < actualbol) {
@@ -198,6 +204,7 @@ namespace irstlm {
 		if (bol) *bol=actualbol;
 		if (bow) *bow=log(actualbow);
 		if (maxsuffptr) *maxsuffptr=actualmaxsuffptr;
+		if (maxsuffidx) *maxsuffidx=actualmaxsuffidx;
 		if (statesize) *statesize=actualstatesize;
 		if (extendible) {
 			*extendible=actualextendible;
@@ -211,7 +218,8 @@ namespace irstlm {
 		return log10(pr);
 	}
 	
-	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+//	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,ngram_state_t* maxsuffidx,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		
 		//create the actual ngram
@@ -219,7 +227,8 @@ namespace irstlm {
 		ong.pushc(codes,sz);
 		MY_ASSERT (ong.size == sz);
 		
-		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
+//		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
+		return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible);
 	}
 	
 	double lmInterpolation::setlogOOVpenalty(int dub)

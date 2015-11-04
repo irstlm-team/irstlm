@@ -191,6 +191,8 @@ int main(int argc, char **argv)
 
   lmt->load(infile);
 
+	lmt->print_table_stat();
+	
   //CHECK this part for sfilter to make it possible only for LMTABLE
   if (sfilter != NULL) {
     lmContainer* filtered_lmt = NULL;
@@ -296,12 +298,14 @@ int main(int argc, char **argv)
 			
       double bow;
       int bol=0;
+      ngram_state_t msidx;
       char *msp;
       unsigned int statesize;
 
       lmt->dictionary_incflag(1);
 
       while(inptxt >> ng) {
+				VERBOSE(3,"read ng:|" << ng << "|" << std::endl);
 
         if (ng.size>lmt->maxlevel()) ng.size=lmt->maxlevel();
 
@@ -312,7 +316,10 @@ int main(int argc, char **argv)
         }
 
         if (ng.size>=1) {
-          Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
+					VERBOSE(3,"computing clprob ng:|" << ng << "|" << std::endl);
+//          Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
+          Pr=lmt->clprob(ng,&bow,&bol,&msidx,&msp,&statesize);
+					VERBOSE(3,"computing clprob ng:|" << ng << "| Pr:|" << Pr << "| ngramstate:" << msidx << " msp:|" << (void*) msp << "| statesize:|" << statesize << "|" << std::endl);
           logPr+=Pr;
           sent_logPr+=Pr;
 
@@ -331,12 +338,12 @@ int main(int argc, char **argv)
             std::cout.flush();
           }
           else if (debug==4) {
-            std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
+            std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " ngramstate:" << msidx << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
             std::cout << std::endl;
             std::cout.flush();
           }
           else if (debug>4) {
-            std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
+            std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " ngramstate:" << msidx << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
             double totp=0.0;
             int oldw=*ng.wordp(1);
             double oovp=lmt->getlogOOVpenalty();
@@ -386,8 +393,10 @@ int main(int argc, char **argv)
             std::cerr << ".";
             lmt->check_caches_levels();
           }
-
+					
+					VERBOSE(3,"computing clprob END" << std::endl);
         }
+				VERBOSE(3,"read END" << std::endl);
       }
 
       PP=exp((-logPr * log(10.0)) /Nw);
@@ -471,6 +480,7 @@ int main(int argc, char **argv)
 		double Pr;
 		double bow;
 		int bol=0;
+		ngram_state_t msidx;
 		char *msp;
 		unsigned int statesize;
 
@@ -490,9 +500,10 @@ int main(int argc, char **argv)
 					ng.size=lmt->maxlevel();
 				}
 				
-				Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
+//				Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
+				Pr=lmt->clprob(ng,&bow,&bol,&msidx, &msp,&statesize);
 #ifndef OUTPUT_SUPPRESSED
-				std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
+				std::cout << ng << " [" << ng.size-bol << "-gram: recombine:" << statesize << " ngramstate:" << msidx << " state:" << (void*) msp << "] [" << ng.size+1-((bol==0)?(1):bol) << "-gram: bol:" << bol << "] " << Pr << " bow:" << bow;
 				std::cout << std::endl;
     				std::cout.flush();
 #endif

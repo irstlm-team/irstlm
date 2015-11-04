@@ -77,8 +77,10 @@ public:
   void load(const std::string &filename,int mmap=0);
 
   double lprob(ngram ng);
-  double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+//  double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+//  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+  double clprob(ngram ng,double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 
   const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
   const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);

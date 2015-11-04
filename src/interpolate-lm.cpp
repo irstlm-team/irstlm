@@ -390,6 +390,7 @@ int main(int argc, char **argv)
 
       double bow;
       int bol=0;
+      ngram_state_t msidx;
       char *msp;
       unsigned int statesize;
 
@@ -415,7 +416,8 @@ int main(int argc, char **argv)
 
             ngram ong(lmt[i]->getDict());
             ong.trans(ng);
-            logpr = lmt[i]->clprob(ong,&bow,&bol,&msp,&statesize); //actual prob of the interpolation
+//            logpr = lmt[i]->clprob(ong,&bow,&bol,&msp,&statesize); //actual prob of the interpolation
+            logpr = lmt[i]->clprob(ong,&bow,&bol,&msidx,&msp,&statesize); //actual prob of the interpolation
             //logpr = lmt[i]->clprob(ong,&bow,&bol); //LM log-prob
 
             Pr+=w[i] * pow(10.0,logpr); //actual prob of the interpolation
@@ -519,8 +521,9 @@ int main(int argc, char **argv)
         for (i=0; i<N; i++) {
           ngram ong(lmt[i]->getDict());
           ong.trans(ng);
-          logpr = lmt[i]->clprob(ong,&bow,&bol,NULL,&statesize); //LM log-prob (using caches if available)
-
+//          logpr = lmt[i]->clprob(ong,&bow,&bol,NULL,&statesize); //LM log-prob (using caches if available)
+          logpr = lmt[i]->clprob(ong,&bow,&bol,NULL,NULL,&statesize); //LM log-prob (using caches if available)
+					
           Pr+=w[i] * pow(10.0,logpr); //actual prob of the interpolation
           std::cout << "lm " << i << ":" << " logpr: " << logpr << " weight: " << w[i] << std::endl;
           if (maxbol<bol) maxbol=bol;

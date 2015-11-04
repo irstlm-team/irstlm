@@ -327,15 +327,18 @@ double lmmacro::lprob(ngram micro_ng)
 
   return prob;
 };
-
-double lmmacro::clprob(int* codes, int sz,  double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
+	
+//double lmmacro::clprob(int* codes, int sz,  double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
+double lmmacro::clprob(int* codes, int sz,  double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible)
 {
   ngram micro_ng(getDict());
   micro_ng.pushc(codes,sz);
-  return clprob(micro_ng,bow,bol,state,statesize,extendible);
+//  return clprob(micro_ng,bow,bol,state,statesize,extendible);
+  return clprob(micro_ng,bow,bol,ngramstate,state,statesize,extendible);
 }
 
-double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
+//	double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
+double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible)
 {
 
   VERBOSE(3," lmmacro::clprob(ngram), parameter = <" <<  micro_ng << ">\n");
@@ -353,7 +356,8 @@ double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, char** state,unsig
     logpr = 0.0;
   } else {
     VERBOSE(3,"  QUERY MACRO LM on (after transformation and size reduction) " << transformed_ng << "\n");
-    logpr = lmtable::clprob(transformed_ng, bow, bol, state, statesize, extendible);
+//    logpr = lmtable::clprob(transformed_ng, bow, bol, state, statesize, extendible);
+    logpr = lmtable::clprob(transformed_ng, bow, bol, ngramstate, state, statesize, extendible);
   }
   VERBOSE(3,"  GET logpr: " << logpr << "\n");
 

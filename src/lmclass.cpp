@@ -201,8 +201,9 @@ void lmclass::loadMapElement(const char* in, const char* out, double sc)
 
   if (wcode >= MapScoreN) MapScoreN++; //increment size of the array MapScore if the element is new
 }
-
-double lmclass::lprob(ngram ong,double* bow, int* bol, char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	
+//double lmclass::lprob(ngram ong,double* bow, int* bol, char** maxsuffptr,unsigned int* statesize,bool* extendible)
+double lmclass::lprob(ngram ong,double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible)
 {
   double lpr=getMapScore(*ong.wordp(1));
 
@@ -213,8 +214,9 @@ double lmclass::lprob(ngram ong,double* bow, int* bol, char** maxsuffptr,unsigne
   //  mapped_ng.trans_freq(ong);
   mapping(ong,mapped_ng);
 
-  lpr+=lmtable::clprob(mapped_ng,bow,bol,maxsuffptr,statesize, extendible);
-
+//  lpr+=lmtable::clprob(mapped_ng,bow,bol,maxsuffptr,statesize, extendible);
+  lpr+=lmtable::clprob(mapped_ng,bow,bol,maxsuffidx,maxsuffptr,statesize, extendible);
+	
   VERBOSE(3,"In lmclass::lprob(...) global prob  = " <<  lpr  << "\n");
   return lpr;
 }

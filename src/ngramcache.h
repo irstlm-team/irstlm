@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 #include "mempool.h"
 #include "htable.h"
+#include "util.h"
 
 #define NGRAMCACHE_t ngramcache
 
@@ -32,12 +33,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 typedef struct PROB_AND_STATE_ENTRY {
   double logpr;   //!< probability value of an ngram
+  ngram_state_t ngramstate;  //!< index of the largest n-gram contained in the LM table.
   char* state;  //!< the largest suffix of an n-gram contained in the LM table.
   unsigned int statesize; //!< LM statesize of an ngram
   double bow;     //!< backoff weight
   int bol;        //!< backoff level
   bool extendible;  //!< flag for extendibility of the ngram
-  PROB_AND_STATE_ENTRY(double lp=0.0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false): logpr(lp), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex) {}; //initializer
+//  PROB_AND_STATE_ENTRY(double lp=0.0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false): logpr(lp), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex) {}; //initializer
+  PROB_AND_STATE_ENTRY(double lp=0.0, ngram_state_t ngramst=0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false): logpr(lp), ngramstate(ngramst), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex) {}; //initializer
 } prob_and_state_t;
 
 void print(prob_and_state_t* pst,  std::ostream& out=std::cout);

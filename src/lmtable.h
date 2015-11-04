@@ -65,6 +65,7 @@
 typedef enum {INTERNAL,QINTERNAL,LEAF,QLEAF} LMT_TYPE;
 typedef char* node;
 
+typedef unsigned int  ngram_state_t; //type for pointing to a full ngram in the table
 typedef unsigned int  table_entry_pos_t; //type for pointing to a full ngram in the table
 typedef unsigned long table_pos_t; // type for pointing to a single char in the table
 typedef unsigned char qfloat_t; //type for quantized probabilities
@@ -315,11 +316,17 @@ public:
 	void filter(const char* /* unused parameter: lmfile */) {};
 	
 	
-	virtual double  lprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-	virtual double clprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-	virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+//	virtual double  lprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+//	virtual double clprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+//	virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 	
 	
+	
+	virtual double  lprob(ngram ng, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+  virtual double clprob(ngram ng, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+  virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+	
+
 	void *search(int lev,table_entry_pos_t offs,table_entry_pos_t n,int sz,int *w, LMT_ACTION action,char **found=(char **)NULL);
 	
 	int mybsearch(char *ar, table_entry_pos_t n, int size, char *key, table_entry_pos_t *idx);
@@ -342,7 +349,7 @@ public:
 	
 	virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
 	virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
-        virtual const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
+  virtual const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
 	
 	inline void putmem(char* ptr,int value,int offs,int size) {
 		MY_ASSERT(ptr!=NULL);
@@ -461,7 +468,6 @@ public:
 		
 		return value;
 	};
-	
 	
 	inline float bow(node nd,LMT_TYPE ndt) {
 		int offs=LMTCODESIZE+(ndt==QINTERNAL?QPROBSIZE:PROBSIZE);
