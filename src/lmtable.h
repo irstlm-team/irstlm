@@ -300,8 +300,8 @@ public:
 	inline void update_offset(int level, table_entry_pos_t value) { tb_offset[level]=value; };
 	
 	
-	void load(const std::string &filename, int mmap=0);
-	void load(std::istream& inp,const char* filename=NULL,const char* outfilename=NULL,int mmap=0);
+	virtual void load(const std::string &filename, int mmap=0);
+	virtual void load(std::istream& inp,const char* filename=NULL,const char* outfilename=NULL,int mmap=0);
 	
 	void load_centers(std::istream& inp,int l);
 	
@@ -315,16 +315,23 @@ public:
 	
 	void filter(const char* /* unused parameter: lmfile */) {};
 	
+	virtual double  lprob(ngram ng){
+		return lprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	}
+	virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible){
+		return lprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, NULL);
+	}
+	virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible){
+	 return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL);
+	}
 	
-//	virtual double  lprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-//	virtual double clprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-//	virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+	virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow){
+		return lprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow);
+	}
+	virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
 	
-	
-	
-	virtual double  lprob(ngram ng, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-  virtual double clprob(ngram ng, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-  virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+  virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL);
+  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL);
 	
 
 	void *search(int lev,table_entry_pos_t offs,table_entry_pos_t n,int sz,int *w, LMT_ACTION action,char **found=(char **)NULL);

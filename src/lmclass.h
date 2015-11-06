@@ -74,25 +74,22 @@ public:
   ~lmclass();
 
   void load(const std::string &filename,int mmap=0);
-	
-//  double lprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-/*
-  inline double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
-    return lprob(ng,bow,bol,maxsuffptr,statesize,extendible);
+
+  double lprob(ngram ng, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+		return lprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible);
   };
-*/
-/*
- inline double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
-    ngram ong(getDict());
-    ong.pushc(ng,ngsize);
-    return lprob(ong,bow,bol,maxsuffptr,statesize,extendible);
+  double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+    return clprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible);
   };
-*/
+  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+    return clprob(ng,ngsize,bow,bol,NULL,maxsuffptr,statesize,extendible);
+  };
+
   double lprob(ngram ng, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
-  inline double clprob(ngram ng,double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+  double clprob(ngram ng,double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
     return lprob(ng,bow,bol,maxsuffidx,maxsuffptr,statesize,extendible);
   };
-  inline double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
+  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) {
     ngram ong(getDict());
     ong.pushc(ng,ngsize);
     return lprob(ong,bow,bol,maxsuffidx,maxsuffptr,statesize,extendible);

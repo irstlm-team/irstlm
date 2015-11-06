@@ -115,7 +115,23 @@ public:
     return false;
   };	
 	
-	virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
+	double clprob(ngram ng) {
+		return clprob(ng, NULL, NULL, NULL, NULL, NULL, NULL);
+	}
+	double clprob(ngram ng, double* bow, int* bol) {
+		return clprob(ng, bow, bol, NULL, NULL, NULL, NULL);
+	}
+	double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize) {
+		return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, NULL);
+	}
+	double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize) {
+		return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL);
+	}
+	virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize,bool* extendible) {
+		VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
+		return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible);
+  };
+	virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize,bool* extendible) {
 		VERBOSE(3,"virtual double  lmContainer::clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) ng:|" << ng  << "|\n");
     UNUSED(ng);
     UNUSED(bow);
@@ -127,9 +143,12 @@ public:
     return 0.0;
   };
 
-//  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-  virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL) {
-//	VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
+  virtual double clprob(int* ng, int ngsize, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize,bool* extendible) {
+		VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
+		return clprob(ng, ngsize, bow, bol, NULL, maxsuffptr, statesize, extendible);
+  };
+
+  virtual double clprob(int* ng, int ngsize, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize,bool* extendible) {
 	VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL)\n");
     UNUSED(ng);
     UNUSED(ngsize);
@@ -145,17 +164,12 @@ public:
 	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
-    UNUSED(ng);
-    UNUSED(statesize);
-    return NULL;
+    return cmaxsuffptr(ng, statesize);
   }
 	
   virtual const char *cmaxsuffptr(int* ng, int ngsize, unsigned int* statesize=NULL)
   {
-    UNUSED(ng);
-    UNUSED(ngsize);
-    UNUSED(statesize);
-    return NULL;
+    return cmaxsuffptr(ng, ngsize, statesize);
   }
 	
   virtual ngram_state_t cmaxsuffidx(ngram ng, unsigned int* statesize=NULL)
