@@ -2707,17 +2707,17 @@ namespace irstlm {
 						if (statesize)	*statesize=ng.size;
 						if (maxsuffptr)	*maxsuffptr=ng.link; //we should check ng.link != NULL
 						
-						size_t _level=ng.size;
-						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| _level:|" << _level << "|" << std::endl);
+						size_t isize=ng.size;
+						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| isize:|" << isize << "|" << std::endl);
 //						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| (void*) table:|" << (void*) table << "|" << std::endl);
 //						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| (void*) ng.link:|" << (void*) ng.link << "|" << std::endl);
 						
 						
 						if (maxsuffidx){
-							int ndsz=nodesize(tbltype[_level]);
+							int ndsz=nodesize(tbltype[isize]);
 							*maxsuffidx=0;
 							if (ng.link){
-								*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ng.link) - (table_pos_t) table[_level]) / ndsz ) + tb_offset[_level] + 1; //added 1 to distinguish from zero-ngram
+								*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ng.link) - (table_pos_t) table[isize]) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
 							}
 							
 							VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| *maxsuffidx:|" << *maxsuffidx << "|" << std::endl);
