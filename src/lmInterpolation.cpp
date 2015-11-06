@@ -140,7 +140,7 @@ namespace irstlm {
 	}
 	
 	//return log10 prob of an ngram
-//	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	//	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		
@@ -155,14 +155,14 @@ namespace irstlm {
 		bool _extendible=false;
 		bool actualextendible=false;
 		
-//		ngram_state_t* maxsuffidx = new ngram_state_t;
+		//		ngram_state_t* maxsuffidx = new ngram_state_t;
 		
 		for (size_t i=0; i<m_lm.size(); i++) {
 			
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
 				_ng.trans(ng);
-//				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);				
+				//				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);				
 				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible);
 				
 				IFVERBOSE(3){
@@ -218,7 +218,7 @@ namespace irstlm {
 		return log10(pr);
 	}
 	
-//	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	//	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,ngram_state_t* maxsuffidx,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	{
 		
@@ -227,9 +227,109 @@ namespace irstlm {
 		ong.pushc(codes,sz);
 		MY_ASSERT (ong.size == sz);
 		
-//		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
+		//		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
 		return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible);
 	}
+	
+	const char *lmInterpolation::cmaxsuffptr(ngram ng, unsigned int* statesize){
+		
+		char *maxsuffptr=NULL;
+		unsigned int _statesize=0,actualstatesize=0;
+		
+		//		ngram_state_t* maxsuffidx = new ngram_state_t;
+		
+		for (size_t i=0; i<m_lm.size(); i++) {
+			
+			if (m_weight[i]>0.0){
+				ngram _ng(m_lm[i]->getDict());
+				_ng.trans(ng);
+				
+				const char* _maxsuffptr = m_lm[i]->cmaxsuffptr(_ng,&_statesize);
+				
+				IFVERBOSE(3){
+					//cerr.precision(10);
+					VERBOSE(3," LM " << i << " weight:" << m_weight[i] << std::endl);
+					VERBOSE(3," _statesize:" << _statesize << std::endl);
+				}
+				
+				/*
+				 //TO CHECK the following claims
+				 //What is the statesize of a LM interpolation? The largest _statesize among the submodels
+				 //What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
+				 */
+				
+				if(_statesize > actualstatesize || i == 0) {
+					maxsuffptr = (char*) _maxsuffptr;
+					actualstatesize = _statesize;
+				}
+			}
+		}
+		if (statesize) *statesize=actualstatesize;
+		
+		if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
+		
+		return maxsuffptr;
+	}
+	
+  const char *lmInterpolation::cmaxsuffptr(int* codes, int sz, unsigned int* statesize)
+	{
+		//create the actual ngram
+		ngram ong(dict);
+		ong.pushc(codes,sz);
+		MY_ASSERT (ong.size == sz);
+		return cmaxsuffptr(ong, statesize);
+	}
+	
+	ngram_state_t lmInterpolation::cmaxsuffidx(ngram ng, unsigned int* statesize)
+	{
+		ngram_state_t maxsuffidx=0;
+		unsigned int _statesize=0,actualstatesize=0;
+		
+		//		ngram_state_t* maxsuffidx = new ngram_state_t;
+		
+		for (size_t i=0; i<m_lm.size(); i++) {
+			
+			if (m_weight[i]>0.0){
+				ngram _ng(m_lm[i]->getDict());
+				_ng.trans(ng);
+				
+				ngram_state_t _maxsuffidx = m_lm[i]->cmaxsuffidx(_ng,&_statesize);
+				
+				IFVERBOSE(3){
+					//cerr.precision(10);
+					VERBOSE(3," LM " << i << " weight:" << m_weight[i] << std::endl);
+					VERBOSE(3," _statesize:" << _statesize << std::endl);
+				}
+				
+				/*
+				 //TO CHECK the following claims
+				 //What is the statesize of a LM interpolation? The largest _statesize among the submodels
+				 //What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
+				 */
+				
+				if(_statesize > actualstatesize || i == 0) {
+					maxsuffidx = _maxsuffidx;
+					actualstatesize = _statesize;
+				}
+			}
+		}
+		
+	  if (statesize) *statesize=actualstatesize;
+		
+		if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
+		
+		return maxsuffidx;
+	}
+	
+  ngram_state_t lmInterpolation::cmaxsuffidx(int* codes, int sz, unsigned int* statesize)
+	{
+		//create the actual ngram
+		ngram ong(dict);
+		ong.pushc(codes,sz);
+		MY_ASSERT (ong.size == sz);
+		return cmaxsuffidx(ong, statesize);
+	}
+	
 	
 	double lmInterpolation::setlogOOVpenalty(int dub)
 	{
@@ -249,3 +349,4 @@ namespace irstlm {
 		return logOOVpenalty;
 	}
 }//namespace irstlm
+
