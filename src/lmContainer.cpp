@@ -117,7 +117,6 @@ lmContainer* lmContainer::CreateLanguageModel(const std::string infile, float nl
 
 lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf)
 {
-  std::cerr << "Language Model Type is " << type << std::endl;
   VERBOSE(1,"Language Model Type is " << type << std::endl);
 
   lmContainer* lm=NULL;

@@ -319,7 +319,7 @@ int main(int argc, char **argv)
 					VERBOSE(3,"computing clprob ng:|" << ng << "|" << std::endl);
 //          Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
           Pr=lmt->clprob(ng,&bow,&bol,&msidx,&msp,&statesize);
-					VERBOSE(3,"computing clprob ng:|" << ng << "| Pr:|" << Pr << "| ngramstate:" << msidx << " msp:|" << (void*) msp << "| statesize:|" << statesize << "|" << std::endl);
+					
           logPr+=Pr;
           sent_logPr+=Pr;
 
