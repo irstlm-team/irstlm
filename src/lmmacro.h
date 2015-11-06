@@ -84,7 +84,9 @@ public:
 
   const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
   const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
-
+  ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
+  ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
+	
   void map(ngram *in, ngram *out);
   void One2OneMapping(ngram *in, ngram *out);
   void Micro2MacroMapping(ngram *in, ngram *out);

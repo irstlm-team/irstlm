@@ -543,31 +543,78 @@ const char *lmmacro::maxsuffptr(ngram micro_ng, unsigned int* size)
 
   return lmtable::maxsuffptr(macro_ng,size);
 }
-
+	
 const char *lmmacro::cmaxsuffptr(ngram micro_ng, unsigned int* size)
 {
-  //cerr << "lmmacro::CMAXsuffptr\n";
-  //cerr << "micro_ng: " << micro_ng
-  //	<< " -> micro_ng.size: " << micro_ng.size << "\n";
-
-  //the LM working on the selected field = 0
-  //contributes to the LM state
-  //  if (selectedField>0)    return NULL;
-
-  ngram macro_ng(lmtable::getDict());
-
-  if (micro_ng.dict ==  macro_ng.dict)
-    macro_ng.trans(micro_ng);  // micro to macro mapping already done
-  else
-    map(&micro_ng, &macro_ng); // mapping required
-
-  VERBOSE(2,"lmmacro::lprob: micro_ng = " << micro_ng << "\n"
-          <<  "lmmacro::lprob: macro_ng = " << macro_ng << "\n")
-
-  return lmtable::cmaxsuffptr(macro_ng,size);
-
+		//cerr << "lmmacro::CMAXsuffptr\n";
+		//cerr << "micro_ng: " << micro_ng
+		//	<< " -> micro_ng.size: " << micro_ng.size << "\n";
+		
+		//the LM working on the selected field = 0
+		//contributes to the LM state
+		//  if (selectedField>0)    return NULL;
+		
+		ngram macro_ng(lmtable::getDict());
+		
+		if (micro_ng.dict ==  macro_ng.dict)
+			macro_ng.trans(micro_ng);  // micro to macro mapping already done
+		else
+			map(&micro_ng, &macro_ng); // mapping required
+		
+		VERBOSE(2,"lmmacro::lprob: micro_ng = " << micro_ng << "\n"
+						<<  "lmmacro::lprob: macro_ng = " << macro_ng << "\n")
+		
+		return lmtable::cmaxsuffptr(macro_ng,size);
+		
 }
+	
+ngram_state_t lmmacro::maxsuffidx(ngram micro_ng, unsigned int* size)
+{
+		//cerr << "lmmacro::CMAXsuffptr\n";
+		//cerr << "micro_ng: " << micro_ng
+		//	<< " -> micro_ng.size: " << micro_ng.size << "\n";
+		
+		//the LM working on the selected field = 0
+		//contributes to the LM state
+		//  if (selectedField>0)    return NULL;
+		
+		ngram macro_ng(lmtable::getDict());
+		
+		if (micro_ng.dict ==  macro_ng.dict)
+			macro_ng.trans(micro_ng);  // micro to macro mapping already done
+			else
+				map(&micro_ng, &macro_ng); // mapping required
+				
+				VERBOSE(2,"lmmacro::lprob: micro_ng = " << micro_ng << "\n"
+								<<  "lmmacro::lprob: macro_ng = " << macro_ng << "\n")
+				
+				return lmtable::cmaxsuffidx(macro_ng,size);
+		
+	}
 
+ngram_state_t lmmacro::cmaxsuffidx(ngram micro_ng, unsigned int* size)
+{
+		//cerr << "lmmacro::CMAXsuffptr\n";
+		//cerr << "micro_ng: " << micro_ng
+		//	<< " -> micro_ng.size: " << micro_ng.size << "\n";
+		
+		//the LM working on the selected field = 0
+		//contributes to the LM state
+		//  if (selectedField>0)    return NULL;
+		
+		ngram macro_ng(lmtable::getDict());
+		
+		if (micro_ng.dict ==  macro_ng.dict)
+			macro_ng.trans(micro_ng);  // micro to macro mapping already done
+		else
+			map(&micro_ng, &macro_ng); // mapping required
+		
+		VERBOSE(2,"lmmacro::lprob: micro_ng = " << micro_ng << "\n"
+						<<  "lmmacro::lprob: macro_ng = " << macro_ng << "\n")
+		
+		return lmtable::cmaxsuffidx(macro_ng,size);
+		
+	}
 
 void lmmacro::map(ngram *in, ngram *out)
 {

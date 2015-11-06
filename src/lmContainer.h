@@ -144,15 +144,30 @@ public:
     return 0.0;
   };
 
-
+	
   virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
   {
     UNUSED(ng);
     UNUSED(statesize);
     return NULL;
   }
-
+	
   virtual const char *cmaxsuffptr(int* ng, int ngsize, unsigned int* statesize=NULL)
+  {
+    UNUSED(ng);
+    UNUSED(ngsize);
+    UNUSED(statesize);
+    return NULL;
+  }
+	
+  ngram_state_t cmaxsuffidx(ngram ng, unsigned int* statesize=NULL)
+  {
+    UNUSED(ng);
+    UNUSED(statesize);
+    return NULL;
+  }
+
+  ngram_state_t cmaxsuffidx(int* ng, int ngsize, unsigned int* statesize=NULL)
   {
     UNUSED(ng);
     UNUSED(ngsize);
