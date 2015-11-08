@@ -141,7 +141,7 @@ namespace irstlm {
 	
 	//return log10 prob of an ngram
 	//	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible, double* lastbow)
 	{
 		
 		double pr=0.0;
@@ -152,6 +152,7 @@ namespace irstlm {
 		unsigned int _statesize=0,actualstatesize=0;
 		int _bol=0,actualbol=MAX_NGRAM;
 		double _bow=0.0,actualbow=0.0; 
+		double _lastbow=0.0,actuallastbow=0.0; 
 		bool _extendible=false;
 		bool actualextendible=false;
 		
@@ -163,7 +164,7 @@ namespace irstlm {
 				ngram _ng(m_lm[i]->getDict());
 				_ng.trans(ng);
 				//				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible);				
-				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible);
+				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible, lastbow);
 				
 				IFVERBOSE(3){
 					//cerr.precision(10);
@@ -173,6 +174,7 @@ namespace irstlm {
 					VERBOSE(3," _statesize:" << _statesize << std::endl);
 					VERBOSE(3," _bow:" << _bow << std::endl);
 					VERBOSE(3," _bol:" << _bol << std::endl);
+					VERBOSE(3," _lastbow:" << _lastbow << std::endl);
 				}
 				
 				/*
@@ -183,6 +185,7 @@ namespace irstlm {
 				 //What is the bow of a LM interpolation? The weighted sum of the bow of the submodels
 				 //What is the prob of a LM interpolation? The weighted sum of the prob of the submodels
 				 //What is the extendible flag of a LM interpolation? true if the extendible flag is one for any LM
+				 //What is the lastbow of a LM interpolation? The weighted sum of the lastbow of the submodels
 				 */
 				
 				pr+=m_weight[i]*pow(10.0,_logpr);
@@ -199,6 +202,9 @@ namespace irstlm {
 				if (_extendible) {
 					actualextendible=true; //set extendible flag to true if the ngram is extendible for any LM
 				}
+				if (_lastbow < actuallastbow) {
+					actuallastbow=_lastbow; //backoff limit of LM[i]
+				}
 			}
 		}
 		if (bol) *bol=actualbol;
@@ -206,30 +212,31 @@ namespace irstlm {
 		if (maxsuffptr) *maxsuffptr=actualmaxsuffptr;
 		if (maxsuffidx) *maxsuffidx=actualmaxsuffidx;
 		if (statesize) *statesize=actualstatesize;
-		if (extendible) {
-			*extendible=actualextendible;
-			//    delete _extendible;
-		}
+		if (extendible) *extendible=actualextendible;
+		if (lastbow) *bol=actuallastbow;
 		
 		if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
 		if (bow) VERBOSE(3, " bow:" << *bow << std::endl);
 		if (bol) VERBOSE(3, " bol:" << *bol << std::endl);
+		if (lastbow) VERBOSE(3, " lastbow:" << *lastbow << std::endl);
 		
 		return log10(pr);
 	}
 	
-	//	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,ngram_state_t* maxsuffidx,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	{
-		
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		
-		//		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
-		return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible);
-	}
+	/*
+	 //	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	 double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,ngram_state_t* maxsuffidx,char** maxsuffptr,unsigned int* statesize,bool* extendible)
+	 {
+	 
+	 //create the actual ngram
+	 ngram ong(dict);
+	 ong.pushc(codes,sz);
+	 MY_ASSERT (ong.size == sz);
+	 
+	 //		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
+	 return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible);
+	 }
+	 */
 	
 	const char *lmInterpolation::cmaxsuffptr(ngram ng, unsigned int* statesize){
 		
@@ -270,7 +277,8 @@ namespace irstlm {
 		
 		return maxsuffptr;
 	}
-	
+
+	/*
   const char *lmInterpolation::cmaxsuffptr(int* codes, int sz, unsigned int* statesize)
 	{
 		//create the actual ngram
@@ -279,7 +287,7 @@ namespace irstlm {
 		MY_ASSERT (ong.size == sz);
 		return cmaxsuffptr(ong, statesize);
 	}
-	
+	*/
 	ngram_state_t lmInterpolation::cmaxsuffidx(ngram ng, unsigned int* statesize)
 	{
 		ngram_state_t maxsuffidx=0;
@@ -320,7 +328,8 @@ namespace irstlm {
 		
 		return maxsuffidx;
 	}
-	
+
+	/*
   ngram_state_t lmInterpolation::cmaxsuffidx(int* codes, int sz, unsigned int* statesize)
 	{
 		//create the actual ngram
@@ -329,7 +338,7 @@ namespace irstlm {
 		MY_ASSERT (ong.size == sz);
 		return cmaxsuffidx(ong, statesize);
 	}
-	
+	*/
 	
 	double lmInterpolation::setlogOOVpenalty(int dub)
 	{
