@@ -6,6 +6,7 @@ ADD_DEFINITIONS("-D_LARGE_FILES")
 ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
 ADD_DEFINITIONS("-DMYCODESIZE=3")
 ADD_DEFINITIONS("-DDEBUG")
+#ADD_DEFINITIONS("-DTRACE_LEVEL=1")
 
 if (TRACE_LEVEL)
   ADD_DEFINITIONS("-DTRACE_LEVEL=${TRACE_LEVEL}")
@@ -62,12 +63,14 @@ SET( LIB_IRSTLM_SRC
         cplsa.h cplsa.cpp 
         cswam.h cswam.cpp 
         doc.h doc.cpp
+	lmContextDependent.h lmContextDependent.cpp
+        context-similarity.h context-similarity.cpp
 )
 
 ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})
 LINK_DIRECTORIES (${LIBRARY_OUTPUT_PATH})
 
-FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching)
+FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching context-dependent-evaluation)
 
 ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
 TARGET_LINK_LIBRARIES (${CMD} irstlm -lm -lz -lpthread)

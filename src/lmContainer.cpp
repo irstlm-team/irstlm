@@ -32,6 +32,7 @@
 #include "lmmacro.h"
 #include "lmclass.h"
 #include "lmInterpolation.h"
+#include "lmContextDependent.h"
 
 using namespace std;
 
@@ -94,6 +95,8 @@ namespace irstlm {
 		VERBOSE(1,"type: " << type << std::endl);
 		if (header == "lmminterpolation" || header == "LMINTERPOLATION") {
 			type = _IRSTLM_LMINTERPOLATION;
+		} else if (header == "lmcontextdependent" || header == "LMCONTEXTDEPENDENT") {
+			type = _IRSTLM_LMCONTEXTDEPENDENT;
 		} else if (header == "lmmacro" || header == "LMMACRO") {
 			type = _IRSTLM_LMMACRO;
 		} else if (header == "lmclass" || header == "LMCLASS") {
@@ -141,6 +144,11 @@ namespace irstlm {
 			case _IRSTLM_LMINTERPOLATION:
 				VERBOSE(1,"_IRSTLM_LMINTERPOLATION" << std::endl);
 				lm = new lmInterpolation(nlf, dlf);
+				break;
+
+			case _IRSTLM_LMCONTEXTDEPENDENT:
+				VERBOSE(1,"_IRSTLM_LMCONTEXTDEPENDENT" << std::endl);
+				lm = new lmContextDependent(nlf, dlf);
 				break;
 				
 			default:
