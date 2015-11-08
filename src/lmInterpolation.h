@@ -45,11 +45,12 @@ namespace irstlm {
 	class lmInterpolation: public lmContainer
 	{
 		static const bool debug=true;
-		int m_number_lm;
+		size_t m_number_lm;
 		int order;
 		int dictionary_upperbound; //set by user
 		double  logOOVpenalty; //penalty for OOV words (default 0)
-		bool      isInverted;
+		bool isInverted;
+		bool m_map_flag; //flag for the presence of a map between name and lm
 		int memmap;  //level from which n-grams are accessed via mmap
 		
 		std::vector<double> m_weight;
@@ -57,13 +58,18 @@ namespace irstlm {
 		std::vector<bool> m_isinverted;
 		std::vector<lmContainer*> m_lm;
 		
-		int               maxlev; //maximun order of sub LMs;
+		int maxlev; //maximun order of sub LMs;
+		
+		std::map< std::string, size_t > m_idx;
+		std::map< size_t, std::string > m_name;
 		
 		float ngramcache_load_factor;
 		float dictionary_load_factor;
 		
 		dictionary *dict; // dictionary for all interpolated LMs
 		
+		void set_weight(const topic_map_t& map, double_vec_t& weight);
+
 	public:
 		
 		lmInterpolation(float nlf=0.0, float dlfi=0.0);
@@ -73,6 +79,7 @@ namespace irstlm {
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 		
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
 		
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
