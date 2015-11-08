@@ -39,8 +39,9 @@ typedef struct PROB_AND_STATE_ENTRY {
   double bow;     //!< backoff weight
   int bol;        //!< backoff level
   bool extendible;  //!< flag for extendibility of the ngram
+  double lastbow;        //!< bow weight of the deepest found ngram
 //  PROB_AND_STATE_ENTRY(double lp=0.0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false): logpr(lp), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex) {}; //initializer
-  PROB_AND_STATE_ENTRY(double lp=0.0, ngram_state_t ngramst=0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false): logpr(lp), ngramstate(ngramst), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex) {}; //initializer
+  PROB_AND_STATE_ENTRY(double lp=0.0, ngram_state_t ngramst=0, char* st=NULL, unsigned int stsz=0, double bw=0.0, int bl=0, bool ex=false, double lstbw=0): logpr(lp), ngramstate(ngramst), state(st), statesize(stsz), bow(bw), bol(bl), extendible(ex), lastbow(lstbw) {}; //initializer
 } prob_and_state_t;
 
 void print(prob_and_state_t* pst,  std::ostream& out=std::cout);
