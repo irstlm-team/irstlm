@@ -139,22 +139,21 @@ namespace irstlm {
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); };
-		
+
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
 		{
-				UNUSED(ng);
-				UNUSED(bow);
-				UNUSED(bol);
-				UNUSED(maxsuffidx);
-				UNUSED(maxsuffptr);
-				UNUSED(statesize);
-				UNUSED(extendible);
-				UNUSED(lastbow);
-				
-				return 0.0;
-			}
-			
-			
+			UNUSED(ng);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+                        UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+
+                        return 0.0;
+		}
+		
 			virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 			{
 				//create the actual ngram
