@@ -172,4 +172,46 @@ namespace irstlm {
 		return false;
 	};
 	
+	bool lmContainer::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
+	{
+		VERBOSE(2,"bool lmContextDependent::GetSentenceAndContext" << std::endl);
+		VERBOSE(2,"line:|" << line << "|" << std::endl);
+		bool ret;
+		size_t pos = line.find(context_delimiter);
+		if (pos != std::string::npos){ // context_delimiter is found
+			sentence = line.substr(0, pos);
+			line.erase(0, pos + context_delimiter.length());
+			
+			//getting context string;
+			context = line;
+			ret=true;
+		}else{
+			sentence = line;
+			context = "";
+			ret=false;
+		}
+		VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);
+		VERBOSE(2,"context:|" << context << "|" << std::endl);
+		return ret;
+	}
+	
+	void lmContainer::setContextMap(topic_map_t& topic_map, const std::string& context){
+		
+		string_vec_t topic_weight_vec;
+		string_vec_t topic_weight;
+		
+		// context is supposed in this format
+		// topic-name1,topic-value1:topic-name2,topic-value2:...:topic-nameN,topic-valueN
+		
+		//first-level split the context in a vector of  topic-name1,topic-value1, using the first separator ':'
+		split(context, topic_map_delimiter1, topic_weight_vec);
+		for (string_vec_t::iterator it=topic_weight_vec.begin(); it!=topic_weight_vec.end(); ++it){
+			//first-level split the context in a vector of  topic-name1 and ,topic-value1, using the second separator ','
+			split(*it, topic_map_delimiter2, topic_weight);
+			topic_map[topic_weight.at(0)] = strtod (topic_weight.at(1).c_str(), NULL);
+			topic_weight.clear();
+		}
+	}
+	
+	
 }//namespace irstlm
