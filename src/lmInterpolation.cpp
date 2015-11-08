@@ -73,7 +73,7 @@ namespace irstlm {
 		m_isinverted.resize(m_number_lm);
 		m_lm.resize(m_number_lm);
 		
-		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_number_lm:"<< m_number_lm << std::endl;);
+		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_number_lm:"<< m_number_lm << std::endl);
 		
 		dict->incflag(1);
 		for (int i=0; i<m_number_lm; i++) {
@@ -94,7 +94,7 @@ namespace irstlm {
 			
 			m_weight[i] = (float) atof(words[0]);
 			m_file[i] = words[1];
-			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_file:"<< words[1] << std::endl;);
+			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_file:"<< words[1] << std::endl);
 			
 			m_lm[i] = load_lm(i,memmap,ngramcache_load_factor,dictionary_load_factor);
 			//set the actual value for inverted flag, which is known only after loading the lM
@@ -152,12 +152,9 @@ namespace irstlm {
 		int _bol=0,actualbol=MAX_NGRAM;
 		double _bow=0.0,actualbow=0.0; 
 		double _lastbow=0.0,actuallastbow=0.0; 
-		bool _extendible=false;
-		bool actualextendible=false;
+		bool _extendible=false,actualextendible=false;
 		
-		//		ngram_state_t* maxsuffidx = new ngram_state_t;
-		
-		for (size_t i=0; i<m_lm.size(); i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
@@ -228,9 +225,7 @@ namespace irstlm {
 		char *maxsuffptr=NULL;
 		unsigned int _statesize=0,actualstatesize=0;
 		
-		//		ngram_state_t* maxsuffidx = new ngram_state_t;
-		
-		for (size_t i=0; i<m_lm.size(); i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
@@ -268,9 +263,7 @@ namespace irstlm {
 		ngram_state_t maxsuffidx=0;
 		unsigned int _statesize=0,actualstatesize=0;
 		
-		//		ngram_state_t* maxsuffidx = new ngram_state_t;
-		
-		for (size_t i=0; i<m_lm.size(); i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());

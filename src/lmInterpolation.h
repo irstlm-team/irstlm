@@ -45,7 +45,7 @@ namespace irstlm {
 	class lmInterpolation: public lmContainer
 	{
 		static const bool debug=true;
-		int m_number_lm;
+		size_t m_number_lm;
 		int order;
 		int dictionary_upperbound; //set by user
 		double  logOOVpenalty; //penalty for OOV words (default 0)
