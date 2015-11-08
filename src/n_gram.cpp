@@ -150,7 +150,6 @@ ifstream& operator>> ( ifstream& fi , ngram& ng)
 	
 }
 
-
 int ngram::pushw(const char* w)
 {
 	
@@ -167,6 +166,17 @@ int ngram::pushw(const char* w)
 	
   return 1;
 	
+}
+
+int ngram::pushw(std::string w){
+	return pushw(w.c_str());
+}
+
+int ngram::pushw(std::vector<std::string> w_vec){
+	for (std::vector<std::string>::iterator it=w_vec.begin(); it != w_vec.end(); ++it){
+		pushw(*it);
+	}
+	return 1;
 }
 
 int ngram::pushc(int c)

@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <assert.h>
+#include <math.h>
 
 using namespace std;
 
@@ -84,10 +85,6 @@ int parseline(istream& inp, int Order,ngram& ng,float& prob,float& bow);
 
 void exit_error(int err, const std::string &msg="");
 
-namespace irstlm{
-  string_vec_t &split(const std::string &s, const char delim, string_vec_t &elems);
-	void* reallocf(void *ptr, size_t size);
-}
 
 //extern int tracelevel;
 extern const int tracelevel;
@@ -97,14 +94,25 @@ extern const int tracelevel;
 #define IFVERBOSE(level) if (tracelevel > level)
 
 /*
-#define _DEBUG_LEVEL TRACE_LEVEL
-
-#define TRACE_ERR(str) { std::cerr << str; }
-#define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
-#define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
-*/
+ #define _DEBUG_LEVEL TRACE_LEVEL
+ 
+ #define TRACE_ERR(str) { std::cerr << str; }
+ #define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
+ #define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
+ */
 
 void MY_ASSERT(bool x);
 
+namespace irstlm{
+  string_vec_t &split(const std::string &s, const char delim, string_vec_t &elems);
+	void* reallocf(void *ptr, size_t size);
+	
+	float logsum(float a,float b);
+	float log10sum(float a,float b);
+	double logsum(double a,double b);
+	double log10sum(double a,double b);
+	
+	double logistic_function(double x, double max=1.0, double steep=1.0);
+}
 #endif
 
