@@ -2249,7 +2249,7 @@ namespace irstlm {
 	
 	//maxsuffptr returns the largest suffix of an n-gram that is contained
 	//in the LM table. This can be used as a compact representation of the
-	//(n-1)-gram state of a n-gram LM. if the input k-gram has k>=n then it
+	//(n-1)-gram state of a n-gram LM. If the input k-gram has k>=n then it
 	//is trimmed to its n-1 suffix.
 	
 	//non recursive version
@@ -2347,62 +2347,12 @@ namespace irstlm {
 		return (char *)maxsuffptr(ong,size);
 #endif
 	}
+
 	
-	/*
-	//this function simulates the cmaxsuffptr(ngram, ...) but it takes as input an array of codes instead of the ngram
-	const char *lmtable::cmaxsuffptr(int* codes, int sz, unsigned int* size)
-	{
-		VERBOSE(3,"const char *lmtable::cmaxsuffptr(int* codes, int sz, unsigned int* size)\n");
-		
-		if (sz==0) {
-			if (size!=NULL) *size=0;
-			return (char*) NULL;
-		}
-		
-		if (sz>maxlev) sz=maxlev; //adjust n-gram level to table size
-		
-#ifdef PS_CACHE_ENABLE
-		//cache hit
-		prob_and_state_t pst;
-		
-		//cache hit
-		//		if (prob_and_state_cache && sz==maxlev && prob_and_state_cache->get(codes,pst)) {
-		if (prob_and_state_cache[sz] && prob_and_state_cache[sz]->get(codes,pst)) {
-			if (size) *size = pst.statesize;
-			return pst.state;
-		}
-		
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		
-		//cache miss
-		unsigned int isize; //internal state size variable
-		char* found=(char *)maxsuffptr(ong,&isize);
-		
-		//cache insert
-		//IMPORTANT: this function updates only two fields (state, statesize) of the entry of the cache; the reminaing fields (logpr, bow, bol, extendible) are undefined; hence, it should not be used before the corresponding clprob()
-		if (ong.size>=maxlev) ong.size=maxlev;
-		//		if (prob_and_state_cache && ong.size==maxlev) {
-		if (prob_and_state_cache[sz]) {
-			pst.state=found;
-			pst.statesize=isize;
-			//			prob_and_state_cache->add(ong.wordp(maxlev),pst);
-			prob_and_state_cache[sz]->add(ong.wordp(ong.size),pst);
-		}
-		if (size!=NULL) *size=isize;
-		return found;
-#else
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		return maxsuffptr(ong,size);
-#endif
-	}
-	*/
-	
+	//maxsuffidx returns an index of the largest of an n-gram that is contained
+	//in the LM table. This can be used as a compact representation of the
+	//(n-1)-gram state of a n-gram LM. If the input k-gram has k>=n then it
+	//is trimmed to its n-1 suffix.
 	//non recursive version
 	ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)
 	{
@@ -2438,7 +2388,6 @@ namespace irstlm {
 			if (ong.size>=maxlev) ong.size=maxlev-1; //if still larger or equals to maxlen reduce again
 			
 			if (size!=NULL) *size=ong.size; //will return the largest found ong.size
-			
 			
 			for (ngram ng=ong; ng.size>0; ng.size--) {
 				if (get(ng,ng.size,ng.size)) {
@@ -2514,60 +2463,6 @@ namespace irstlm {
 #endif
 	}
 	
-	/*
-	//this function simulates the cmaxsuffptr(ngram, ...) but it takes as input an array of codes instead of the ngram
-	ngram_state_t lmtable::cmaxsuffidx(int* codes, int sz, unsigned int* size)
-	{
-		VERBOSE(3,"const char *lmtable::cmaxsuffptr(int* codes, int sz, unsigned int* size)\n");
-		
-		if (sz==0) {
-			if (size!=NULL) *size=0;
-			return 0;
-		}
-		
-		if (sz>maxlev) sz=maxlev; //adjust n-gram level to table size
-		
-#ifdef PS_CACHE_ENABLE
-		//cache hit
-		prob_and_state_t pst;
-		
-		//cache hit
-		//		if (prob_and_state_cache && sz==maxlev && prob_and_state_cache->get(codes,pst)) {
-		if (prob_and_state_cache[sz] && prob_and_state_cache[sz]->get(codes,pst)) {
-			if (size) *size = pst.statesize;
-			return pst.ngramstate;
-		}
-		
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		
-		//cache miss
-		unsigned int isize; //internal state size variable
-		ngram_state_t msidx = maxsuffidx(ong,&isize);
-		
-		//cache insert
-		//IMPORTANT: this function updates only two fields (ngramstate, statesize) of the entry of the cache; the reminaing fields (logpr, bow, bol, extendible) are undefined; hence, it should not be used before the corresponding clprob()
-		if (ong.size>=maxlev) ong.size=maxlev;
-		//		if (prob_and_state_cache && ong.size==maxlev) {
-		if (prob_and_state_cache[sz]) {
-			pst.ngramstate=msidx;
-			pst.statesize=isize;
-			prob_and_state_cache[sz]->add(ong.wordp(ong.size),pst);
-		}
-		if (size!=NULL) *size=isize;
-		return msidx;
-#else
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		return maxsuffidx(ong,size);
-#endif
-	}
-	*/
-	
 	//returns log10prob of n-gram
 	//bow: backoff weight
 	//bol: backoff level
@@ -2582,7 +2477,6 @@ namespace irstlm {
 	double lmtable::lprob(ngram ong,double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible, double *lastbow)
 	{
 		VERBOSE(3," lmtable::lprob(ngram) ong |" << ong  << "|\n" << std::endl);
-		VERBOSE(3," lmtable::lprob(ngram) ong.size |" << ong.size  << "|\n" << std::endl);
 		
 		if (ong.size==0){ //sanity check
 			if (maxsuffptr) *maxsuffptr=NULL;
@@ -2614,7 +2508,6 @@ namespace irstlm {
 				if (maxsuffidx){
 					int ndsz=nodesize(tbltype[isize]);
 					*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ing.path[isize]) - (table_pos_t) table[isize] ) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
-					VERBOSE(3,"lmtable::lprob(ngram) ing:|" << ing << "| isize:|" << isize << "| ing.path[isize]:|" << ing.path[isize] << "| tb_offset[_level]:|" << tb_offset[isize] << "| *maxsuffidx:|" << *maxsuffidx << "|" << std::endl);
 				}
 				if (extendible) *extendible=succrange(ing.path[ing.lev],ing.lev)>0;
 				if (lastbow) *lastbow=(double) (isQtable?Bcenters[ing.lev][(qfloat_t)ing.bow]:ing.bow);
@@ -2653,15 +2546,11 @@ namespace irstlm {
 			MY_ASSERT((extendible == NULL) || (extendible && *extendible==false));
 			//		MY_ASSERT(lastbow==NULL);
 			for (ngram ng=ong; ng.size>0; ng.size--) {
-				VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "|" << std::endl);
 				if (get(ng,ng.size,ng.size)) {
-					VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| inside if get" << std::endl);
 					iprob=ng.prob;
 					lpr = (double)(isQtable?Pcenters[ng.size][(qfloat_t)iprob]:iprob);
 					if (*ng.wordp(1)==dict->oovcode()) lpr-=logOOVpenalty; //add OOV penalty
 					if (maxsuffptr || statesize) { //one extra step is needed if ng.size=ong.size
-						
-						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| inside if maxsuffptr" << std::endl);
 						if (ong.size==ng.size) {
 							ng.size--;
 							get(ng,ng.size,ng.size);
@@ -2669,8 +2558,7 @@ namespace irstlm {
 						if (statesize)	*statesize=ng.size;
 						if (maxsuffptr)	*maxsuffptr=ng.link; //we should check ng.link != NULL
 						
-						size_t isize=ng.size;
-						VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| isize:|" << isize << "|" << std::endl);						
+						size_t isize=ng.size;					
 						
 						if (maxsuffidx){
 							int ndsz=nodesize(tbltype[isize]);
@@ -2678,15 +2566,10 @@ namespace irstlm {
 							if (ng.link){
 								*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ng.link) - (table_pos_t) table[isize]) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
 							}
-							
-							VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| *maxsuffidx:|" << *maxsuffidx << "|" << std::endl);
 						}
 					}
-					VERBOSE(3,"lmtable::lprob(ngram) returning (rbow+lpr):|" << (rbow+lpr) << "|" << std::endl);
 					return rbow+lpr;
 				} else {
-					VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| inside else get" << std::endl);
-					VERBOSE(3,"lmtable::lprob(ngram) ng.size:|" << ng.size << "|" << std::endl);
 					if (ng.size==1) { //means a real unknow word!
 						if (statesize)  *statesize=0;
 						if (maxsuffptr) *maxsuffptr=NULL; //default stateptr for zero-gram!
@@ -2706,14 +2589,11 @@ namespace irstlm {
 					}
 					
 				}
-				VERBOSE(3,"lmtable::lprob(ngram) ng:|" << ng << "| END " << std::endl);
-				
 			}
 		}
 		MY_ASSERT(0); //never pass here!!!
 		return 1.0;
 	}
-	
 	
 	//return log10 probsL use cache memory
 	double lmtable::clprob(ngram ong,double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow)
@@ -2769,7 +2649,7 @@ namespace irstlm {
 		if (ngramstate) *ngramstate = pst_add.ngramstate;
 		if (statesize) *statesize = pst_add.statesize;
 		if (extendible) *extendible = pst_add.extendible;
-		if (extendible) *lastbow = pst_add.lastbow;
+		if (lastbow) *lastbow = pst_add.lastbow;
 		
 		
 		//		if (prob_and_state_cache && ong.size==maxlev) {
@@ -2783,91 +2663,6 @@ namespace irstlm {
 		return lmtable::lprob(ong, bow, bol, ngramstate, state, statesize, extendible, lastbow);
 #endif
 	};
-	
-	/*
-	 //return log10 probsL use cache memory
-	 //this function simulates the clprob(ngram, ...) but it takes as input an array of codes instead of the ngram
-	 double lmtable::clprob(int* codes, int sz, double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible, double* lastbow)
-	 {
-	 VERBOSE(3," double lmtable::clprob(int* codes, int sz, double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow)\n");
-	 #ifdef TRACE_CACHELM
-	 //		if (probcache && sz==maxlev && sentence_id>0) {
-	 if (probcache && sentence_id>0) {
-	 *cacheout << sentence_id << "\n";
-	 //print the codes of the vector ng
-	 }
-	 #endif
-	 
-	 if (sz==0) {
-	 if (statesize!=NULL) *statesize=0;
-	 if (state!=NULL) *state=NULL;
-	 if (ngramstate!=NULL) *ngramstate=NULL;
-	 if (extendible!=NULL) *extendible=false;
-	 if (lastbow!=NULL) *lastbow=false;
-	 return 0.0;
-	 }
-	 
-	 if (sz>maxlev) sz=maxlev; //adjust n-gram level to table size
-	 
-	 #ifdef PS_CACHE_ENABLE
-	 double logpr;
-	 
-	 //cache hit
-	 prob_and_state_t pst_get;
-	 
-	 //		if (prob_and_state_cache && sz==maxlev && prob_and_state_cache->get(codes,pst_get)) {
-	 if (prob_and_state_cache[sz] && prob_and_state_cache[sz]->get(codes,pst_get)) {
-	 
-	 logpr=pst_get.logpr;
-	 if (bow) *bow = pst_get.bow;
-	 if (bol) *bol = pst_get.bol;
-	 if (state) *state = pst_get.state;
-	 if (ngramstate) *ngramstate = pst_get.ngramstate;
-	 if (statesize) *statesize = pst_get.statesize;
-	 if (extendible) *extendible = pst_get.extendible;
-	 if (lastbow) *lastbow = pst_get.lastbow;
-	 
-	 return logpr;
-	 }
-	 
-	 
-	 //create the actual ngram
-	 ngram ong(dict);
-	 ong.pushc(codes,sz);
-	 MY_ASSERT (ong.size == sz);
-	 
-	 //cache miss
-	 prob_and_state_t pst_add;
-	 //		logpr = pst_add.logpr = lmtable::lprob(ong, &(pst_add.bow), &(pst_add.bol), &(pst_add.state), &(pst_add.statesize), &(pst_add.extendible), &(pst_add.lastbow));
-	 logpr = pst_add.logpr = lmtable::lprob(ong, &(pst_add.bow), &(pst_add.bol), &(pst_add.ngramstate), &(pst_add.state), &(pst_add.statesize), &(pst_add.extendible), &(pst_add.lastbow));
-	 
-	 
-	 if (bow) *bow = pst_add.bow;
-	 if (bol) *bol = pst_add.bol;
-	 if (state) *state = pst_add.state;
-	 if (ngramstate) *ngramstate = pst_add.ngramstate;
-	 if (statesize) *statesize = pst_add.statesize;
-	 if (extendible) *extendible = pst_add.extendible;
-	 if (lastbow) *lastbow = pst_add.lastbow;
-	 
-	 
-	 //		if (prob_and_state_cache && ong.size==maxlev) {
-	 //			prob_and_state_cache->add(ong.wordp(maxlev),pst_add);
-	 //		}
-	 if (prob_and_state_cache[sz]) {
-	 prob_and_state_cache[sz]->add(ong.wordp(ong.size),pst_add);
-	 }
-	 return logpr;
-	 #else
-	 
-	 //create the actual ngram
-	 ngram ong(dict);
-	 ong.pushc(codes,sz);
-	 MY_ASSERT (ong.size == sz);
-	 return lmtable::lprob(ong, bow, bol, ngramstate, state, statesize, extendible,lastbow);
-	 #endif
-	 };
-	 */
 	
 	int lmtable::succrange(node ndp,int level,table_entry_pos_t* isucc,table_entry_pos_t* esucc)
 	{

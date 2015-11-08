@@ -73,13 +73,9 @@ namespace irstlm {
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 		
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		//  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
 		
-		const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
-		//  const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
-		ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
-		//  ngram_state_t cmaxsuffidx(int* codes, int sz, unsigned int* size=NULL);
-		
+		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
+		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
 		
 		int maxlevel() const {
 			return maxlev;

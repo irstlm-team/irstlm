@@ -140,7 +140,6 @@ namespace irstlm {
 	}
 	
 	//return log10 prob of an ngram
-	//	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
 	double lmInterpolation::clprob(ngram ng, double* bow,int* bol,ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible, double* lastbow)
 	{
 		
@@ -223,22 +222,8 @@ namespace irstlm {
 		return log10(pr);
 	}
 	
-	/*
-	 //	double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	 double lmInterpolation::clprob(int* codes, int sz, double* bow,int* bol,ngram_state_t* maxsuffidx,char** maxsuffptr,unsigned int* statesize,bool* extendible)
-	 {
-	 
-	 //create the actual ngram
-	 ngram ong(dict);
-	 ong.pushc(codes,sz);
-	 MY_ASSERT (ong.size == sz);
-	 
-	 //		return clprob(ong, bow, bol, maxsuffptr, statesize, extendible);
-	 return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible);
-	 }
-	 */
-	
-	const char *lmInterpolation::cmaxsuffptr(ngram ng, unsigned int* statesize){
+	const char *lmInterpolation::cmaxsuffptr(ngram ng, unsigned int* statesize)
+	{
 		
 		char *maxsuffptr=NULL;
 		unsigned int _statesize=0,actualstatesize=0;
@@ -278,16 +263,6 @@ namespace irstlm {
 		return maxsuffptr;
 	}
 
-	/*
-  const char *lmInterpolation::cmaxsuffptr(int* codes, int sz, unsigned int* statesize)
-	{
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		return cmaxsuffptr(ong, statesize);
-	}
-	*/
 	ngram_state_t lmInterpolation::cmaxsuffidx(ngram ng, unsigned int* statesize)
 	{
 		ngram_state_t maxsuffidx=0;
@@ -328,17 +303,6 @@ namespace irstlm {
 		
 		return maxsuffidx;
 	}
-
-	/*
-  ngram_state_t lmInterpolation::cmaxsuffidx(int* codes, int sz, unsigned int* statesize)
-	{
-		//create the actual ngram
-		ngram ong(dict);
-		ong.pushc(codes,sz);
-		MY_ASSERT (ong.size == sz);
-		return cmaxsuffidx(ong, statesize);
-	}
-	*/
 	
 	double lmInterpolation::setlogOOVpenalty(int dub)
 	{

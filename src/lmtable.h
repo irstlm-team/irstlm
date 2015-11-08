@@ -314,7 +314,7 @@ namespace irstlm {
 		int reload(std::set<string> words);
 		
 		void filter(const char* /* unused parameter: lmfile */) {};
-		
+		/*
 		virtual double  lprob(ngram ng){ return lprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double  lprob(ngram ng, double* bow){ return lprob(ng, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double  lprob(ngram ng, double* bow, int* bol){ return lprob(ng, bow, bol, NULL, NULL, NULL, NULL, NULL); }
@@ -326,14 +326,16 @@ namespace irstlm {
 		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
 		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
 		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); }
-		
-		
-//		virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow){ return lprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
+		*/
+
+		virtual double  lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-//		virtual double clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		
+
+		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
+		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
+		virtual ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
+		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
 		
 		void *search(int lev,table_entry_pos_t offs,table_entry_pos_t n,int sz,int *w, LMT_ACTION action,char **found=(char **)NULL);
 		
@@ -354,13 +356,6 @@ namespace irstlm {
 		virtual int get(ngram& ng,int n,int lev);
 		
 		int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev);
-		
-		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
-		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
-//		virtual const char *cmaxsuffptr(int* codes, int sz, unsigned int* size=NULL);
-		virtual ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
-		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
-//		virtual ngram_state_t cmaxsuffidx(int* codes, int sz, unsigned int* size=NULL);
 		
 		inline void putmem(char* ptr,int value,int offs,int size) {
 			MY_ASSERT(ptr!=NULL);

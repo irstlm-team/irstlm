@@ -306,7 +306,8 @@ namespace irstlm {
 	}
 	
 	
-	double lmmacro::lprob(ngram micro_ng)
+//	double lmmacro::lprob(ngram micro_ng)
+	double lmmacro::lprob(ngram micro_ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
 	{
 		VERBOSE(2,"lmmacro::lprob, parameter = <" <<  micro_ng << ">\n");
 		
@@ -322,23 +323,12 @@ namespace irstlm {
 		
 		// ask LM with macro
 		double prob;
-		prob = lmtable::lprob(macro_ng);
+		prob = lmtable::lprob(macro_ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		VERBOSE(3,"prob = " << prob << "\n");
 		
 		return prob;
 	};
-	/*
-	 //double lmmacro::clprob(int* codes, int sz,  double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
-	 double lmmacro::clprob(int* codes, int sz,  double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible, double* lastbow)
-	 {
-	 ngram micro_ng(getDict());
-	 micro_ng.pushc(codes,sz);
-	 //  return clprob(micro_ng,bow,bol,state,statesize,extendible);
-	 return clprob(micro_ng,bow,bol,ngramstate,state,statesize,extendible, lastbow);
-	 }
-	 */
-	
-	//	double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, char** state,unsigned int* statesize,bool* extendible)
+
 	double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible, double* lastbow)
 	{
 		

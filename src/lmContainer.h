@@ -129,9 +129,8 @@ namespace irstlm {
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); };
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
 		
-		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL) {
-			VERBOSE(3,"virtual double lmContainer::clprob(int* ng, int ngsize, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)\n");
-			
+		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
 			//create the actual ngram
 			ngram ong(getDict());
 			ong.pushc(ng,ngsize);

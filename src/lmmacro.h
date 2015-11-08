@@ -76,15 +76,12 @@ namespace irstlm {
 		
 		virtual void load(const std::string &filename,int mmap=0);
 		
-		virtual double lprob(ngram ng);
-		virtual double clprob(ngram ng,double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
-		//  double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,ngram_state_t* maxsuffidx=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL);
+		virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		
 		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
-		//  const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
-		//  ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
-		
+
 		void map(ngram *in, ngram *out);
 		void One2OneMapping(ngram *in, ngram *out);
 		void Micro2MacroMapping(ngram *in, ngram *out);
