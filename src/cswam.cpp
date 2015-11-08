@@ -507,11 +507,6 @@ void cswam::freeAlphaDen(){
 //pthread_mutex_t cswam_mut2;
 double cswam_LL=0; //Log likelihood
 
-float logsum(float a,float b){
-    if (b<a) return a + logf(1 + expf(b-a));
-    else return b + logf(1+ expf(a-b));
-}
-
 int global_i=0;
 int global_j=0;
 
