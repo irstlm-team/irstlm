@@ -318,9 +318,17 @@ namespace irstlm {
 		
 		inline std::string getContextDelimiter() const{ return context_delimiter; }
 		
+		bool GetSentenceAndLexicon(std::string& sentence, std::string& lexiconfile, std::string& line);
 		bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
-		
 		void setContextMap(topic_map_t& topic_map, const std::string& context);
+		virtual inline void set_Active(bool val)
+		{
+			UNUSED(val);
+		};
+		virtual bool is_Normalized(){ return  false; };
+		virtual void set_Normalized(bool val)		{
+			UNUSED(val);
+		};
 		
 	};
 	

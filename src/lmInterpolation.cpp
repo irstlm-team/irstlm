@@ -123,6 +123,7 @@ namespace irstlm {
 			VERBOSE(2,"i:" << i << " m_isinverted[i]:" << m_isinverted[i] << endl);
 			
 			m_weight[i] = atof(words[idx_weight]);
+			VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << endl);
 			if (m_map_flag){
 				m_idx[words[idx_name]] = i;
 				m_name[i] = words[idx_name];
@@ -135,7 +136,7 @@ namespace irstlm {
 			}
 			m_file[i] = words[idx_file];
 			
-			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) i:" << i << " m_name:|"<< m_name[i] << "|" " m_file:|"<< m_file[i] << "| isadaptve:|" << m_isadaptive << "|" << std::endl);
+			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) i:" << i << " m_name:|"<< m_name[i] << "|" " m_file:|"<< m_file[i] << "| isadaptive:|" << m_isadaptive << "|" << std::endl);
 			
 			m_lm[i] = load_lm(i,memmap,ngramcache_load_factor,dictionary_load_factor);
 			//set the actual value for inverted flag, which is known only after loading the lM
@@ -282,6 +283,9 @@ namespace irstlm {
 		double _lastbow=0.0,actuallastbow=0.0; 
 		bool _extendible=false,actualextendible=false;
 		
+		for (size_t i=0; i<m_number_lm; i++) {
+			VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << endl);
+		}
 		for (size_t i=0; i<m_number_lm; i++) {
 			
 			if (m_weight[i]>0.0){

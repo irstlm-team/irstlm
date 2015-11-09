@@ -201,8 +201,10 @@ int main(int argc, char **argv)
   lmt->setMaxLoadedLevel(requiredMaxlev);
 	
   lmt->load(infile);
-	((lmContextDependent*) lmt)->set_Active(context_model_active);
-	((lmContextDependent*) lmt)->set_Normalized(context_model_normalization);
+//	((lmContextDependent*) lmt->set_Active(context_model_active);
+	lmt->set_Active(context_model_active);
+//	((lmContextDependent*) lmt)->set_Normalized(context_model_normalization);
+	lmt->set_Normalized(context_model_normalization);
 	
   if (dub) lmt->setlogOOVpenalty((int)dub);
 	
@@ -235,18 +237,6 @@ int main(int argc, char **argv)
 	if (topicscore == true) {
 		if (lmt->getLanguageModelType() != _IRSTLM_LMCONTEXTDEPENDENT) {
 			exit_error(IRSTLM_ERROR_DATA, "This type of score is not available for the LM loaded");
-		}
-		if (lmt->getLanguageModelType() == _IRSTLM_LMINTERPOLATION) {
-			debug = (debug>4)?4:debug;
-			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
-		}
-		if (lmt->getLanguageModelType() == _IRSTLM_LMMACRO) {
-			debug = (debug>4)?4:debug;
-			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
-		}
-		if (lmt->getLanguageModelType() == _IRSTLM_LMCLASS) {
-			debug = (debug>4)?4:debug;
-			std::cerr << "Maximum debug value for this LM type: " << debug << std::endl;
 		}
 		
 		std::cerr << "Start Topic Score generation " << std::endl;
@@ -403,13 +393,15 @@ int main(int argc, char **argv)
 			std::string context;
 			std::string sentence_lexiconfile;
 			
-			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+//			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+			bool withLexicon = lmt->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
 			bool withContext = lmt->GetSentenceAndContext(sentence,context,tmp_sentence);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
 			if (withContext){
-				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
+//				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
+				lmt->setContextMap(apriori_topic_map,context);
 			}
 			// computation using std::string
 			// loop over ngrams of the sentence

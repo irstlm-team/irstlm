@@ -89,7 +89,9 @@ namespace irstlm {
 			ngram ng(dict);
 			ng.pushw(text);
 			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
-			
+			for (size_t i=0; i<m_number_lm; i++) {
+				VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << endl);
+			}
 			MY_ASSERT (ng.size == (int) text.size());
 			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}

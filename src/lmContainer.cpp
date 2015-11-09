@@ -180,6 +180,28 @@ namespace irstlm {
 		return false;
 	};
 	
+	bool lmContainer::GetSentenceAndLexicon(std::string& sentence, std::string& lexiconfile, std::string& line)
+	{
+		VERBOSE(2,"bool lmContextDependent::GetSentenceAndLexicon" << std::endl);
+		VERBOSE(2,"line:|" << line << "|" << std::endl);
+		bool ret;
+		size_t pos = line.find(lexicon_delimiter);	
+		if (pos != std::string::npos){ // lexicon_delimiter is found
+			sentence = line.substr(0, pos);
+			line.erase(0, pos + lexicon_delimiter.length());
+			
+			//getting context string;
+			lexiconfile = line;
+			ret=true;
+		}else{
+			sentence = line;
+			lexiconfile = "";
+			ret=false;
+		}	
+		VERBOSE(2,"sentence:|" << sentence << "|" << std::endl);	
+		VERBOSE(2,"lexicon:|" << lexiconfile << "|" << std::endl);
+		return ret;
+	}
 	bool lmContainer::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
 	{
 		VERBOSE(2,"bool lmContextDependent::GetSentenceAndContext" << std::endl);
