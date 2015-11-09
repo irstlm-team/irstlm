@@ -51,9 +51,6 @@ namespace irstlm {
 	static const char topic_map_delimiter1=':';
 	static const char topic_map_delimiter2=',';
 	
-	
-	typedef std::map< std::string, float > topic_map_t;
-	
 	class lmContainer
 	{
 		static const bool debug=true;
