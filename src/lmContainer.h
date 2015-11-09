@@ -139,7 +139,7 @@ namespace irstlm {
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); };
-
+		
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
 		{
 			UNUSED(ng);
@@ -147,175 +147,184 @@ namespace irstlm {
 			UNUSED(bol);
 			UNUSED(maxsuffidx);
 			UNUSED(maxsuffptr);
-                        UNUSED(statesize);
+			UNUSED(statesize);
 			UNUSED(extendible);
 			UNUSED(lastbow);
-
-                        return 0.0;
+			
+			return 0.0;
 		}
 		
-			virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-			{
-				//create the actual ngram
-				ngram ong(getDict());
-				ong.pushc(ng,ngsize);
-				MY_ASSERT (ong.size == ngsize);
-				
-				return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-			};
+		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			//create the actual ngram
+			ngram ong(getDict());
+			ong.pushc(ng,ngsize);
+			MY_ASSERT (ong.size == ngsize);
 			
-			virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL) { return clprob(ng, topic_weights, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); };		
-			virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-			{
-				UNUSED(topic_weights);
-				return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-			}
-			virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-			{
-				//create the actual ngram
-				ngram ong(getDict());
-				ong.pushc(ng,ngsize);
-				MY_ASSERT (ong.size == ngsize);
-				
-				return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-			}
-			virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-			{
-				UNUSED(text);
-				UNUSED(bow);
-				UNUSED(bol);
-				UNUSED(maxsuffidx);
-				UNUSED(maxsuffptr);
-				UNUSED(statesize);
-				UNUSED(extendible);
-				UNUSED(lastbow);
-				return 0.0;
-			};
-			virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
-			{
-				UNUSED(topic_weights);
-				return clprob(text, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-			}
-			
-			virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
-			{
-				UNUSED(ng);
-				UNUSED(statesize);
-				return NULL;
-			}
-			
-			virtual const char *cmaxsuffptr(int* ng, int ngsize, unsigned int* statesize=NULL)
-			{
-				//create the actual ngram 
-				ngram ong(getDict());
-				ong.pushc(ng,ngsize);
-				MY_ASSERT (ong.size == ngsize);
-				return cmaxsuffptr(ng, ngsize, statesize);
-			}
-			
-			virtual ngram_state_t cmaxsuffidx(ngram ng, unsigned int* statesize=NULL)
-			{
-				UNUSED(ng);
-				UNUSED(statesize);
-				return 0;
-			}
-			
-			virtual ngram_state_t cmaxsuffidx(int* ng, int ngsize, unsigned int* statesize=NULL)
-			{
-				//create the actual ngram 
-				ngram ong(getDict());                
-				ong.pushc(ng,ngsize);
-				MY_ASSERT (ong.size == ngsize); 
-				return cmaxsuffidx(ong,statesize);
-			}
-			
-			virtual inline int get(ngram& ng) {
-				UNUSED(ng);
-				return 0;
-			}
-			
-			virtual int get(ngram& ng,int n,int lev){
-				UNUSED(ng);
-				UNUSED(n);
-				UNUSED(lev);
-				return 0;
-			}
-			
-			virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
-				UNUSED(ng);
-				UNUSED(h);
-				UNUSED(action);
-				UNUSED(lev);
-				return 0;     
-			}
-			
-			
-			virtual void used_caches() {};
-			virtual void init_caches(int uptolev) {
-				UNUSED(uptolev);
-			};
-			virtual void check_caches_levels() {};
-			virtual void reset_caches() {};
-			
-			virtual void  reset_mmap() {};
-			
-			void inline setLanguageModelType(int type) {
-				lmtype=type;
-			};
-			int getLanguageModelType() const {
-				return lmtype;
-			};
-			static int getLanguageModelType(std::string filename);
-			
-			inline virtual void dictionary_incflag(const bool flag) {
-				UNUSED(flag);
-			};
-			
-			virtual bool filter(const string sfilter, lmContainer*& sublmt, const string skeepunigrams);
-			
-			static lmContainer* CreateLanguageModel(const std::string infile, float nlf=0.0, float dlf=0.0);
-			static lmContainer* CreateLanguageModel(int type, float nlf=0.0, float dlf=0.0);
-			
-			inline virtual bool is_OOV(int code) {
-				UNUSED(code);
-				return false;
-			};
-			
-			
-			inline static bool is_lmt_cache_enabled(){
-				VERBOSE(3,"inline static bool is_lmt_cache_enabled() " << lmt_cache_enabled << std::endl);
-				return lmt_cache_enabled;
-			}
-			
-			inline static bool is_ps_cache_enabled(){
-				VERBOSE(3,"inline static bool is_ps_cache_enabled() " << ps_cache_enabled << std::endl);
-				return ps_cache_enabled;
-			}
-			
-			inline static bool is_cache_enabled(){
-				return is_lmt_cache_enabled() && is_ps_cache_enabled();
-			}
-			
-			virtual int addWord(const char *w){
-				getDict()->incflag(1);
-				int c=getDict()->encode(w);
-				getDict()->incflag(0);
-				return c;
-			}
-			
-			virtual void print_table_stat(){
-				VERBOSE(3,"virtual void lmContainer::print_table_stat() "<< std::endl);
-			};
-			
-			inline std::string getContextDelimiter() const{ return context_delimiter; }
-			
-			bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
-			
-			void setContextMap(topic_map_t& topic_map, const std::string& context);
-			
+			return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		};
 		
-	}//namespace irstlm
+		//			virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL) { return clprob(ng, topic_weights, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); };		
+		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			UNUSED(topic_weights);
+			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			//create the actual ngram
+			ngram ong(getDict());
+			ong.pushc(ng,ngsize);
+			MY_ASSERT (ong.size == ngsize);
+			
+			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			UNUSED(text);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+			return 0.0;
+		};
+		
+		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
+		{ 
+			UNUSED(text);
+			UNUSED(topic_weights);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+			return 0.0;
+		};
+		
+		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
+		{
+			UNUSED(ng);
+			UNUSED(statesize);
+			return NULL;
+		}
+		
+		virtual const char *cmaxsuffptr(int* ng, int ngsize, unsigned int* statesize=NULL)
+		{
+			//create the actual ngram 
+			ngram ong(getDict());
+			ong.pushc(ng,ngsize);
+			MY_ASSERT (ong.size == ngsize);
+			return cmaxsuffptr(ng, ngsize, statesize);
+		}
+		
+		virtual ngram_state_t cmaxsuffidx(ngram ng, unsigned int* statesize=NULL)
+		{
+			UNUSED(ng);
+			UNUSED(statesize);
+			return 0;
+		}
+		
+		virtual ngram_state_t cmaxsuffidx(int* ng, int ngsize, unsigned int* statesize=NULL)
+		{
+			//create the actual ngram 
+			ngram ong(getDict());                
+			ong.pushc(ng,ngsize);
+			MY_ASSERT (ong.size == ngsize); 
+			return cmaxsuffidx(ong,statesize);
+		}
+		
+		virtual inline int get(ngram& ng) {
+			UNUSED(ng);
+			return 0;
+		}
+		
+		virtual int get(ngram& ng,int n,int lev){
+			UNUSED(ng);
+			UNUSED(n);
+			UNUSED(lev);
+			return 0;
+		}
+		
+		virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
+			UNUSED(ng);
+			UNUSED(h);
+			UNUSED(action);
+			UNUSED(lev);
+			return 0;     
+		}
+		
+		
+		virtual void used_caches() {};
+		virtual void init_caches(int uptolev) {
+			UNUSED(uptolev);
+		};
+		virtual void check_caches_levels() {};
+		virtual void reset_caches() {};
+		
+		virtual void  reset_mmap() {};
+		
+		void inline setLanguageModelType(int type) {
+			lmtype=type;
+		};
+		int getLanguageModelType() const {
+			return lmtype;
+		};
+		static int getLanguageModelType(std::string filename);
+		
+		inline virtual void dictionary_incflag(const bool flag) {
+			UNUSED(flag);
+		};
+		
+		virtual bool filter(const string sfilter, lmContainer*& sublmt, const string skeepunigrams);
+		
+		static lmContainer* CreateLanguageModel(const std::string infile, float nlf=0.0, float dlf=0.0);
+		static lmContainer* CreateLanguageModel(int type, float nlf=0.0, float dlf=0.0);
+		
+		inline virtual bool is_OOV(int code) {
+			UNUSED(code);
+			return false;
+		};
+		
+		
+		inline static bool is_lmt_cache_enabled(){
+			VERBOSE(3,"inline static bool is_lmt_cache_enabled() " << lmt_cache_enabled << std::endl);
+			return lmt_cache_enabled;
+		}
+		
+		inline static bool is_ps_cache_enabled(){
+			VERBOSE(3,"inline static bool is_ps_cache_enabled() " << ps_cache_enabled << std::endl);
+			return ps_cache_enabled;
+		}
+		
+		inline static bool is_cache_enabled(){
+			return is_lmt_cache_enabled() && is_ps_cache_enabled();
+		}
+		
+		virtual int addWord(const char *w){
+			getDict()->incflag(1);
+			int c=getDict()->encode(w);
+			getDict()->incflag(0);
+			return c;
+		}
+		
+		virtual void print_table_stat(){
+			VERBOSE(3,"virtual void lmContainer::print_table_stat() "<< std::endl);
+		};
+		
+		inline std::string getContextDelimiter() const{ return context_delimiter; }
+		
+		bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
+		
+		void setContextMap(topic_map_t& topic_map, const std::string& context);
+		
+	};
 	
+}//namespace irstlm
+
 #endif
-	
+
