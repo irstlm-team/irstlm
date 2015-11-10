@@ -142,6 +142,7 @@ namespace irstlm {
                         return 0.0;
 }
 		
+		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL){ return clprob(ng, ngsize, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); }
 		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
 			//create the actual ngram
