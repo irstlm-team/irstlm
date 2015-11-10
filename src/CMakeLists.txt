@@ -77,3 +77,11 @@ ENDFOREACH()
 #INSTALL INCLUDE FILES
 FILE(GLOB includes src *.h)
 INSTALL(FILES ${includes} DESTINATION include)
+
+add_custom_command(OUTPUT LNS
+                   COMMAND ln -s -f -h lib lib64
+		   WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
+                   COMMENT "creating link from lib to lib64")
+
+add_custom_target(LinkToLib64 ALL DEPENDS LNS)
+
