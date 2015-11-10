@@ -151,7 +151,12 @@ namespace irstlm {
 			return 0.0;
 		}
 		
-		virtual double clprob(int* ng, int ngsize=NULL, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		virtual double clprob(int* ng, int ngsize){ return clprob(ng, ngsize, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
+		virtual double clprob(int* ng, int ngsize, double* bow){ return clprob(ng, ngsize, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
+		virtual double clprob(int* ng, int ngsize, double* bow, int* bol){ return clprob(ng, ngsize, bow, bol, NULL, NULL, NULL, NULL, NULL); }
+		virtual double clprob(int* ng, int ngsize, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return clprob(ng, ngsize, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); }
+		virtual double clprob(int* ng, int ngsize, double* bow, int* bol, ngram_state_t* maxsuffidx){ return clprob(ng, ngsize, bow, bol, maxsuffidx, NULL, NULL, NULL, NULL); }
+		virtual double clprob(int* ng, int ngsize, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
 		{
 			//create the actual ngram
 			ngram ong(getDict());
