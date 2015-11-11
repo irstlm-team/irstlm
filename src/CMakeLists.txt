@@ -79,7 +79,7 @@ FILE(GLOB includes src *.h)
 INSTALL(FILES ${includes} DESTINATION include)
 
 add_custom_command(OUTPUT LNS
-                   COMMAND ln -s -f -h lib lib64
+                   COMMAND ln -s -f -n lib lib64
 		   WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
                    COMMENT "creating link from lib to lib64")
 
