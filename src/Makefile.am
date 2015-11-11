@@ -32,7 +32,9 @@ libirstlm_la_HEADERS = \
   shiftlm.h \
   cplsa.h \
   cswam.h \
-  doc.h
+  doc.h \
+  lmContextDependent.h \
+  context-similarity.h
 
 libirstlm_la_SOURCES = \
   cmd.c \
@@ -60,7 +62,9 @@ libirstlm_la_SOURCES = \
   shiftlm.cpp \
   cplsa.cpp \
   cswam.cpp \
-  doc.cpp
+  doc.cpp \
+  lmContextDependent.cpp \
+  context-similarity.cpp
 
 CLEANFILES = $(BUILT_SOURCES)
 
@@ -69,7 +73,8 @@ libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB)
 LDADD = -lirstlm -lpthread
 DEPENDENCIES = libirstlm.la
 
-bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa
+bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa context-dependent-evaluation
+
 dict_SOURCES = dict.cpp
 dict_DEPENDENCIES = $(DEPENDENCIES)
 ngt_SOURCES = ngt.cpp
@@ -94,3 +99,5 @@ verify_caching_SOURCES = verify-caching.cpp
 verify_caching_DEPENDENCIES = $(DEPENDENCIES)
 cswa_SOURCES = cswa.cpp
 cswa_DEPENDENCIES = $(DEPENDENCIES)
+context_dependent_evaluation_SOURCES = context-dependent-evaluation.cpp
+context_dependent_evaluation_DEPENDENCIES = $(DEPENDENCIES)

@@ -205,14 +205,13 @@ double GetUserTime()
 	return g_timer.get_elapsed_time();
 }
 
-
-void ShowProgress(long long current, long long target){
-    
-    int frac=(current * 1000)/target;
-    if (!(frac % 10)) fprintf(stderr,"%02d\b\b",frac/10);
-
+void ShowProgress(long long current, long long target)
+{
+	
+	int frac=(current * 1000)/target;
+	if (!(frac % 10)) fprintf(stderr,"%02d\b\b",frac/10);
+	
 }
-
 
 int parseWords(char *sentence, const char **words, int max)
 {
@@ -279,7 +278,8 @@ int parseline(istream& inp, int Order,ngram& ng,float& prob,float& bow)
 	return 1;
 }
 
-void exit_error(int err, const std::string &msg){
+void exit_error(int err, const std::string &msg)
+{
 	if (msg != "") {
 		VERBOSE(0,msg+"\n";);
 	}
@@ -312,17 +312,17 @@ void exit_error(int err, const std::string &msg){
 };
 
 /*
-#ifdef MY_ASSERT_FLAG
-#if MY_ASSERT_FLAG>0
-#undef MY_ASSERT(x)
-#define MY_ASSERT(x) do { assert(x); } while (0)
-#else
-#define MY_ASSERT(x) { UNUSED(x); }
-#endif
-#else
-#define MY_ASSERT(x) { UNUSED(x); }
-#endif
-*/
+ #ifdef MY_ASSERT_FLAG
+ #if MY_ASSERT_FLAG>0
+ #undef MY_ASSERT(x)
+ #define MY_ASSERT(x) do { assert(x); } while (0)
+ #else
+ #define MY_ASSERT(x) { UNUSED(x); }
+ #endif
+ #else
+ #define MY_ASSERT(x) { UNUSED(x); }
+ #endif
+ */
 
 /** assert macros e functions**/
 #ifdef MY_ASSERT_FLAG
@@ -364,6 +364,51 @@ namespace irstlm {
 			return NULL;
 		}
 	}
+	
+	string_vec_t &split(const std::string &s, const char delim, string_vec_t &elems) {
+		std::stringstream ss(s);
+		std::string item;
+		while (std::getline(ss, item, delim)) {
+			elems.push_back(item);
+		}
+		return elems;
+	}
+	
+	float logsum(float a,float b){
+		if (b<a) return a + logf(1 + expf(b-a));
+		else return b + logf(1+ expf(a-b));
+	}
+	
+	float log10sum(float a,float b){
+		if (b<a) return a + log10(1 + pow(10.0,(b-a)));
+		else return b + log10(1 + pow(10.0,(a-b)));
+	}
+	
+	double logsum(double a,double b){
+		if (b<a) return a + log(1 + exp(b-a));
+		else return b + log(1 + exp(a-b));
+	}
+	
+	double log10sum(double a,double b){
+		if (b<a) return a + log10(1 + pow(10.0,(b-a)));
+		else return b + log10(1 + pow(10.0,(a-b)));
+	}
+	
+	
+	double logistic_function(double x, double max, double steep)
+	{
+		//domain: (-inf, +inf)
+		//image: [0,max)
+		//logistic_function(0.0,max,steep) = max/2
+		//lim_{x->+inf} logistic_function(x,max,steep) = max
+		//lim_{x->-inf} logistic_function(x,max,steep) = 0
+		//if steep1>steep2, then
+		// logistic_function(x,max,steep1) > logistic_function(x,max,steep2)   if x>0
+		// logistic_function(x,max,steep1) < logistic_function(x,max,steep2)   if x<0
+		
+		return max/1+exp(-steep*x);
+	}
+	
 	
 }
 

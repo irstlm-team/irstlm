@@ -329,7 +329,6 @@ namespace irstlm {
 		*/
 
 		virtual double  lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 
 		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);

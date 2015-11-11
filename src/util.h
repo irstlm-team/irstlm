@@ -3,11 +3,13 @@
 #ifndef IRSTLM_UTIL_H
 #define IRSTLM_UTIL_H
 
-
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <map>
 #include <assert.h>
+#include <math.h>
 
 using namespace std;
 
@@ -49,9 +51,14 @@ using namespace std;
 #define BUCKET 10000
 #define SSEED 50
 
-class ngram;
+typedef std::vector< std::string > string_vec_t;
+typedef std::vector< double > double_vec_t;
+typedef std::vector< float > float_vec_t;
+typedef std::map< std::string, float > topic_map_t;
+
 typedef unsigned int  ngram_state_t; //type for pointing to a full ngram in the table
 
+class ngram;
 class mfstream;
 
 std::string gettempfolder();
@@ -74,11 +81,10 @@ void ShowProgress(long long current,long long total);
 int parseWords(char *, const char **, int);
 int parseline(istream& inp, int Order,ngram& ng,float& prob,float& bow);
 
+//split a string into a vector of string according to one specified delimiter (char)
+
 void exit_error(int err, const std::string &msg="");
 
-namespace irstlm{
-	void* reallocf(void *ptr, size_t size);
-}
 
 //extern int tracelevel;
 extern const int tracelevel;
@@ -88,14 +94,25 @@ extern const int tracelevel;
 #define IFVERBOSE(level) if (tracelevel > level)
 
 /*
-#define _DEBUG_LEVEL TRACE_LEVEL
-
-#define TRACE_ERR(str) { std::cerr << str; }
-#define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
-#define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
-*/
+ #define _DEBUG_LEVEL TRACE_LEVEL
+ 
+ #define TRACE_ERR(str) { std::cerr << str; }
+ #define VERBOSE(level,str) { if (_DEBUG_LEVEL > level) { TRACE_ERR("DEBUG_LEVEL:" <<_DEBUG_LEVEL << " "); TRACE_ERR(str); } }
+ #define IFVERBOSE(level) if (_DEBUG_LEVEL > level)
+ */
 
 void MY_ASSERT(bool x);
 
+namespace irstlm{
+  string_vec_t &split(const std::string &s, const char delim, string_vec_t &elems);
+	void* reallocf(void *ptr, size_t size);
+	
+	float logsum(float a,float b);
+	float log10sum(float a,float b);
+	double logsum(double a,double b);
+	double log10sum(double a,double b);
+	
+	double logistic_function(double x, double max=1.0, double steep=1.0);
+}
 #endif
 

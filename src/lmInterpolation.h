@@ -49,7 +49,8 @@ namespace irstlm {
 		int order;
 		int dictionary_upperbound; //set by user
 		double  logOOVpenalty; //penalty for OOV words (default 0)
-		bool      isInverted;
+		bool isInverted;
+		bool m_map_flag; //flag for the presence of a map between name and lm
 		int memmap;  //level from which n-grams are accessed via mmap
 		
 		std::vector<double> m_weight;
@@ -57,13 +58,18 @@ namespace irstlm {
 		std::vector<bool> m_isinverted;
 		std::vector<lmContainer*> m_lm;
 		
-		int               maxlev; //maximun order of sub LMs;
+		int maxlev; //maximun order of sub LMs;
+		
+		std::map< std::string, size_t > m_idx;
+		std::map< size_t, std::string > m_name;
 		
 		float ngramcache_load_factor;
 		float dictionary_load_factor;
 		
 		dictionary *dict; // dictionary for all interpolated LMs
 		
+		void set_weight(const topic_map_t& map, double_vec_t& weight);
+
 	public:
 		
 		lmInterpolation(float nlf=0.0, float dlfi=0.0);
@@ -73,6 +79,35 @@ namespace irstlm {
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 		
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
+		
+		virtual double clprob(string_vec_t& text, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+		{
+			VERBOSE(2,"lmInterpolation::clprob(string_vec_t& text, ...)" << std::endl);
+			
+			//create the actual ngram
+			ngram ng(dict);
+			ng.pushw(text);
+			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
+			for (size_t i=0; i<m_number_lm; i++) {
+				VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << endl);
+			}
+			MY_ASSERT (ng.size == (int) text.size());
+			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		
+		virtual double clprob(string_vec_t& text, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+		{
+			VERBOSE(2,"lmInterpolation::clprob(string_vec_t& text, topic_map_t& lm_weights, ...)" << std::endl);
+			
+			//create the actual ngram
+			ngram ng(dict);
+			ng.pushw(text);
+			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
+			
+			MY_ASSERT (ng.size == (int) text.size());
+			return clprob(ng, lm_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
 		
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
@@ -109,7 +144,7 @@ namespace irstlm {
 		//for an interpolation LM this variable does not make sense
 		//for compatibility, we return true if all subLM return true
 		inline bool is_inverted() {
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				if (m_isinverted[i] == false) return false;
 			}
 			return true;
@@ -120,7 +155,7 @@ namespace irstlm {
 		};
 		
 		inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				int _code=m_lm[i]->getDict()->encode(getDict()->decode(code));
 				if (m_lm[i]->is_OOV(_code) == false) return false;
 			}
@@ -128,7 +163,7 @@ namespace irstlm {
 		}
 		
 		virtual int addWord(const char *w){
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				m_lm[i]->getDict()->incflag(1);
 				m_lm[i]->getDict()->encode(w);
 				m_lm[i]->getDict()->incflag(0);

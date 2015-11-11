@@ -370,6 +370,11 @@ public:
     inline int bo_state(int value) {
         return backoff_state=value;
     }
+	
+	
+	inline dictionary* getDict() const {
+		return dict;
+	};
 };
 
 #endif

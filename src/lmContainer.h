@@ -28,7 +28,7 @@
 #define _IRSTLM_LMMACRO 2
 #define _IRSTLM_LMCLASS 3
 #define _IRSTLM_LMINTERPOLATION 4
-
+#define _IRSTLM_LMCONTEXTDEPENDENT 5
 
 #include <stdio.h>
 #include <cstdlib>
@@ -46,6 +46,11 @@ typedef enum {LMT_FIND,    //!< search: find an entry
 } LMT_ACTION;
 
 namespace irstlm {
+	static const std::string context_delimiter="___CONTEXT___";
+	static const std::string lexicon_delimiter="___LEXICON___";
+	static const char topic_map_delimiter1=':';
+	static const char topic_map_delimiter2=',';
+	
 	class lmContainer
 	{
 		static const bool debug=true;
@@ -56,6 +61,10 @@ namespace irstlm {
 		int          lmtype; //auto reference to its own type
 		int          maxlev; //maximun order of sub LMs;
 		int  requiredMaxlev; //max loaded level, i.e. load up to requiredMaxlev levels
+		
+		bool m_isadaptive; //flag is true if the LM can be adapted by means of any external context
+		void isAdaptive(bool val){ m_isadaptive = val; }
+		bool isAdaptive(){ return m_isadaptive;}
 		
 	public:
 		
@@ -127,20 +136,20 @@ namespace irstlm {
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); };
-
+		
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-{
+		{
 			UNUSED(ng);
 			UNUSED(bow);
 			UNUSED(bol);
 			UNUSED(maxsuffidx);
 			UNUSED(maxsuffptr);
-                        UNUSED(statesize);
+			UNUSED(statesize);
 			UNUSED(extendible);
 			UNUSED(lastbow);
-
-                        return 0.0;
-}
+			
+			return 0.0;
+		}
 		
 		virtual double clprob(int* ng, int ngsize){ return clprob(ng, ngsize, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double clprob(int* ng, int ngsize, double* bow){ return clprob(ng, ngsize, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
@@ -155,6 +164,48 @@ namespace irstlm {
 			MY_ASSERT (ong.size == ngsize);
 			
 			return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		};
+		
+		//			virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL) { return clprob(ng, topic_weights, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); };		
+		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			UNUSED(topic_weights);
+			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			//create the actual ngram
+			ngram ong(getDict());
+			ong.pushc(ng,ngsize);
+			MY_ASSERT (ong.size == ngsize);
+			
+			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			UNUSED(text);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+			return 0.0;
+		};
+		
+		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
+		{ 
+			UNUSED(text);
+			UNUSED(topic_weights);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+			return 0.0;
 		};
 		
 		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
@@ -265,6 +316,20 @@ namespace irstlm {
 		
 		virtual void print_table_stat(){
 			VERBOSE(3,"virtual void lmContainer::print_table_stat() "<< std::endl);
+		};
+		
+		inline std::string getContextDelimiter() const{ return context_delimiter; }
+		
+		bool GetSentenceAndLexicon(std::string& sentence, std::string& lexiconfile, std::string& line);
+		bool GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line);
+		void setContextMap(topic_map_t& topic_map, const std::string& context);
+		virtual inline void set_Active(bool val)
+		{
+			UNUSED(val);
+		};
+		virtual bool is_Normalized(){ return  false; };
+		virtual void set_Normalized(bool val)		{
+			UNUSED(val);
 		};
 		
 	};
