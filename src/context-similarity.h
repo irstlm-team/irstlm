@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <string>
+#include <sstream>
 #include <math.h>
 #include "cmd.h"
 #include "util.h"
@@ -41,6 +42,10 @@ namespace irstlm {
 #define topic_map_delimiter1 ':'
 #define topic_map_delimiter2 ','
 #define SIMILARITY_LOWER_BOUND -10000
+#define TOPIC_SCORE_TYPE_0 0
+#define TOPIC_SCORE_TYPE_1 1
+#define TOPIC_SCORE_TYPE_2 2
+#define TOPIC_SCORE_TYPE_3 3
 	
 	class ContextSimilarity
 	{
@@ -59,6 +64,7 @@ namespace irstlm {
 		topic_map_t topic_map; 
 		int m_threshold_on_h; //frequency threshold on h to allow computation of similairty scores
 		double m_smoothing; //smoothing value to sum to the counts to avoid zero-prob; implements a sort of shift-beta smoothing
+		int m_score_type; //scoreing type for computing the topic distribution, values are TOPIC_SCORE_TYPE_[0123]
 
 		//flag for enabling/disabling context_similarity scores
 		// if disabled, context_similarity is 0.0 and topic_scores distribution is empty
@@ -130,6 +136,23 @@ namespace irstlm {
 			m_active = val;
 		}
 		
+                void set_Topic_Score_Type(int t){
+                        switch (t){
+			case TOPIC_SCORE_TYPE_0:
+			case TOPIC_SCORE_TYPE_1:
+			case TOPIC_SCORE_TYPE_2:
+			case TOPIC_SCORE_TYPE_3:
+                        	m_score_type = t;
+			default:
+	                        std::stringstream ss_msg;
+        	                ss_msg << "Topic score type " << m_score_type << " is unknown.";
+                        	exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+			}
+                }
+                int get_Topic_Score_Type(){
+                        return m_score_type;
+                }
+
 	};
 }
 

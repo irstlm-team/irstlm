@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include "lmContainer.h"
@@ -30,12 +31,6 @@
 #include "util.h"
 
 using namespace std;
-
-inline void error(const char* message)
-{
-  std::cerr << message << "\n";
-  throw std::runtime_error(message);
-}
 
 namespace irstlm {
 	
@@ -66,6 +61,11 @@ namespace irstlm {
 		VERBOSE(2,"lmContextDependent::load(const std::string &filename,int memmap)" << std::endl);
 		VERBOSE(2,"configuration file:|" << filename << "|" << std::endl);
 		
+		std::stringstream ss_format;
+
+		ss_format << "LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold [smoothing]" << std::endl;
+		ss_format << "or\nLMCONTEXTDEPENDENT TYPE score_type\nfilename_of_LM \nweight k_model hk_model hwk_model pruning_threshold [smoothing]" << std::endl;
+
 		dictionary_upperbound=1000000;
 		int memmap=mmap;
 		
@@ -78,16 +78,40 @@ namespace irstlm {
 		int tokenN;
 		inp.getline(line,MAX_LINE,'\n');
 		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
-		
-		if (tokenN != 1 || ((strcmp(words[0],"LMCONTEXTDEPENDENT") != 0) && (strcmp(words[0],"lmcontextdependent")!=0)))
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
+
+		bool error=false;
+                if ((tokenN!=1) || (tokenN!=3)){
+                        error=true;     
+                }else if ((strcmp(words[0],"LMCONTEXTDEPENDENT") != 0) && (strcmp(words[0],"lmcontextdependent")!=0)) {
+                        error=true;
+                }else if ((tokenN==3) && ((strcmp(words[1],"TYPE") != 0) && (strcmp(words[1],"type") != 0))){
+                        error=true;
+                }
+		if (error){
+			std::stringstream ss_msg;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+                }
+
+                int _score_type;
+                if (tokenN==1){
+                	_score_type = TOPIC_SCORE_TYPE_2;
+		}else{
+                	_score_type = atoi(words[2]);
+		}	
 		
 		//reading ngram-based LM
 		inp.getline(line,BUFSIZ,'\n');
 		tokenN = parseWords(line,words,1);
 		if(tokenN < 1 || tokenN > 1) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
+			error=true;
 		}
+                if (error){
+                        std::stringstream ss_msg;
+                        ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+                }
+
 		
 		VERBOSE(0, "model_w:|" << words[0] << "|" << std::endl);
 		//checking the language model type
@@ -107,8 +131,13 @@ namespace irstlm {
 		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
 		
 		if(tokenN < 5 || tokenN > LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN) {
-			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCONTEXTDEPENDENT\nfilename_of_LM\nweight k_model hk_model hwk_model pruning_threshold");
+			error= true;
 		}
+                if (error){
+                        std::stringstream ss_msg;
+                        ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+                }
 		
 		//loading topic model and initialization
 		m_similaritymodel_weight = (float) atof(words[0]);
@@ -116,11 +145,14 @@ namespace irstlm {
 		std::string _hk_ngt = words[2];
 		std::string _hwk_ngt = words[3];
 		int _thr = atoi(words[4]);
+
 		double _smoothing = 0.1;
 		if (tokenN == 6){ _smoothing = atof(words[5]); }
+
 		m_similaritymodel = new ContextSimilarity(_k_ngt, _hk_ngt, _hwk_ngt);
 		m_similaritymodel->set_Threshold_on_H(_thr);
 		m_similaritymodel->set_SmoothingValue(_smoothing);
+		m_similaritymodel->set_Topic_Score_Type(_score_type);
 		
 		inp.close();
 		

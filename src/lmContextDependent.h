@@ -191,7 +191,7 @@ namespace irstlm {
 		void set_Normalized(bool val){
 			m_normalization = val;
 		}
-		
+
 	};
 }//namespace irstlm
 

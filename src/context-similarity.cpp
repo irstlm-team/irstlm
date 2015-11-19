@@ -56,7 +56,7 @@ namespace irstlm {
 		m_smoothing = 0.001;
 		m_threshold_on_h = 0;
 		m_active=true;
-		
+		m_score_type = TOPIC_SCORE_TYPE_2;	
 		m_topic_size = m_k_ngt->getDict()->size();
 		VERBOSE(1, "There are " << m_topic_size << " topics in the model" << std::endl);
 		
@@ -217,15 +217,20 @@ namespace irstlm {
 	}
 	
 	double ContextSimilarity::topic_score(ngram& ng, ngramtable& ngt, ngramtable& ngt2){
-#ifdef OPTION_1
-		return topic_score_option1(ng, ngt, ngt2);
-#elif OPTION_2
-		return topic_score_option2(ng, ngt, ngt2);
-#elif OPTION_3
-		return topic_score_option3(ng, ngt, ngt2);
-#else
-		return topic_score_option0(ng, ngt, ngt2);
-#endif
+		switch (m_score_type){
+                case TOPIC_SCORE_TYPE_0:
+                        return topic_score_option0(ng, ngt, ngt2);
+		case TOPIC_SCORE_TYPE_1:
+			return topic_score_option1(ng, ngt, ngt2);
+		case TOPIC_SCORE_TYPE_2:
+			return topic_score_option2(ng, ngt, ngt2);
+		case TOPIC_SCORE_TYPE_3:
+			return topic_score_option3(ng, ngt, ngt2);
+		default:
+			std::stringstream ss_msg;
+                        ss_msg << "Topic score type " << m_score_type << " is unknown.";
+                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+		}
 	}
 	
 	double ContextSimilarity::topic_score_option0(ngram& ng, ngramtable& ngt, ngramtable& ngt2)
@@ -234,11 +239,11 @@ namespace irstlm {
 		UNUSED(ngt2);
 		VERBOSE(2, "double ContextSimilarity::topic_score_option0(ngram& ng, ngramtable& ngt) with ng:|" << ng << "|" << std::endl);
 		
-		//option 0: uniform (not considering log function) 
+		//approximation 0: uniform (not considering log function) 
 		//P(k|hw) = 1/number_of_topics
 		double log_pr = -log(m_topic_size)/M_LN10;
 		
-		VERBOSE(3, "option0: return: " << log_pr<< std::endl);	
+		VERBOSE(3, "score_type:0  return:" << log_pr<< std::endl);	
 		return log_pr;
 	}
 	
@@ -264,14 +269,14 @@ namespace irstlm {
 		double c_xk2, c_x2;
 		get_counts(ng2, ngt2, c_xk2, c_x2);
 		
-		//option 1: (not considering log function) 
+		//approximation 1: (not considering log function) 
 		//P(k|hw)/sum_v P(k|hv) ~approx~ P(k|hw)/P(k|h) ~approx~ num_pr/den_pr
 		//num_pr = c'(hwk)/c'(hw)
 		//den_pr = c'(hk)/c'(h)
 		double den_log_pr = log10(c_xk2) - log10(c_x2);
 		double num_log_pr = log10(c_xk) - log10(c_x);
 		double log_pr = num_log_pr - den_log_pr;
-		VERBOSE(3, "option1: num_log_pr:" << num_log_pr << " den_log_pr:" << den_log_pr << " return: " << log_pr << std::endl);
+		VERBOSE(3, "score_type:1  num_log_pr:" << num_log_pr << " den_log_pr:" << den_log_pr << " return:" << log_pr << std::endl);
 		return log_pr;
 	}
 	
@@ -284,10 +289,10 @@ namespace irstlm {
 		double c_xk, c_x;
 		get_counts(ng, ngt, c_xk, c_x);
 		
-		//option 1: (not considering log function) 
+		//approximation 2: (not considering log function) 
 		//P(k|hw)/sum_v P(k|hv) ~approx~ P(k|hw)/P(k|h) ~approx~ c'(hwk)/c'(hw)
 		double log_pr = log10(c_xk) - log10(c_x);
-		VERBOSE(3, "option2: log_pr:" << log_pr << " return: " << log_pr << std::endl);
+		VERBOSE(3, "score_type:2  log_pr:" << log_pr << " return:" << log_pr << std::endl);
 		return log_pr;
 	}
 	
@@ -325,7 +330,7 @@ namespace irstlm {
 		
 		double log_pr = logistic_function((c_xk*c_x2)/(c_x*c_xk2),1.0,1.0);
 		
-		VERBOSE(3, "option3: return: " << log_pr << std::endl);
+		VERBOSE(3, "score_type:3  return:" << log_pr << std::endl);
 		return log_pr;
 	}
 	

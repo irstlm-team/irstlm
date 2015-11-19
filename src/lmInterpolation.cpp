@@ -48,7 +48,12 @@ namespace irstlm {
 	{
 		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int memmap)" << std::endl);
 		VERBOSE(2," filename:|" << filename << "|" << std::endl);
-		
+
+                std::stringstream ss_format;
+
+                ss_format << "LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2 [inverted]\n...\n";
+                ss_format << "or\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2 [inverted]\n...\n";
+
 		dictionary_upperbound=1000000;
 		int memmap=mmap;
 		
@@ -74,8 +79,9 @@ namespace irstlm {
 		}
 		
 		if (error){
-			exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format:\nLMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2\nor\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2");
-			
+                        std::stringstream ss_msg;
+                        ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		
 		size_t idx_weight, idx_file, idx_name, idx_inverted, idx_size;
@@ -111,7 +117,12 @@ namespace irstlm {
 			tokenN = parseWords(line,words,3);
 			
 			if(tokenN < idx_file || tokenN > idx_size) {
-				exit_error(IRSTLM_ERROR_DATA, "ERROR: wrong header format of configuration file\ncorrect format:\nLMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2\nor\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2");
+				error = true;
+			}
+                        if (error){
+				std::stringstream ss_msg;
+                        	ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+                        	exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 			}
 			
 			//check whether the (textual) LM has to be loaded as inverted
