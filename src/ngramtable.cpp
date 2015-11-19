@@ -197,7 +197,7 @@ tabletype::tabletype(TABLETYPE tt,int codesize) {
     }
 
     L_FREQ_OFFS=CODESIZE;
-};
+}
 
 ngramtable::ngramtable(char* filename,int maxl,char* /* unused parameter: is */, 
 					   dictionary* extdict /* external dictionary */,char* filterdictfile,
@@ -666,7 +666,7 @@ void ngramtable::generate(char *filename, dictionary* extdict)
   for (i=1; i<maxlev; i++) {
     ng.pushw(dict->BoS());
     ng.freq=1;
-  };
+  }
 
   while (inp >> ng) {
 	
@@ -702,7 +702,7 @@ void ngramtable::generate(char *filename, dictionary* extdict)
       int code=filterdict->encode(dict->decode(*ng2.wordp(maxlev)));
       if (code!=filterdict->oovcode())	put(ng2);
     } else put(ng2);
-  };
+  }
 
   dict->incflag(0);
   inp.close();
@@ -766,7 +766,7 @@ void ngramtable::generate_hmask(char *filename,char* hmask,int inplen)
     if (ng2.size) dict->incfreq(*ng2.wordp(1),1);
 
     if (!(++c % 1000000)) cerr << ".";
-  };
+  }
 
   dict->incflag(0);
   inp.close();
@@ -1253,8 +1253,7 @@ char **ngramtable::grow(table *tb,NODETYPE ndt,int lev,
   }
 
   return tb;
-
-};
+}
 
 
 int ngramtable::put(ngram& ng)
@@ -1551,7 +1550,7 @@ ngramtable::~ngramtable()
   delete [] occupancy;
   delete [] mentr;
   delete dict;
-};
+}
 
 void ngramtable::stat(int level)
 {
@@ -1729,7 +1728,7 @@ int ngramtable::codecmp(char * a,char *b) {
       if(result) return result;
     }
     return 0;
-};
+}
 
 long long ngramtable::freq(node nd,NODETYPE ndt,long long value) {
     int offs=(ndt & LNODE)?L_FREQ_OFFS:I_FREQ_OFFS;

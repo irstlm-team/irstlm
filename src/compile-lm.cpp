@@ -419,7 +419,7 @@ int main(int argc, char **argv)
 
       delete lmt;
       return 0;
-    };
+    }
   }
 
   if (sscore == true) {

@@ -249,7 +249,7 @@ const char *strstack::push(const char *s)
 	
 	if ((len+1) >= size) {
 		exit_error(IRSTLM_ERROR_DATA, "strstack::push string is too long");
-	};
+	}
 	
 	if ((idx+len+1) >= size) {
 		//append a new block

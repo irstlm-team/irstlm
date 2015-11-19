@@ -193,7 +193,7 @@ Timer g_timer;
 void ResetUserTime()
 {
 	g_timer.start();
-};
+}
 
 void PrintUserTime(const std::string &message)
 {
@@ -309,7 +309,7 @@ void exit_error(int err, const std::string &msg)
 		}
 	}
 	exit(err);
-};
+}
 
 /*
  #ifdef MY_ASSERT_FLAG

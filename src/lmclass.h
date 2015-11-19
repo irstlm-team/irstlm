@@ -56,7 +56,7 @@ namespace irstlm {
 				wcode = getDict()->oovcode();
 			}
 			return MapScore[wcode];
-		};
+		}
 		
 		inline size_t getMap(int wcode) {
 			//the input word is un-known by the map, so I "transform" this word into the oov (of the words)
@@ -64,7 +64,7 @@ namespace irstlm {
 				wcode = getDict()->oovcode();
 			}
 			return dict->freq(wcode);
-		};
+		}
 		
 		void checkMap();
 		
@@ -76,25 +76,25 @@ namespace irstlm {
 		virtual void load(const std::string &filename,int mmap=0);
 		
 		/*		
-		  virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible,lastbow); };
-		  virtual double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible); };
-		  virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,ngsize,bow,bol,NULL,maxsuffptr,statesize,extendible); };
+		  virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible,lastbow); }
+		  virtual double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible); }
+		  virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,ngsize,bow,bol,NULL,maxsuffptr,statesize,extendible); }
 		*/
 		
 		virtual double lprob(ngram ng, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
+		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
 		
 		inline bool is_OOV(int code) {
 			//a word is consisdered OOV if its mapped value is OOV
 			return lmtable::is_OOV(getMap(code));
-		};
+		}
 		
 		inline dictionary* getDict() const {
 			return dict;
 		}
 		inline virtual void dictionary_incflag(const bool flag) {
 			dict->incflag(flag);
-		};
+		}
 	};
 	
 }//namespace irstlm

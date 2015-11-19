@@ -112,7 +112,7 @@ namespace irstlm {
 		
 		// by default, it is a standard LM, i.e. queried for score
 		setOrderQuery(false);
-	};
+	}
 	
 	lmtable::~lmtable()
 	{
@@ -138,7 +138,7 @@ namespace irstlm {
 		}
 		
 		if (delete_dict) delete dict;
-	};
+	}
 	
 	void lmtable::init_prob_and_state_cache()
 	{
@@ -511,7 +511,7 @@ namespace irstlm {
 		for (int c=0; c<NumCenters[Order]; c++) {
 			inp >> Pcenters[Order][c];
 			if (Order<maxlev) inp >> Bcenters[Order][c];
-		};
+		}
 		//empty the last line
 		inp.getline((char*)line,MAX_LINE);
 	}
@@ -1165,7 +1165,7 @@ namespace irstlm {
 		}
 		return 1;
 		
-	};
+	}
 	
 	
 	//template<typename TA, typename TB>
@@ -1258,7 +1258,7 @@ namespace irstlm {
 		}
 		return 1;
 		
-	};
+	}
 	
 	
 	void *lmtable::search(int lev,
@@ -1303,7 +1303,7 @@ namespace irstlm {
 				}
 			default:
 				error((char*)"lmtable::search: this option is available");
-		};
+		}
 		return NULL;
 	}
 	
@@ -2246,6 +2246,19 @@ namespace irstlm {
 		}
 		return 0;
 	}
+
+	/* returns into the dictionary the successors of the given ngram */
+	void lmtable::getSuccDict(ngram& ng,dictionary* d){
+		ngram hg=ng;	
+		hg.pushc(0);
+		if (get(hg,hg.size,hg.size-1)){
+			ngram _ng=hg;
+			succscan(hg,_ng,LMT_INIT,_ng.size);
+			while(succscan(hg,_ng,LMT_CONT,_ng.size)) {
+				d->encode(_ng.dict->decode(*_ng.wordp(1)));
+			}   
+		}
+	}
 	
 	//maxsuffptr returns the largest suffix of an n-gram that is contained
 	//in the LM table. This can be used as a compact representation of the
@@ -2662,7 +2675,7 @@ namespace irstlm {
 #else
 		return lmtable::lprob(ong, bow, bol, ngramstate, state, statesize, extendible, lastbow);
 #endif
-	};
+	}
 	
 	int lmtable::succrange(node ndp,int level,table_entry_pos_t* isucc,table_entry_pos_t* esucc)
 	{

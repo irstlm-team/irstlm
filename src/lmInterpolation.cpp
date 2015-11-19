@@ -48,12 +48,12 @@ namespace irstlm {
 	{
 		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int memmap)" << std::endl);
 		VERBOSE(2," filename:|" << filename << "|" << std::endl);
-
-                std::stringstream ss_format;
-
-                ss_format << "LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2 [inverted]\n...\n";
-                ss_format << "or\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2 [inverted]\n...\n";
-
+		
+		std::stringstream ss_format;
+		
+		ss_format << "LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2 [inverted]\n...\n";
+		ss_format << "or\nLMINTERPOLATION number_of_models MAP\nweight_of_LM_1 name_LM_1 filename_of_LM_1\nweight_of_LM_2 name_LM_2 filename_of_LM_2 [inverted]\n...\n";
+		
 		dictionary_upperbound=1000000;
 		int memmap=mmap;
 		
@@ -79,9 +79,9 @@ namespace irstlm {
 		}
 		
 		if (error){
-                        std::stringstream ss_msg;
-                        ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
-                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+			std::stringstream ss_msg;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		
 		size_t idx_weight, idx_file, idx_name, idx_inverted, idx_size;
@@ -119,10 +119,10 @@ namespace irstlm {
 			if(tokenN < idx_file || tokenN > idx_size) {
 				error = true;
 			}
-                        if (error){
+			if (error){
 				std::stringstream ss_msg;
-                        	ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
-                        	exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+				ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+				exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 			}
 			
 			//check whether the (textual) LM has to be loaded as inverted
@@ -473,5 +473,45 @@ namespace irstlm {
 			VERBOSE(4,"it->first:|" << it->first << "| it->second:|" << it->second << "| m_idx[it->first]:|" << m_idx[it->first] << "| weight[m_idx[it->first]]:|" <<weight[m_idx[it->first]] << "|" << std::endl);
 		}
 	}
+	int lmInterpolation::get(ngram& ng,int n,int lev)
+	{
+		/*The function get for the lmInterpolation  LM type is not well defined
+		 The chosen implementation is the following:
+		 - for each submodel with weight larger than 0.0,
+		 -- an ngram is created with the submodel dictionary using the main ngram (of lmInterpolation)
+		 -- the submodel-specific ngram is searched in the corresponding submodel
+		 - the main ngram is considered found if any submodel-specific ngram is found
+		 - the amount of successors of the main ngram are set to the maximum among the amount of successors of the submodel-specifc ngrams
+		 Note: an other option could be that of setting he amount of successors of the main ngram to the sum of the amount of successors of the submodel-specifc ngram; but we did not implemented it.
+		 */
+		int ret = 0;
+		int succ = 0;
+		for (size_t i=0; i<m_number_lm; i++) {
+			if (m_weight[i]>0.0){
+				ngram _ng(m_lm[i]->getDict());
+				_ng.trans(ng);
+				if (m_lm[i]->get(_ng, n, lev)){
+					ret = 1;
+					succ = (_ng.succ>succ)?_ng.succ:succ;
+				}
+			}
+		}
+		ng.succ=succ;
+		return ret;
+	}
+	
+	/* returns into the dictionary the successors of the given ngram;
+	 it collects the successors from all submodels with weights larger than 0.0
+	 */
+	void lmInterpolation::getSuccDict(ngram& ng,dictionary* d){
+		for (size_t i=0; i<m_number_lm; i++) {
+			if (m_weight[i]>0.0){
+				ngram _ng(m_lm[i]->getDict());
+				_ng.trans(ng);
+				m_lm[i]->getSuccDict(_ng,d);
+			}			
+		}
+	}
+	
 }//namespace irstlm
 

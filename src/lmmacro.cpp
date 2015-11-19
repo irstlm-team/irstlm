@@ -54,7 +54,7 @@ namespace irstlm {
 	{
 		dict = new dictionary((char *)NULL,1000000); // dict of micro tags
 		getDict()->incflag(1);
-	};
+	}
 	
 	lmmacro::~lmmacro()
 	{
@@ -157,7 +157,7 @@ namespace irstlm {
 			loadmap(mapfilename);
 		getDict()->genoovcode();
 		
-	};
+	}
 	
 	void lmmacro::unloadmap()
 	{
@@ -327,7 +327,7 @@ namespace irstlm {
 		VERBOSE(3,"prob = " << prob << "\n");
 		
 		return prob;
-	};
+	}
 
 	double lmmacro::clprob(ngram micro_ng, double* bow, int* bol, ngram_state_t* ngramstate, char** state,unsigned int* statesize,bool* extendible, double* lastbow)
 	{

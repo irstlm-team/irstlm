@@ -86,7 +86,7 @@ int mfstream::swapbytes(char *p, int sz, int n)
 	}
   return 0;
 	
-};
+}
 
 
 mfstream& mfstream::iwritex(streampos loc,void *ptr,int size,int n)

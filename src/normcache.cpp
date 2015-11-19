@@ -64,7 +64,7 @@ void normcache::expand(int n)
   for (int i=0; i<step; i++)
     cache[n][maxcache[n]+i]=0;
   maxcache[n]+=step;
-};
+}
 
 
 double normcache::get(ngram ng,int size,double& value)

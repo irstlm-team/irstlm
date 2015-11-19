@@ -57,7 +57,7 @@ namespace irstlm {
 		memset(MapScore,0,MaxMapSize*sizeof(double));
 		MapScoreN=0;
 		dict = new dictionary((char *)NULL,MaxMapSize); //word to cluster dictionary
-	};
+	}
 	
 	lmclass::~lmclass()
 	{

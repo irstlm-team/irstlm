@@ -73,7 +73,7 @@ namespace irstlm {
 	public:
 		
 		lmInterpolation(float nlf=0.0, float dlfi=0.0);
-		virtual ~lmInterpolation() {};
+		virtual ~lmInterpolation() {}
 		
 		virtual void load(const std::string &filename,int mmap=0);
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
@@ -114,16 +114,16 @@ namespace irstlm {
 		
 		int maxlevel() const {
 			return maxlev;
-		};
+		}
 		
 		virtual inline void setDict(dictionary* d) {
 			if (dict) delete dict;
 			dict=d;
-		};
+		}
 		
 		virtual inline dictionary* getDict() const {
 			return dict;
-		};
+		}
 		
 		//set penalty for OOV words
 		virtual inline double getlogOOVpenalty() const {
@@ -152,7 +152,7 @@ namespace irstlm {
 		
 		inline virtual void dictionary_incflag(const bool flag) {
 			dict->incflag(flag);
-		};
+		}
 		
 		inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
 			for (size_t i=0; i<m_number_lm; i++) {
@@ -173,6 +173,14 @@ namespace irstlm {
 			getDict()->incflag(0);
 			return c;
 		}
+		
+		virtual inline int get(ngram& ng) {
+			return get(ng,ng.size,ng.size);
+		}
+		virtual int get(ngram& ng,int n,int lev);
+
+		/* returns into the dictionary the successors of the given ngram */
+		virtual void getSuccDict(ngram& ng,dictionary* d);
 		
 	};
 }//namespace irstlm

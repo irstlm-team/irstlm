@@ -218,19 +218,21 @@ namespace irstlm {
 	
 	double ContextSimilarity::topic_score(ngram& ng, ngramtable& ngt, ngramtable& ngt2){
 		switch (m_score_type){
-                case TOPIC_SCORE_TYPE_0:
-                        return topic_score_option0(ng, ngt, ngt2);
-		case TOPIC_SCORE_TYPE_1:
-			return topic_score_option1(ng, ngt, ngt2);
-		case TOPIC_SCORE_TYPE_2:
-			return topic_score_option2(ng, ngt, ngt2);
-		case TOPIC_SCORE_TYPE_3:
-			return topic_score_option3(ng, ngt, ngt2);
-		default:
-			std::stringstream ss_msg;
-                        ss_msg << "Topic score type " << m_score_type << " is unknown.";
-                        exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+			case TOPIC_SCORE_TYPE_0:
+				return topic_score_option0(ng, ngt, ngt2);
+			case TOPIC_SCORE_TYPE_1:
+				return topic_score_option1(ng, ngt, ngt2);
+			case TOPIC_SCORE_TYPE_2:
+				return topic_score_option2(ng, ngt, ngt2);
+			case TOPIC_SCORE_TYPE_3:
+				return topic_score_option3(ng, ngt, ngt2);
+			default:
+				std::stringstream ss_msg;
+				ss_msg << "Topic score type " << m_score_type << " is unknown.";
+				exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
+		MY_ASSERT(false); //never pass here!!!
+		return 0.0;
 	}
 	
 	double ContextSimilarity::topic_score_option0(ngram& ng, ngramtable& ngt, ngramtable& ngt2)

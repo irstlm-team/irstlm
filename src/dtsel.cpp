@@ -203,12 +203,12 @@ int main(int argc, char **argv)
 	
 	if (!evalset && (!indom || !outdom)){		
     exit_error(IRSTLM_ERROR_DATA, "Must specify in-domain and out-domain data files");
-	};
+	}
 	
 	//score file is always required: either as output or as input
 	if (!scorefile){
     exit_error(IRSTLM_ERROR_DATA, "Must specify score file");
-	};
+	}
 	
 	if (!evalset && !model){
     exit_error(IRSTLM_ERROR_DATA, "Must specify data selection model");

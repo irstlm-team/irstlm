@@ -213,7 +213,7 @@ public:
 	void load(std::istream& fd);
 	void save(std::ostream& fd);
 	
-	void augment(dictionary *d);
+	void augment(dictionary *d, bool add_oov=true);
 	
 	int size() const {
 		return n;
@@ -228,7 +228,7 @@ public:
 	void print_curve_oov(int curvesize, const char *filename, int listflag=0);
 	
 	void cleanfreq() {
-		for (int i=0; i<n; ++i){ tb[i].freq=0; };
+		for (int i=0; i<n; ++i){ tb[i].freq=0; }
 		N=0;
 	}
 	

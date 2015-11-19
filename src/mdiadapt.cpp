@@ -61,19 +61,19 @@ namespace irstlm {
 		forelm=NULL;
 		cache=NULL;
 		m_save_per_level=true;
-	};
+	}
 	
 	mdiadaptlm::~mdiadaptlm()
 	{
 		if (cache) delete cache;
 		delete_caches();
-	};
+	}
 	
 	void mdiadaptlm::delete_caches(int level)
 	{
 		if (probcache[level]) delete probcache[level];
 		if (backoffcache[level]) delete backoffcache[level];
-	};
+	}
 	
 	void mdiadaptlm::delete_caches()
 	{
@@ -83,7 +83,7 @@ namespace irstlm {
 		delete [] probcache;
 		delete [] backoffcache;
 #endif
-	};
+	}
 	
 	void mdiadaptlm::caches_stat()
 	{
@@ -99,7 +99,7 @@ namespace irstlm {
 			}
 		}
 #endif
-	};
+	}
 	
 	
 	void mdiadaptlm::create_caches(int mcl)
@@ -123,41 +123,40 @@ namespace irstlm {
 		MY_ASSERT(backoffcache[level]==NULL);
 		probcache[level]=new NGRAMCACHE_t(level,sizeof(double),400000);
 		backoffcache[level]=new NGRAMCACHE_t(level,sizeof(double),400000);
-	};
+	}
 	
 	void mdiadaptlm::init_caches()
 	{
 #ifdef MDIADAPTLM_CACHE_ENABLE
 		for (int i=1; i<=max_caching_level; i++)		init_caches(i);
 #endif
-	};
+	}
 	
 	void mdiadaptlm::check_cache_levels(int level)
 	{
 		if (probcache[level] && probcache[level]->isfull()) probcache[level]->reset(probcache[level]->cursize());
 		if (backoffcache[level] && backoffcache[level]->isfull()) backoffcache[level]->reset(backoffcache[level]->cursize());
-	};
+	}
 	
 	void mdiadaptlm::check_cache_levels()
 	{
 #ifdef MDIADAPTLM_CACHE_ENABLE
 		for (int i=1; i<=max_caching_level; i++)		check_cache_levels(i);
 #endif
-	};
+	}
 	
 	void mdiadaptlm::reset_caches(int level)
 	{
 		if (probcache[level]) probcache[level]->reset(MAX(probcache[level]->cursize(),probcache[level]->maxsize()));
 		if (backoffcache[level]) backoffcache[level]->reset(MAX(backoffcache[level]->cursize(),backoffcache[level]->maxsize()));
-	};
+	}
 	
 	void mdiadaptlm::reset_caches()
 	{
 #ifdef MDIADAPTLM_CACHE_ENABLE
 		for (int i=1; i<=max_caching_level; i++)		reset_caches(i);
 #endif
-	};
-	
+	}
 	
 	inline NGRAMCACHE_t* mdiadaptlm::get_probcache(int level)
 	{
@@ -198,7 +197,7 @@ namespace irstlm {
 		oovscaling=foreunig(fng)/oovscaling;
 		
 		return 1;
-	};
+	}
 	
 	int mdiadaptlm::savescalefactor(char* filename)
 	{
@@ -256,9 +255,7 @@ namespace irstlm {
 		discount(ng,1,fstar,lambda,0);
 		
 		return fstar;
-	};
-	
-	
+	}
 	
 	int mdiadaptlm::adapt(char* ngtfile,int alev,double step)
 	{
@@ -307,7 +304,7 @@ namespace irstlm {
 		cerr << "done\n";
 		
 		return 1;
-	};
+	}
 	
 	
 	double mdiadaptlm::zeta(ngram ng,int size)
@@ -705,7 +702,7 @@ namespace irstlm {
       *l=c;
     }
 		return 0;
-	};
+	}
 	
 	void fwritex(char *p,int sz,int n,FILE* f)
 	{
@@ -1031,7 +1028,7 @@ namespace irstlm {
 		system("date");
 		
 		return 1;
-	};
+	}
 	
 	
 	///// Save in IRST MT format
@@ -1165,7 +1162,7 @@ namespace irstlm {
 			cerr << "LEVEL " << i << "DONE \n";
 		}
 		return 1;
-	};
+	}
 	
 	///// Save in binary format forbackoff N-gram models
 	
@@ -1462,7 +1459,7 @@ namespace irstlm {
 		
 		VERBOSE(2,"mdiadaptlm::saveBIN_per_word END\n");	
 		return 1;
-	};
+	}
 	
 	///// Save in binary format forbackoff N-gram models
 	int mdiadaptlm::saveBIN_per_level(char *filename,int backoff,char* subdictfile,int mmap)
@@ -1927,7 +1924,7 @@ namespace irstlm {
 		
 		VERBOSE(2,"mdiadaptlm::saveARPA_per_word END\n");
 		return 1;
-	};
+	}
 	
 	///// Save in format for ARPA backoff N-gram models
 	int mdiadaptlm::saveARPA_per_level(char *filename,int backoff,char* subdictfile )
@@ -2145,7 +2142,7 @@ namespace irstlm {
 		
 		VERBOSE(2,"mdiadaptlm::saveARPA_per_level END\n");
 		return 1;
-	};
+	}
 	
 }//namespace irstlm
 

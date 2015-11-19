@@ -485,7 +485,7 @@ int main(int argc, char **argv)
               << " Noov_any=" << Noov_any
               << " OOV_any=" << (float)Noov_any/Nw * 100.0 << "%" << std::endl;
 
-  };
+  }
 
 
   if (score == true) {

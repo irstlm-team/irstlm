@@ -175,8 +175,8 @@ namespace irstlm {
 		void init_prob_and_state_cache();
 		void init_probcache() {
 			init_prob_and_state_cache();
-		}; //kept for back compatibility
-		void init_statecache() {}; //kept for back compatibility
+		} //kept for back compatibility
+		void init_statecache() {} //kept for back compatibility
 		void init_lmtcaches();
 		//	void init_lmtcaches(int uptolev);
 		void init_caches(int uptolev);
@@ -189,7 +189,7 @@ namespace irstlm {
 		void delete_prob_and_state_cache();
 		void delete_probcache() {
 			delete_prob_and_state_cache();
-		}; //kept for back compatibility
+		} //kept for back compatibility
 		void delete_statecache() {}; //kept for back compatibility
 		void delete_lmtcaches();
 		void delete_caches();
@@ -201,15 +201,15 @@ namespace irstlm {
 		void check_prob_and_state_cache_levels() const;
 		void check_probcache_levels() const {
 			check_prob_and_state_cache_levels();
-		}; //kept for back compatibility
-		void check_statecache_levels() const{}; //kept for back compatibility
+		} //kept for back compatibility
+		void check_statecache_levels() const {} //kept for back compatibility
 		void check_lmtcaches_levels() const;
 		void check_caches_levels() const;
 		
 		void reset_prob_and_state_cache();
 		void reset_probcache() {
 			reset_prob_and_state_cache();
-		}; //kept for back compatibility
+		} //kept for back compatibility
 		void reset_statecache() {}; //kept for back compatibility
 		void reset_lmtcaches();
 		void reset_caches();
@@ -218,10 +218,10 @@ namespace irstlm {
 		bool are_prob_and_state_cache_active() const;
 		bool is_probcache_active() const {
 			return are_prob_and_state_cache_active();
-		}; //kept for back compatibility
+		} //kept for back compatibility
 		bool is_statecache_active() const {
 			return are_prob_and_state_cache_active();
-		}; //kept for back compatibility
+		} //kept for back compatibility
 		bool are_lmtcaches_active() const;
 		bool are_caches_active() const;
 		
@@ -256,7 +256,7 @@ namespace irstlm {
 		
 		virtual int maxlevel() const {
 			return maxlev;
-		};
+		}
 		inline bool isQuantized() const {
 			return isQtable;
 		}
@@ -297,7 +297,7 @@ namespace irstlm {
 		void resize_level_nommap(int level);
 		void resize_level_mmap(int level, const char* filename);
 		
-		inline void update_offset(int level, table_entry_pos_t value) { tb_offset[level]=value; };
+		inline void update_offset(int level, table_entry_pos_t value) { tb_offset[level]=value; }
 		
 		
 		virtual void load(const std::string &filename, int mmap=0);
@@ -313,7 +313,7 @@ namespace irstlm {
 		
 		int reload(std::set<string> words);
 		
-		void filter(const char* /* unused parameter: lmfile */) {};
+		void filter(const char* /* unused parameter: lmfile */) {}
 		/*
 		virtual double  lprob(ngram ng){ return lprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double  lprob(ngram ng, double* bow){ return lprob(ng, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
@@ -331,6 +331,32 @@ namespace irstlm {
 		virtual double  lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 
+		virtual double clprob(string_vec_t& text, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+		{
+			VERBOSE(2,"lmtable::clprob(string_vec_t& text, ...)" << std::endl);
+			
+			//create the actual ngram
+			ngram ng(dict);
+			ng.pushw(text);
+			VERBOSE(3,"ng:|" << ng << "|" << std::endl);
+			MY_ASSERT (ng.size == (int) text.size());
+			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		
+		virtual double clprob(string_vec_t& text, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+		{
+			UNUSED(lm_weights);
+			VERBOSE(2,"lmtable::clprob(string_vec_t& text, topic_map_t& lm_weights, ...)" << std::endl);
+			
+			//create the actual ngram
+			ngram ng(dict);
+			ng.pushw(text);
+			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
+			
+			MY_ASSERT (ng.size == (int) text.size());
+			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+		}
+		
 		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
@@ -360,7 +386,7 @@ namespace irstlm {
 			MY_ASSERT(ptr!=NULL);
 			for (int i=0; i<size; i++)
 				ptr[offs+i]=(value >> (8 * i)) & 0xff;
-		};
+		}
 		
 		inline void getmem(char* ptr,int* value,int offs,int size) {
 			MY_ASSERT(ptr!=NULL);
@@ -368,20 +394,19 @@ namespace irstlm {
 			for (int i=1; i<size; i++){
 				*value= *value | ( ( ptr[offs+i] & 0xff ) << (8 *i));
 			}
-		};
+		}
 		
 		template<typename T>
 		inline void putmem(char* ptr,T value,int offs) {
 			MY_ASSERT(ptr!=NULL);
 			memcpy(ptr+offs, &value, sizeof(T));
-		};
+		}
 		
 		template<typename T>
 		inline void getmem(char* ptr,T* value,int offs) {
 			MY_ASSERT(ptr!=NULL);
 			memcpy((void*)value, ptr+offs, sizeof(T));
-		};
-		
+		}		
 		
 		int nodesize(LMT_TYPE ndt) {
 			switch (ndt) {
@@ -408,8 +433,7 @@ namespace irstlm {
 				putmem(nd,value,offset,LMTCODESIZE);
 			
 			return value;
-		};
-		
+		}
 		
 		int codecmp(node a,node b) {
 			register int i,result;
@@ -418,12 +442,11 @@ namespace irstlm {
 				if(result) return result;
 			}
 			return 0;
-		};
+		}
 		
 		int codediff(node a,node b) {
 			return word(a)-word(b);
-		};
-		
+		}		
 		
 		inline float prob(node nd,LMT_TYPE ndt) {
 			int offs=LMTCODESIZE;
@@ -447,7 +470,7 @@ namespace irstlm {
 					MY_ASSERT(0);
 					return 0;
 			}
-		};
+		}
 		
 		template<typename T>
 		inline T prob(node nd, LMT_TYPE ndt, T value) {
@@ -472,7 +495,7 @@ namespace irstlm {
 			}
 			
 			return value;
-		};
+		}
 		
 		inline float bow(node nd,LMT_TYPE ndt) {
 			int offs=LMTCODESIZE+(ndt==QINTERNAL?QPROBSIZE:PROBSIZE);
@@ -496,7 +519,7 @@ namespace irstlm {
 					MY_ASSERT(0);
 					return 0;
 			}
-		};
+		}
 		
 		template<typename T>
 		inline T bow(node nd,LMT_TYPE ndt, T value) {
@@ -521,7 +544,7 @@ namespace irstlm {
 			}
 			
 			return value;
-		};
+		}
 		
 		
 		inline table_entry_pos_t boundwithoffset(node nd,LMT_TYPE ndt, int level){ return bound(nd,ndt) - tb_offset[level+1]; }
@@ -540,7 +563,7 @@ namespace irstlm {
 			//		value -= tb_offset[level+1];
 			
 			return value;
-		};
+		}
 		
 		
 		//	table_entry_pos_t bound(node nd,LMT_TYPE ndt, table_entry_pos_t value, int level=0) {
@@ -553,7 +576,7 @@ namespace irstlm {
 			putmem(nd,value,offs);
 			
 			return value;
-		};
+		}
 		
 		//template<typename T> T boundwithoffset(node nd,LMT_TYPE ndt, T value, int level);
 		
@@ -567,7 +590,7 @@ namespace irstlm {
 		 getmem(nd,&value,offs);
 		 return value;
 		 //    return value-tb_offset[level+1];
-		 };
+		 }
 		 */
 		
 		/*
@@ -579,7 +602,7 @@ namespace irstlm {
 		 
 		 return value;
 		 //		return value+tb_offset[level+1];
-		 };	
+		 }
 		 */
 		
 		/*
@@ -591,7 +614,7 @@ namespace irstlm {
 		 
 		 getmem(nd,&value,offs);
 		 return value;
-		 };
+		 }
 		 
 		 template<typename T>
 		 inline T bound(node nd,LMT_TYPE ndt, T value) {
@@ -601,7 +624,7 @@ namespace irstlm {
 		 putmem(nd,value,offs);
 		 
 		 return value;
-		 };
+		 }
 		 */
 		//returns the indexes of the successors of a node
 		int succrange(node ndp,int level,table_entry_pos_t* isucc=NULL,table_entry_pos_t* esucc=NULL);
@@ -613,15 +636,15 @@ namespace irstlm {
 			if (delete_dict==true && dict) delete dict;
 			dict=d;
 			delete_dict=false;
-		};
+		}
 		
 		inline dictionary* getDict() const {
 			return dict;
-		};
+		}
 		
 		inline table_entry_pos_t getCurrentSize(int l) const {
 			return cursize[l];
-		};
+		}
 		
 		inline void setOrderQuery(bool v) {
 			orderQuery = v;
@@ -640,7 +663,7 @@ namespace irstlm {
 		//never allow the increment of the dictionary through this function
 		inline virtual void dictionary_incflag(const bool flag) {
 			UNUSED(flag);
-		};
+		}
 		
 		inline virtual bool filter(const string sfilter, lmtable* sublmt, const string skeepunigrams) {
 			std::cerr << "filtering... \n";
@@ -655,7 +678,10 @@ namespace irstlm {
 		
 		inline virtual bool is_OOV(int code) {
 			return (code == dict->oovcode());
-		};
+		}
+		
+		/* returns into the dictionary the successors of the given ngram */
+		virtual void getSuccDict(ngram& ng,dictionary* d);
 		
 	};
 	

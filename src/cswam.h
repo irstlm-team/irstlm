@@ -158,25 +158,25 @@ public:
     static void *expected_counts_helper(void *argv){
         task t=*(task *)argv;
         ((cswam *)t.ctx)->expected_counts(t.argv);return NULL;
-    };
+    }
     
     void maximization(void *argv);
     static void *maximization_helper(void *argv){
         task t=*(task *)argv;
         ((cswam *)t.ctx)->maximization(t.argv);return NULL;
-    };
+    }
     
     void expansion(void *argv);
     static void *expansion_helper(void *argv){
         task t=*(task *)argv;
         ((cswam *)t.ctx)->expansion(t.argv);return NULL;
-    };
+    }
     
     void contraction(void *argv);
     static void *contraction_helper(void *argv){
         task t=*(task *)argv;
         ((cswam *)t.ctx)->contraction(t.argv);return NULL;
-    };
+    }
     
     
     void M1_ecounts(void *argv);
@@ -201,16 +201,13 @@ public:
         
     void findfriends(FriendList* friends);
     
-    
-    
     int train(char *srctrainfile,char *trgtrainfile,char* modelfile, int maxiter,int threads=1);
     
     void aligner(void *argv);
     static void *aligner_helper(void *argv){
         task t=*(task *)argv;
         ((cswam *)t.ctx)->aligner(t.argv);return NULL;
-    };
-    
+    }
     
     int test(char *srctestfile, char* trgtestfile, char* modelfile,char* alignmentfile, int threads=1);
     

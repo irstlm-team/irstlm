@@ -107,7 +107,7 @@ namespace irstlm {
 		VERBOSE(1,"type: " << type << std::endl);
 		
 		return type;
-	};
+	}
 	
 	lmContainer* lmContainer::CreateLanguageModel(const std::string infile, float nlf, float dlf)
 	{
@@ -178,11 +178,11 @@ namespace irstlm {
 			return res;
 		}
 		return false;
-	};
+	}
 	
 	bool lmContainer::GetSentenceAndLexicon(std::string& sentence, std::string& lexiconfile, std::string& line)
 	{
-		VERBOSE(2,"bool lmContextDependent::GetSentenceAndLexicon" << std::endl);
+		VERBOSE(2,"bool lmContainer::GetSentenceAndLexicon" << std::endl);
 		VERBOSE(2,"line:|" << line << "|" << std::endl);
 		bool ret;
 		size_t pos = line.find(lexicon_delimiter);	
@@ -204,7 +204,7 @@ namespace irstlm {
 	}
 	bool lmContainer::GetSentenceAndContext(std::string& sentence, std::string& context, std::string& line)
 	{
-		VERBOSE(2,"bool lmContextDependent::GetSentenceAndContext" << std::endl);
+		VERBOSE(2,"bool lmContainer::GetSentenceAndContext" << std::endl);
 		VERBOSE(2,"line:|" << line << "|" << std::endl);
 		bool ret;
 		size_t pos = line.find(context_delimiter);

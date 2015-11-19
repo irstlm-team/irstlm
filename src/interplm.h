@@ -98,7 +98,7 @@ public:
   void trainunigr();
 	
   double unigrWB(ngram ng);
-  virtual double unigr(ngram ng){ return unigrWB(ng); };
+  virtual double unigr(ngram ng){ return unigrWB(ng); }
 
   double zerofreq(int lev);
 

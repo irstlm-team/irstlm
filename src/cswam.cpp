@@ -869,7 +869,7 @@ void cswam::contraction(void *argv){
     //re-normalize weights
     float totw=0;
     for (int n=0;n<TM[e].n;n++){totw+=TM[e].W[n]; assert(TM[e].W[n] > 0.0001);}
-    for (int n=0;n<TM[e].n;n++){TM[e].W[n]/=totw;};
+    for (int n=0;n<TM[e].n;n++){TM[e].W[n]/=totw;}
 }
 
 int cswam::train(char *srctrainfile, char*trgtrainfile,char *modelfile, int maxiter,int threads){

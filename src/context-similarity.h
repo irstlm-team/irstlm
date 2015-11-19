@@ -36,8 +36,6 @@
 #include "ngramtable.h"
 #include "lmContainer.h"
 
-class ngram;
-
 namespace irstlm {
 #define topic_map_delimiter1 ':'
 #define topic_map_delimiter2 ','
@@ -58,14 +56,14 @@ namespace irstlm {
 		int m_hk_order; //order of m_hk_ngt
 		int m_wk_order; //order of m_wk_ngt
 		int m_hwk_order; //order of m_hwk_ngt
-	
+		
 		int m_topic_size; //number of topics in the model
 		
 		topic_map_t topic_map; 
 		int m_threshold_on_h; //frequency threshold on h to allow computation of similairty scores
 		double m_smoothing; //smoothing value to sum to the counts to avoid zero-prob; implements a sort of shift-beta smoothing
 		int m_score_type; //scoreing type for computing the topic distribution, values are TOPIC_SCORE_TYPE_[0123]
-
+		
 		//flag for enabling/disabling context_similarity scores
 		// if disabled, context_similarity is 0.0 and topic_scores distribution is empty
 		bool m_active;
@@ -74,7 +72,7 @@ namespace irstlm {
 		void add_topic(const std::string& topic, ngram& ng);
 		void modify_topic(const std::string& topic, ngram& ng);
 		void create_topic_ngram(const string_vec_t& text, const std::string& topic, ngram& ng);
-	
+		
 		void get_counts(ngram& ng, ngramtable& ngt, double& c_xk, double& c_x);
 		
 		double topic_score(string_vec_t text, const std::string& topic, ngramtable& ngt, ngramtable& ngt2);
@@ -112,7 +110,7 @@ namespace irstlm {
 		void print_topic_scores(topic_map_t& map);
 		void print_topic_scores(topic_map_t& map, topic_map_t& refmap, double len);
 		double DeltaCrossEntropy(topic_map_t& topic_map, topic_map_t& tmp_map, double len);
-
+		
 		void normalize_topic_scores(topic_map_t& map);
 		
 		double context_similarity(string_vec_t& text, topic_map_t& topic_weights);
@@ -136,25 +134,25 @@ namespace irstlm {
 			m_active = val;
 		}
 		
-                void set_Topic_Score_Type(int t){
-                        switch (t){
-			case TOPIC_SCORE_TYPE_0:
-			case TOPIC_SCORE_TYPE_1:
-			case TOPIC_SCORE_TYPE_2:
-			case TOPIC_SCORE_TYPE_3:
-                        	m_score_type = t;
-			default:
-	                        std::stringstream ss_msg;
-        	                ss_msg << "Topic score type " << m_score_type << " is unknown.";
-                        	exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
+		void set_Topic_Score_Type(int t){
+			switch (t){
+				case TOPIC_SCORE_TYPE_0:
+				case TOPIC_SCORE_TYPE_1:
+				case TOPIC_SCORE_TYPE_2:
+				case TOPIC_SCORE_TYPE_3:
+					m_score_type = t;
+				default:
+					std::stringstream ss_msg;
+					ss_msg << "Topic score type " << m_score_type << " is unknown.";
+					exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 			}
-                }
-                int get_Topic_Score_Type(){
-                        return m_score_type;
-                }
-
+		}
+		int get_Topic_Score_Type(){
+			return m_score_type;
+		}
+		
 	};
-}
+};
 
 
 #endif

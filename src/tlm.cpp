@@ -352,7 +352,7 @@ int main(int argc, char **argv)
 		default:
 			cerr << "not implemented yet\n";
 			return 1;
-	};
+	}
 	
 	if (dub < lm->dict->size()){
 		cerr << "dub (" << dub << ") is not set or too small. dub is re-set to the dictionary size (" << lm->dict->size() << ")" << endl;
@@ -410,7 +410,7 @@ int main(int argc, char **argv)
 			((mdiadaptlm *)lm)->get_zetacache()->stat();
 
 		cerr << "\n";
-	};
+	}
 	
 	if (compsize)
 		cout << "LM size " << (int)lm->netsize() << "\n";

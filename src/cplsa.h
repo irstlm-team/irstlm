@@ -65,12 +65,12 @@ public:
     static void *expected_counts_helper(void *argv){
         task t=*(task *)argv;
         ((plsa *)t.ctx)->expected_counts(t.argv);return NULL;
-    };
+    }
     
     static void *single_inference_helper(void *argv){
         task t=*(task *)argv;
         ((plsa *)t.ctx)->single_inference(t.argv);return NULL;
-    };
+    }
     
     int train(char *trainfile,char* modelfile, int maxiter, float noiseW,int spectopic=0);
     int inference(char *trainfile, char* modelfile, int maxiter, char* topicfeatfile,char* wordfeatfile);

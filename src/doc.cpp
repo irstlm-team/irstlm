@@ -73,7 +73,7 @@ doc::doc(dictionary* d,char* docfname,bool use_null_word){
             }
             
             if (m < MAXDOCLEN) tmp[m++]=w;
-            if (m==MAXDOCLEN) {cerr<< "warn: clipping long document (line " << n << " )\n";exit(1);};
+            if (m==MAXDOCLEN) {cerr<< "warn: clipping long document (line " << n << " )\n";exit(1);}
         }
     
     cerr << "uploaded " << n << " documents\n";

@@ -156,7 +156,7 @@ int main(int argc, char **argv)
   if (inp==NULL) {
 		usage();
 		exit_error(IRSTLM_ERROR_DATA,"Warning: no input file specified");
-  };
+  }
 
   if (out==NULL) {
     cerr << "Warning: no output file specified!\n";

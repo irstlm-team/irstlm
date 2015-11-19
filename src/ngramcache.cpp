@@ -57,14 +57,13 @@ ngramcache::ngramcache(int n,int size,int maxentries,float lf)
   mp=new mempool(ngsize * sizeof(int)+infosize,MP_BLOCK_SIZE);
   accesses=0;
   hits=0;
-};
+}
 
 ngramcache::~ngramcache()
 {
   delete ht;
   delete mp;
-};
-
+}
 
 //resize cache to specified number of entries
 void ngramcache::reset(int n)
@@ -76,7 +75,7 @@ void ngramcache::reset(int n)
   ht=new htable<int*> ((size_t) (maxn/load_factor), ngsize * sizeof(int)); //decrease the lower load factor to reduce collision
   mp=new mempool(ngsize * sizeof(int)+infosize,MP_BLOCK_SIZE);
   entries=0;
-};
+}
 
 char* ngramcache::get(const int* ngp,char*& info)
 {
@@ -89,7 +88,7 @@ char* ngramcache::get(const int* ngp,char*& info)
   }
 
   return found;
-};
+}
 
 char* ngramcache::get(const int* ngp,double& info)
 {
@@ -102,7 +101,7 @@ char* ngramcache::get(const int* ngp,double& info)
   };
 
   return found;
-};
+}
 
 char* ngramcache::get(const int* ngp,prob_and_state_t& info)
 {
@@ -115,7 +114,7 @@ char* ngramcache::get(const int* ngp,prob_and_state_t& info)
     hits++;
   }
   return found;
-};
+}
 
 int ngramcache::add(const int* ngp,const char*& info)
 {
@@ -126,7 +125,7 @@ int ngramcache::add(const int* ngp,const char*& info)
   MY_ASSERT(found == entry); //false if key is already inside
   entries++;
   return 1;
-};
+}
 
 int ngramcache::add(const int* ngp,const double& info)
 {
@@ -137,7 +136,7 @@ int ngramcache::add(const int* ngp,const double& info)
   MY_ASSERT(found == entry); //false if key is already inside
   entries++;
   return 1;
-};
+}
 
 int ngramcache::add(const int* ngp,const prob_and_state_t& info)
 {
@@ -148,12 +147,11 @@ int ngramcache::add(const int* ngp,const prob_and_state_t& info)
   MY_ASSERT(found == entry); //false if key is already inside
   entries++;
   return 1;
-};
-
+}
 
 void ngramcache::stat() const
 {
   std::cout << "ngramcache stats: entries=" << entries << " acc=" << accesses << " hits=" << hits
        << " ht.used= " << ht->used() << " mp.used= " << mp->used() << " mp.wasted= " << mp->wasted() << "\n";
-};
+}
 

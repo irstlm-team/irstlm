@@ -50,10 +50,10 @@ class memnode
   memnode        *next;   //!< next block ptr
 public:
   //! Creates a memory node
-  memnode():block(NULL), next(NULL){};
+  memnode():block(NULL), next(NULL) {}
 	
   //! Destroys memory node
-  ~memnode(){};
+  ~memnode(){}
 };
 
 

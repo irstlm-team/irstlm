@@ -101,7 +101,7 @@ int main(int argc, char **argv)
   if (inp==NULL) {
 		usage();
 		exit_error(IRSTLM_NO_ERROR, "Warning: no input file specified");
-  };
+  }
 	
   // options compatibility issues:
   if (curveflag && !freqflag)

@@ -50,7 +50,7 @@ shiftone::shiftone(char* ngtfile,int depth,int prunefreq,TABLETYPE tt):
 
   beta=1.0;
 
-};
+}
 
 
 int shiftone::train()
@@ -141,9 +141,7 @@ shiftbeta::shiftbeta(char* ngtfile,int depth,int prunefreq,double b,TABLETYPE tt
 
   prunethresh=prunefreq;
   cerr << "PruneThresh: " << prunethresh << "\n";
-};
-
-
+}
 
 int shiftbeta::train()
 {
@@ -215,7 +213,7 @@ int shiftbeta::train()
   }
 
   return 1;
-};
+}
 
 
 
@@ -311,7 +309,7 @@ improvedkneserney::improvedkneserney(char* ngtfile,int depth,int prunefreq,TABLE
   beta[1][1]=0.0;
   beta[1][2]=0.0;
 
-};
+}
 
 
 int improvedkneserney::train()
@@ -417,7 +415,7 @@ int improvedkneserney::train()
 	}
 	
 	return 1;
-};
+}
 
 
 
@@ -553,7 +551,7 @@ int improvedkneserney::discount(ngram ng_,int size,double& fstar,double& lambda,
 		beta[1][1]=0.0;
 		beta[1][2]=0.0;
 		
-	};
+	}
 	
 	
 	int improvedshiftbeta::train()
@@ -658,9 +656,7 @@ int improvedkneserney::discount(ngram ng_,int size,double& fstar,double& lambda,
 		}
 		
 		return 1;
-	};
-	
-	
+	}
 	
 	int improvedshiftbeta::discount(ngram ng_,int size,double& fstar,double& lambda, int cv)
 	{

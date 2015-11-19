@@ -48,8 +48,7 @@ namespace irstlm {
 		prunethresh=prunefreq;
 		cerr << "PruneThresh: " << prunethresh << "\n";
 		
-	};
-	
+	}
 	
 	int linearwb::train()
 	{
@@ -135,7 +134,7 @@ namespace irstlm {
 	{
 		prunethresh=prunefreq;
 		cerr << "PruneThresh: " << prunethresh << "\n";
-	};
+	}
 	
 	int linearstb::train()
 	{

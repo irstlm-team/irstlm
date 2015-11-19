@@ -140,13 +140,13 @@ void dictionary::generate(char *filename,bool header)
 	
 }
 
-void dictionary::augment(dictionary *d)
+void dictionary::augment(dictionary *d, bool add_oov)
 {
 	incflag(1);
 	for (int i=0; i<d->n; i++)
 		encode(d->decode(i));
 	incflag(0);
-	encode(OOV());
+	if (add_oov) encode(OOV());
 }
 
 
@@ -427,7 +427,7 @@ void dictionary::sort()
 		tb[i].code=i;
 		//always insert without checking whether the word is already in
 		htb->insert((char*)&tb[i].word);
-	};
+	}
 	
 }
 

@@ -100,7 +100,7 @@ interplm::interplm(char *ngtfile,int depth,TABLETYPE tabtype):
          << dict->freq(BoS) << "\n";
   }
 
-};
+}
 
 interplm::~interplm()
 {

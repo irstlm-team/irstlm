@@ -210,7 +210,7 @@ T htable<T>::scan(HT_ACTION action)
 		T k = scan_p->key;
 		scan_p=(entry<T> *)scan_p->next;
 		return k;
-	};
+	}
 	
 	return NULL;
 }
@@ -235,7 +235,7 @@ void htable<T>::map(ostream& co,int cols)
 		while(p!=NULL) {
 			n++;
 			p=(entry<T> *)p->next;
-		};
+		}
 		
 		if (i && (i % cols)==0) {
 			co << img << "\n";
@@ -262,7 +262,7 @@ void htable<T>::stat() const
 	<< " acc " << accesses
 	<< " coll " << collisions
 	<< " used memory " << used()/1024 << "Kb\n";
-};
+}
 
 #endif
 

@@ -59,7 +59,7 @@ address htable<int *>::Hash(int* key)
     h ^=  (h >> 6);
     h += ~(h << 11);
     h ^=  (h >> 16);
-  };
+  }
 
   return h;
 }

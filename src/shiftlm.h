@@ -82,7 +82,7 @@ public:
 		}
 		
 		double unigrIKN(ngram ng);
-		inline double unigr(ngram ng){ return unigrIKN(ng); };		
+		inline double unigr(ngram ng){ return unigrIKN(ng); }	
 	};
 	
 class improvedshiftbeta: public mdiadaptlm

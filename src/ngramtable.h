@@ -186,7 +186,7 @@ public:
     
     inline void freetree() {
         freetree(tree);
-    };
+    }
     
     void freetree(node nd);
     
@@ -296,8 +296,7 @@ public:
     
     inline int codediff(node a,node b) {
         return word(a)-word(b);
-    };
-    
+    }
     
     int update(ngram ng);
     
@@ -374,7 +373,7 @@ public:
 	
 	inline dictionary* getDict() const {
 		return dict;
-	};
+	}
 };
 
 #endif

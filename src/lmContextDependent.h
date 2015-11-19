@@ -36,12 +36,12 @@ namespace irstlm {
 	class PseudoTopicModel
 	{
 	public:
-		PseudoTopicModel(){};
-		~PseudoTopicModel(){};
+		PseudoTopicModel(){}
+		~PseudoTopicModel(){}
 		
 		void load(const std::string &filename){
 			UNUSED(filename);
-		};
+		}
 		
 		double prob(string_vec_t& text, topic_map_t& topic_weights){
 			UNUSED(text);
@@ -99,10 +99,10 @@ namespace irstlm {
 			return lexicon_delimiter;
 		}
 		
-		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
-		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(text, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
-		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(ng, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
-		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(text, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
+		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
+		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(text, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
+		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(ng, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
+		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL){ return lprob(text, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
 
 		virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		virtual double lprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
@@ -128,28 +128,23 @@ namespace irstlm {
 		virtual int succscan(ngram& h,ngram& ng,LMT_ACTION action,int lev){
 			return m_lm->succscan(h,ng,action,lev);
 		}
-		/*
-		int maxlevel() const {
-			return maxlev;
-		};
-		 */
 		
 		virtual inline void setDict(dictionary* d) {
 			if (dict) delete dict;
 			dict=d;
-		};
+		}
 		
 		virtual inline lmContainer* getWordLM() const {
 			return m_lm;
-		};
+		}
 		
 		virtual inline ContextSimilarity* getContextSimilarity() const {
 			return m_similaritymodel;
-		};
+		}
 		
 		virtual inline dictionary* getDict() const {
 			return dict;
-		};
+		}
 		
 		//set penalty for OOV words
 		virtual inline double getlogOOVpenalty() const {
@@ -175,7 +170,7 @@ namespace irstlm {
 		
 		inline virtual void dictionary_incflag(const bool flag) {
 			dict->incflag(flag);
-		};
+		}
 		
 		inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
 			return m_lm->is_OOV(code);
@@ -191,6 +186,9 @@ namespace irstlm {
 		void set_Normalized(bool val){
 			m_normalization = val;
 		}
+		
+		/* returns into the dictionary the successors of the given ngram */
+		virtual void getSuccDict(ngram& ng,dictionary* d);
 
 	};
 }//namespace irstlm
