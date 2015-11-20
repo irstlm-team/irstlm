@@ -91,6 +91,7 @@ extern const int tracelevel;
 
 #define TRACE_ERR(str) { std::cerr << str; }
 #define VERBOSE(level,str) { if (tracelevel > level) { TRACE_ERR("DEBUG_LEVEL:" << level << "/" << tracelevel << " "); TRACE_ERR(str); } }
+#define SMPL_VERBOSE(level,str) { if (tracelevel > level) { TRACE_ERR(str); } }
 #define IFVERBOSE(level) if (tracelevel > level)
 
 /*

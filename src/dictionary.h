@@ -25,6 +25,7 @@
 
 #include "mfstream.h"
 #include "htable.h"
+#include "util.h"
 #include <cstring>
 #include <iostream>
 
@@ -152,25 +153,24 @@ public:
 	
 	inline void genoovcode() {
 		int c=encode(OOV());
-		std::cerr << "OOV code is "<< c << std::endl;
-		cerr << "OOV code is "<< c << std::endl;
+		VERBOSE(0, "OOV code is "<< c << std::endl);
 		oovcode(c);
 	}
 	
 	inline void genBoScode() {
 		int c=encode(BoS());
-		std::cerr << "BoS code is "<< c << std::endl;
+		VERBOSE(0, "BoS code is "<< c << std::endl);
 	}
 	
 	inline void genEoScode() {
 		int c=encode(EoS());
-		std::cerr << "EoS code is "<< c << std::endl;
+		VERBOSE(0, "EoS code is "<< c << std::endl);
 	}
 	
 	inline long long setoovrate(double oovrate) {
 		encode(OOV()); //be sure OOV code exists
 		long long oovfreq=(long long)(oovrate * totfreq());
-		std::cerr << "setting OOV rate to: " << oovrate << " -- freq= " << oovfreq << std::endl;
+		VERBOSE(0, "setting OOV rate to: " << oovrate << " -- freq= " << oovfreq << std::endl);
 		return freq(oovcode(),oovfreq);
 	}
 	

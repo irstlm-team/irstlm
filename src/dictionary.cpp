@@ -76,7 +76,7 @@ dictionary::dictionary(char *filename,int size, float lf)
 	else
 		generate(filename);
 	
-	cerr << "loaded \n";
+	VERBOSE(0,"loaded \n");
 	
 }
 
@@ -87,13 +87,12 @@ int dictionary::getword(fstream& inp , char* buffer) const
 		
 		//warn if the word is very long
 		if (strlen(buffer)==(MAX_WORD-1)) {
-			cerr << "getword: a very long word was read ("
-			<< buffer << ")\n";
+			VERBOSE(0,"getword: a very long word was read ("	<< buffer << ")\n");
 		}
 		
 		//skip words of length zero chars: why should this happen?
 		if (strlen(buffer)==0) {
-			cerr << "zero length word!\n";
+			VERBOSE(0, "zero length word!\n");
 			continue;
 		}
 		
@@ -118,7 +117,7 @@ void dictionary::generate(char *filename,bool header)
 		exit_error(IRSTLM_ERROR_IO, ss_msg.str());
 	}
 	
-	cerr << "dict:";
+	VERBOSE(0, "dict:");
 	
 	ifl=1;
 
@@ -129,12 +128,12 @@ void dictionary::generate(char *filename,bool header)
 		
 		incfreq(encode(buffer),1);
 		
-		if (!(++counter % 1000000)) cerr << ".";
+		if (!(++counter % 1000000)) SMPL_VERBOSE(0,".");
 	}
 	
 	ifl=0;
 	
-	cerr << "\n";
+	SMPL_VERBOSE(0, "\n");
 	
 	inp.close();
 	
@@ -228,7 +227,7 @@ void dictionary::test(int* OOVchart, int* NwTest, int curvesize, const char *fil
                 ss_msg << "cannot open " << filename << "\n";
                 exit_error(IRSTLM_ERROR_IO, ss_msg.str());
         }
-        cerr << "test:";
+        VERBOSE(0, "test:");
 
         int k = 0;
         while (getword(inp,buffer)) {
@@ -244,15 +243,15 @@ void dictionary::test(int* OOVchart, int* NwTest, int curvesize, const char *fil
                 if(freq==0) {
                         OOVchart[0]++;
                         if(listflag) {
-                                cerr << "<OOV>" << buffer << "</OOV>\n";
+                                VERBOSE(0, "<OOV>" << buffer << "</OOV>\n");
                         }
                 } else {
                         if(freq < curvesize) OOVchart[freq]++;
                 }
                 m_NwTest++;
-                if (!(++k % 1000000)) cerr << ".";
+                if (!(++k % 1000000)) SMPL_VERBOSE(0,".");
         }
-        cerr << "\n";
+        SMPL_VERBOSE(0, "\n");
         inp.close();
 
         // cumulating results
@@ -277,7 +276,7 @@ void dictionary::load(char* filename)
 		exit_error(IRSTLM_ERROR_IO, ss_msg.str());
 	}
 	
-	cerr << "dict:";
+	VERBOSE(0, "dict:");
 	
 	inp.getline(header,100);
 	if (strncmp(header,"DICT",4)==0)
@@ -302,8 +301,7 @@ void dictionary::load(char* filename)
 		//always insert without checking whether the word is already in
 		if ((addr=htb->insert((char*)&tb[n].word))) {
 			if (addr!=(char *)&tb[n].word) {
-				cerr << "dictionary::loadtxt wrong entry was found ("
-				<<  buffer << ") in position " << n << "\n";
+				VERBOSE(0, "dictionary::loadtxt wrong entry was found (" <<  buffer << ") in position " << n << "\n");
 				//      exit(1);
 				continue;  // continue loading dictionary
 			}
@@ -417,9 +415,9 @@ void dictionary::sort()
 	
 	htb = new HASHTABLE_t((int) (lim/load_factor));
 	//sort all entries according to frequency
-	cerr << "sorting dictionary ...";
+	VERBOSE(0, "sorting dictionary ...");
 	qsort(tb,n,sizeof(dict_entry),cmpdictentry);
-	cerr << "done\n";
+	VERBOSE(0, "done\n");
 	
 	for (int i=0; i<n; i++) {
 		//eventually re-assign oov code
@@ -452,7 +450,7 @@ void dictionary::grow()
 {
 	delete htb;
 	
-	cerr << "+\b";
+	SMPL_VERBOSE(0,"+\b");
 	
 	int newlim=(int) (lim*GROWTH_STEP);
 	dict_entry *tb2=new dict_entry[newlim];
@@ -479,7 +477,7 @@ void dictionary::save(char *filename,int freqflag)
 	std::ofstream out(filename,ios::out);
 	
 	if (!out) {
-		cerr << "cannot open " << filename << "\n";
+		VERBOSE(0, "cannot open " << filename << "\n");
 	}
 	
 	// header
@@ -511,7 +509,7 @@ int dictionary::encode(const char *w)
 {
 	//case of strange characters
 	if (strlen(w)==0) {
-		cerr << "0";
+		VERBOSE(0, "word (\"" << w << "\") has zero length\n");
 		w=OOV();
 	}
 	
@@ -523,7 +521,7 @@ int dictionary::encode(const char *w)
 	else {
 		if (!ifl) { //do not extend dictionary
 			if (oov_code==-1) { //did not use OOV yet
-				cerr << "starting to use OOV words [" << w << "]\n";
+				VERBOSE(0, "starting to use OOV words [" << w << "]\n");
 				tb[n].word=st->push(OOV());
 				htb->insert((char  *)&tb[n].word);
 				tb[n].code=n;
@@ -550,7 +548,7 @@ const char *dictionary::decode(int c) const
 	if (c>=0 && c < n)
 		return tb[c].word;
 	else {
-		cerr << "decode: code out of boundary\n";
+		VERBOSE(0, "decode: code out of boundary\n");
 		return OOV();
 	}
 }
