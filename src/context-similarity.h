@@ -141,6 +141,7 @@ namespace irstlm {
 				case TOPIC_SCORE_TYPE_2:
 				case TOPIC_SCORE_TYPE_3:
 					m_score_type = t;
+					break;
 				default:
 					std::stringstream ss_msg;
 					ss_msg << "Topic score type " << m_score_type << " is unknown.";

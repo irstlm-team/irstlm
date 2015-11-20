@@ -80,7 +80,7 @@ namespace irstlm {
 		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
 		
 		bool error=false;
-		if ((tokenN!=1) || (tokenN!=3)){
+		if (! (tokenN==1 || tokenN==3) ){
 			error=true;     
 		}else if ((strcmp(words[0],"LMCONTEXTDEPENDENT") != 0) && (strcmp(words[0],"lmcontextdependent")!=0)) {
 			error=true;
@@ -89,7 +89,7 @@ namespace irstlm {
 		}
 		if (error){
 			std::stringstream ss_msg;
-			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format.str();
 			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		
@@ -98,17 +98,18 @@ namespace irstlm {
 			_score_type = TOPIC_SCORE_TYPE_2;
 		}else{
 			_score_type = atoi(words[2]);
-		}	
+		}
 		
 		//reading ngram-based LM
 		inp.getline(line,BUFSIZ,'\n');
 		tokenN = parseWords(line,words,1);
-		if(tokenN < 1 || tokenN > 1) {
+		
+		if(tokenN != 1) {
 			error=true;
 		}
 		if (error){
 			std::stringstream ss_msg;
-			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format.str();
 			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		
@@ -129,13 +130,13 @@ namespace irstlm {
 		//reading topic model
 		inp.getline(line,BUFSIZ,'\n');
 		tokenN = parseWords(line,words,LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN);
-		
+	
 		if(tokenN < 5 || tokenN > LMCONTEXTDEPENDENT_CONFIGURE_MAX_TOKEN) {
 			error= true;
 		}
 		if (error){
 			std::stringstream ss_msg;
-			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format.str();
 			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		

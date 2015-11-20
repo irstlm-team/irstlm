@@ -80,7 +80,7 @@ namespace irstlm {
 		
 		if (error){
 			std::stringstream ss_msg;
-			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+			ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format.str();
 			exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 		}
 		
@@ -121,7 +121,7 @@ namespace irstlm {
 			}
 			if (error){
 				std::stringstream ss_msg;
-				ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format;
+				ss_msg << "ERROR: wrong header format of configuration file\ncorrect format:" << ss_format.str();
 				exit_error(IRSTLM_ERROR_DATA,ss_msg.str());
 			}
 			
