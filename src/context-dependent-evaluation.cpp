@@ -471,18 +471,19 @@ int main(int argc, char **argv)
 					//loop over a set of selected alternative words
 					//populate the dictionary with all words associated with the current word
 					
-					dictionary* current_dict;
-					if (add_full_dictionary){
-						//loop over all words in the LM
-						current_dict = lmt->getDict();
-					}else{
-						current_dict = new dictionary((char *)NULL,1000000);
-					}
+					dictionary* current_dict = new dictionary((char *)NULL,1000000);
 					current_dict->incflag(1);
 					
+					//adding current word
 					current_dict->encode(current_word.c_str());
-					
 					VERBOSE(2,"after current word current_dict->size:" << current_dict->size() << std::endl);
+					
+					if (add_full_dictionary){
+						//loop over all words in the LM
+						current_dict->augment(lmt->getDict());
+					}
+					VERBOSE(2,"after add full dictionary current_dict->size:" << current_dict->size() << std::endl);
+					
 					
 					//add words from the lexicon
 					if (add_lexicon_words){
@@ -508,136 +509,73 @@ int main(int argc, char **argv)
 						VERBOSE(2,"add_lexicon_words not active" << std::endl);	
 					}
 					
-					if(1){			
-						if (add_lm_words){
-							bool succ_flag=false;
-							ngram hg(lmt->getDict());
-							
-							dictionary* succ_dict;
-							
-							if (size==1) {
-								hg.size=0;
-								hg.pushw(lmt->getDict()->BoS());
-								
-								succ_dict = new dictionary((char *)NULL,1000000);
-								succ_dict->incflag(1);
-								lmt->getSuccDict(hg,succ_dict);
-								succ_dict->incflag(0);
-								if (succ_dict->size() >= successor_limit){
-									VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
-								}else if (succ_dict->size() == 0){
-									VERBOSE(3,"there are no successors" << std::endl);	
-								}else{
-									succ_flag=true;
-								}
-							}else if (size>=2) {
-								hg.size=0;
-								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
-								
-								succ_dict = new dictionary((char *)NULL,1000000);
-								succ_dict->incflag(1);
-								lmt->getSuccDict(hg,succ_dict);
-								succ_dict->incflag(0);
-								if (succ_dict->size() >= successor_limit){
-									VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
-								}else if (succ_dict->size() == 0){
-									VERBOSE(3,"there are no successors" << std::endl);	
-								}else{
-									succ_flag=true;
-								}
-								if (!succ_flag && size>=3){
-									hg.size=0;
-									hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-3));
-									hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
-									
-									delete succ_dict;
-									succ_dict = new dictionary((char *)NULL,1000000);
-									succ_dict->incflag(1);
-									lmt->getSuccDict(hg,succ_dict);
-									succ_dict->incflag(0);
-									lmt->getSuccDict(hg,succ_dict);
-									
-									if (succ_dict->size() >= successor_limit){
-										VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
-									}else if (succ_dict->size() == 0){
-										VERBOSE(3,"there are no successors" << std::endl);	
-									}else{
-										succ_flag=true;
-									}
-								}
-							}
-							
-							if (succ_flag){
-								current_dict->augment(succ_dict, false); //do not add OOV
-							}
-							VERBOSE(2,"after add_lm_words current_dict->size:" << current_dict->size() << std::endl);
-						}else{
-							VERBOSE(2,"add_lm_words not active" << std::endl);	
-						}
-					}
-					/*
-					if(0){
 					if (add_lm_words){
 						bool succ_flag=false;
 						ngram hg(lmt->getDict());
 						
+						dictionary* succ_dict = NULL;
+						
 						if (size==1) {
+							hg.size=0;
 							hg.pushw(lmt->getDict()->BoS());
-							hg.pushc(0);
 							
-							VERBOSE(1,"1 before calling lmt->get(hg,hg.size,hg.size-1)  add_lm_words hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
-							lmt->get(hg,hg.size,hg.size-1);
-							VERBOSE(1,"1 after calling lmt->get(hg,hg.size,hg.size-1)  add_lm_words hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
-							if (hg.succ < successor_limit){
-								succ_flag=true;
-							}else{
+							succ_dict = new dictionary((char *)NULL,1000000);
+							succ_dict->incflag(1);
+							lmt->getSuccDict(hg,succ_dict);
+							succ_dict->incflag(0);
+							if (succ_dict->size() >= successor_limit){
 								VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+							}else if (succ_dict->size() == 0){
+								VERBOSE(3,"there are no successors" << std::endl);	
+							}else{
+								succ_flag=true;
 							}
 						}else if (size>=2) {
+							hg.size=0;
 							hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
-							hg.pushc(0);
 							
-							VERBOSE(1,"2 before calling lmt->get(hg,hg.size,hg.size-1)  hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
-							lmt->get(hg,hg.size,hg.size-1);
-							VERBOSE(1,"2 after calling lmt->get(hg,hg.size,hg.size-1)  add_lm_words hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
-							if (hg.succ < successor_limit){
-								succ_flag=true;
-							}else{
+							succ_dict = new dictionary((char *)NULL,1000000);
+							succ_dict->incflag(1);
+							lmt->getSuccDict(hg,succ_dict);
+							succ_dict->incflag(0);
+							if (succ_dict->size() >= successor_limit){
 								VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+							}else if (succ_dict->size() == 0){
+								VERBOSE(3,"there are no successors" << std::endl);	
+							}else{
+								succ_flag=true;
 							}
-							
 							if (!succ_flag && size>=3){
 								hg.size=0;
 								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-3));
 								hg.pushw(tmp_word_vec.at(tmp_word_vec.size()-2));
-								hg.pushc(0);
 								
-								VERBOSE(1,"3 before calling lmt->get(hg,hg.size,hg.size-1)  add_lm_words hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
-								lmt->get(hg,hg.size,hg.size-1);
-								VERBOSE(1,"3 after calling lmt->get(hg,hg.size,hg.size-1)  add_lm_words hg:|" << hg << "| hg.size:|" << hg.size << "| hg.lev+1:|" << (hg.lev+1) << "| hg.succ:|" << hg.succ << "|" << std::endl);
+								delete succ_dict;
+								succ_dict = new dictionary((char *)NULL,1000000);
+								succ_dict->incflag(1);
+								lmt->getSuccDict(hg,succ_dict);
+								succ_dict->incflag(0);
+								lmt->getSuccDict(hg,succ_dict);
 								
-								if (hg.succ < successor_limit){
-									succ_flag=true;
-								}else{
+								if (succ_dict->size() >= successor_limit){
 									VERBOSE(3,"successors are not added into the alternatives because they are too many" << std::endl);	
+								}else if (succ_dict->size() == 0){
+									VERBOSE(3,"there are no successors" << std::endl);	
+								}else{
+									succ_flag=true;
 								}
 							}
 						}
 						
-						
 						if (succ_flag){
-							ngram ng=hg;
-							lmt->succscan(hg,ng,LMT_INIT,ng.size);	
-							while(lmt->succscan(hg,ng,LMT_CONT,ng.size)) {
-								current_dict->encode(ng.dict->decode(*ng.wordp(1)));
-							}
+							current_dict->augment(succ_dict, false); //do not add OOV
 						}
+						
+						if (succ_dict) delete succ_dict;
 						VERBOSE(2,"after add_lm_words current_dict->size:" << current_dict->size() << std::endl);
 					}else{
 						VERBOSE(2,"add_lm_words not active" << std::endl);	
 					}
-					}
-		*/
 					
 					if (add_sentence_words){
 						for (string_vec_t::const_iterator it=word_vec.begin(); it!=word_vec.end(); ++it)
@@ -719,7 +657,7 @@ int main(int argc, char **argv)
 					sent_logPr+=current_Pr;
 					VERBOSE(2,"sent_model_logPr:" << sent_model_logPr << " model_logPr:" << model_logPr << std::endl);	
 					VERBOSE(2,"sent_logPr:" << sent_logPr << " current_Pr:" << current_Pr << std::endl);
-					delete current_dict;
+					if (current_dict) delete current_dict;
 				}
 			}
 			
