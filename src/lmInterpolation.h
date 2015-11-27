@@ -109,7 +109,7 @@ namespace irstlm {
 		//for an interpolation LM this variable does not make sense
 		//for compatibility, we return true if all subLM return true
 		inline bool is_inverted() {
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				if (m_isinverted[i] == false) return false;
 			}
 			return true;
@@ -120,7 +120,7 @@ namespace irstlm {
 		};
 		
 		inline virtual bool is_OOV(int code) { //returns true if the word is OOV for each subLM
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				int _code=m_lm[i]->getDict()->encode(getDict()->decode(code));
 				if (m_lm[i]->is_OOV(_code) == false) return false;
 			}
@@ -128,7 +128,7 @@ namespace irstlm {
 		}
 		
 		virtual int addWord(const char *w){
-			for (int i=0; i<m_number_lm; i++) {
+			for (size_t i=0; i<m_number_lm; i++) {
 				m_lm[i]->getDict()->incflag(1);
 				m_lm[i]->getDict()->encode(w);
 				m_lm[i]->getDict()->incflag(0);

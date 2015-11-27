@@ -76,7 +76,7 @@ namespace irstlm {
 		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) m_number_lm:"<< m_number_lm << std::endl);
 		
 		dict->incflag(1);
-		for (int i=0; i<m_number_lm; i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			inp.getline(line,BUFSIZ,'\n');
 			tokenN = parseWords(line,words,3);
 			
@@ -109,7 +109,7 @@ namespace irstlm {
 		inp.close();
 		
 		int maxorder = 0;
-		for (int i=0; i<m_number_lm; i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			maxorder = (maxorder > m_lm[i]->maxlevel())?maxorder:m_lm[i]->maxlevel();
 		}
 		
@@ -302,7 +302,7 @@ namespace irstlm {
 		MY_ASSERT(dub > dict->size());
 		double _logpr;
 		double OOVpenalty=0.0;
-		for (int i=0; i<m_number_lm; i++) {
+		for (size_t i=0; i<m_number_lm; i++) {
 			if (m_weight[i]>0.0){
 				m_lm[i]->setlogOOVpenalty(dub);  //set OOV Penalty for each LM
 				_logpr=m_lm[i]->getlogOOVpenalty(); // logOOV penalty is in log10
