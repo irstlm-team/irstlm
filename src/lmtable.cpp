@@ -2247,6 +2247,16 @@ namespace irstlm {
 		return 0;
 	}
 	
+	ngram_state_t lmtable::convert(const char* suffptr, size_t lev){
+		int ndsz=nodesize(tbltype[lev]);
+		ngram_state_t suffidx=0;
+		if (suffptr){
+			suffidx = (ngram_state_t) ( ((table_pos_t) suffptr - (table_pos_t) table[lev]) / ndsz ) + tb_offset[lev] + 1; //added 1 to distinguish from zero-ngram
+		}
+		return suffidx;
+	}
+	
+	
 	//maxsuffptr returns the largest suffix of an n-gram that is contained
 	//in the LM table. This can be used as a compact representation of the
 	//(n-1)-gram state of a n-gram LM. If the input k-gram has k>=n then it
@@ -2329,6 +2339,7 @@ namespace irstlm {
 		//cache miss
 		unsigned int isize; //internal state size variable
 		char* found=(char *)maxsuffptr(ong,&isize);
+		ngram_state_t msidx = convert(found,isize);
 		
 		//cache insert
 		//IMPORTANT: this function updates only two fields (state, statesize) of the entry of the cache; the reminaing fields (logpr, bow, bol, extendible) are undefined; hence, it should not be used before the corresponding clprob()
@@ -2337,6 +2348,7 @@ namespace irstlm {
 		//		if (prob_and_state_cache && ong.size==maxlev) {
 		if (prob_and_state_cache[ong.size]) {
 			pst.state=found;
+			pst.ngramstate=msidx;
 			pst.statesize=isize;
 			//			prob_and_state_cache->add(ong.wordp(maxlev),pst);
 			prob_and_state_cache[ong.size]->add(ong.wordp(ong.size),pst);
@@ -2354,65 +2366,13 @@ namespace irstlm {
 	//(n-1)-gram state of a n-gram LM. If the input k-gram has k>=n then it
 	//is trimmed to its n-1 suffix.
 	//non recursive version
+	//It relies on the computation of maxsuffptr
 	ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)
 	{
 		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)\n");
 		
-		if (ong.size==0) {
-			if (size!=NULL) *size=0;
-			return 0;
-		}
-		
-		if (isInverted) {
-			if (ong.size>maxlev) ong.size=maxlev; //if larger than maxlen reduce size
-			ngram ing=ong; //inverted ngram
-			
-			ing.invert(ong);
-			
-			get(ing,ing.size,ing.size); // dig in the trie
-			if (ing.lev > 0) { //found something?
-				size_t isize = MIN(ing.lev,(ing.size-1)); //find largest n-1 gram suffix
-				if (size!=NULL)  *size=isize;
-				
-				int ndsz=nodesize(tbltype[isize]);
-				ngram_state_t msidx = (ngram_state_t) ( ((table_pos_t) (ing.path[isize]) - (table_pos_t) table[isize] ) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
-				VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size) ing:|" << ing << "| isize:|" << isize << "| ing.path[isize]:|" << ing.path[isize] << "| tb_offset[isize]:|" << tb_offset[isize] << "| msidx:|" << msidx << "|" << std::endl);
-				return msidx;
-			} else { // means a real unknown word!
-				if (size!=NULL)  *size=0;     //default statesize for zero-gram!
-				return 0; //default state-value for zero-gram!
-			}
-		} else {
-			if (ong.size>0) ong.size--; //always reduced by 1 word
-			
-			if (ong.size>=maxlev) ong.size=maxlev-1; //if still larger or equals to maxlen reduce again
-			
-			if (size!=NULL) *size=ong.size; //will return the largest found ong.size
-			
-			for (ngram ng=ong; ng.size>0; ng.size--) {
-				if (get(ng,ng.size,ng.size)) {
-					//					if (ng.succ==0) (*size)--;
-					//					if (size!=NULL) *size=ng.size;
-					size_t isize=ng.size;
-					if (size!=NULL)
-					{
-						if (ng.succ==0) *size=isize-1;
-						else *size=isize;
-					}
-					
-					int ndsz=nodesize(tbltype[isize]);
-					ngram_state_t msidx = 0;
-					if (ng.link){
-						msidx = (ngram_state_t) ( ((table_pos_t) (ng.link) - (table_pos_t) table[isize]) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
-					}
-					
-					VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size) ng:|" << ng << "| isize:|" << isize << "| tb_offset[isize]:|" << tb_offset[isize] << "| msidx:|" << msidx << "|" << std::endl);
-					return msidx;
-				}
-			}
-			if (size!=NULL) *size=0;
-			return 0;
-		}
+		const char* suffptr = cmaxsuffptr(ong,size);
+		return convert(suffptr,*size);
 	}
 	
 	ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size)
@@ -2436,14 +2396,14 @@ namespace irstlm {
 		//		if (prob_and_state_cache && ong.size==maxlev && prob_and_state_cache->get(ong.wordp(maxlev),pst)) {
 		if (prob_and_state_cache[ong.size] && prob_and_state_cache[ong.size]->get(ong.wordp(ong.size),pst)) {
 			*size=pst.statesize;
-			//			return pst.state;
 			return pst.ngramstate;
 		}
 		ong.size = orisize;
 		
 		//cache miss
 		unsigned int isize; //internal state size variable
-		ngram_state_t msidx = maxsuffidx(ong,&isize);
+		char* msptr = cmaxsuffptr(ong,&isize);
+		ngram_state_t msidx = convert(suffptr,isize);
 		
 		//cache insert
 		//IMPORTANT: this function updates only two fields (ngramstate, statesize) of the entry of the cache; the reminaing fields (logpr, bow, bol, extendible) are undefined; hence, it should not be used before the corresponding clprob()
@@ -2451,6 +2411,7 @@ namespace irstlm {
 		if (ong.size>=maxlev) ong.size=maxlev;
 		//		if (prob_and_state_cache && ong.size==maxlev) {
 		if (prob_and_state_cache[ong.size]) {
+			pst.state=found;
 			pst.ngramstate=msidx;
 			pst.statesize=isize;
 			//			prob_and_state_cache->add(ong.wordp(maxlev),pst);
@@ -2503,12 +2464,12 @@ namespace irstlm {
 				if (*ong.wordp(1)==dict->oovcode()) lpr-=logOOVpenalty; //add OOV penalty
 				size_t isize=MIN(ing.lev,(ing.size-1));
 				if (statesize)  *statesize=isize; //find largest n-1 gram suffix
-				if (maxsuffptr) *maxsuffptr=ing.path[isize];
+
+				char* suffptr=ing.path[isize];
 				
-				if (maxsuffidx){
-					int ndsz=nodesize(tbltype[isize]);
-					*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ing.path[isize]) - (table_pos_t) table[isize] ) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
-				}
+				if (maxsuffptr) *maxsuffptr=suffptr;				
+				if (maxsuffidx)	*maxsuffidx = convert(suffptr,isize);
+
 				if (extendible) *extendible=succrange(ing.path[ing.lev],ing.lev)>0;
 				if (lastbow) *lastbow=(double) (isQtable?Bcenters[ing.lev][(qfloat_t)ing.bow]:ing.bow);
 			} else { // means a real unknown word!
@@ -2556,17 +2517,12 @@ namespace irstlm {
 							get(ng,ng.size,ng.size);
 						}
 						if (statesize)	*statesize=ng.size;
-						if (maxsuffptr)	*maxsuffptr=ng.link; //we should check ng.link != NULL
-						
+
+						char* suffptr=ng.link; //we should check ng.link != NULL
 						size_t isize=ng.size;					
 						
-						if (maxsuffidx){
-							int ndsz=nodesize(tbltype[isize]);
-							*maxsuffidx=0;
-							if (ng.link){
-								*maxsuffidx = (ngram_state_t) ( ((table_pos_t) (ng.link) - (table_pos_t) table[isize]) / ndsz ) + tb_offset[isize] + 1; //added 1 to distinguish from zero-ngram
-							}
-						}
+						if (maxsuffptr) *maxsuffptr=suffptr;	
+						if (maxsuffidx)	*maxsuffidx = convert(suffptr,isize);
 					}
 					return rbow+lpr;
 				} else {

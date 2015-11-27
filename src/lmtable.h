@@ -91,6 +91,8 @@ namespace irstlm {
 		void loadbin_codebook(std::istream& inp,int l);
 		void loadbin_level(std::istream& inp,int l);
 		
+		ngram_state_t convert(const char* suffptr, size_t lev);
+		
 	protected:
 		char*       table[LMTMAXLEV+1];  //storage of all levels
 		LMT_TYPE    tbltype[LMTMAXLEV+1];  //table type for each levels
