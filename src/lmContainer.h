@@ -170,7 +170,7 @@ namespace irstlm {
 			ngram ong(getDict());
 			ong.pushc(ng,ngsize);
 			MY_ASSERT (ong.size == ngsize);
-			return cmaxsuffptr(ng, ngsize, statesize);
+			return cmaxsuffptr(ong, statesize);
 		}
 		
 		virtual ngram_state_t cmaxsuffidx(ngram ng, unsigned int* statesize=NULL)
