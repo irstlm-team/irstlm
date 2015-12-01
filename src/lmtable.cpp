@@ -2278,7 +2278,7 @@ namespace irstlm {
 	//non recursive version
 	const char *lmtable::maxsuffptr(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size)\n");
+		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size) ong:|" << ong << "|\n");
 		
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
@@ -2326,7 +2326,7 @@ namespace irstlm {
 	
 	const char *lmtable::cmaxsuffptr(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
+		VERBOSE(3,"const char *lmtable::cmaxsuffptr(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
 		
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
@@ -2383,9 +2383,10 @@ namespace irstlm {
 	ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)
 	{
 		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)\n");
-		
-		const char* suffptr = cmaxsuffptr(ong,size);
-		return convert(suffptr,*size);
+		unsigned int isize; //internal state size variable
+		const char* suffptr = cmaxsuffptr(ong,&isize);
+		if (size != NULL){ *size = isize; }
+		return convert(suffptr,isize);
 	}
 	
 	ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size)
