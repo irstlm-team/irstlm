@@ -2566,7 +2566,7 @@ namespace irstlm {
 		if (ong.size==0) {
 			if (statesize!=NULL) *statesize=0;
 			if (state!=NULL) *state=NULL;
-			if (ngramstate!=NULL) *ngramstate=NULL;
+			if (ngramstate!=NULL) *ngramstate=0;
 			if (extendible!=NULL) *extendible=false;
 			if (lastbow!=NULL) *lastbow=false;
 			return 0.0;
