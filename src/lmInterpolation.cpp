@@ -202,7 +202,7 @@ namespace irstlm {
 		double _logpr;
 		
 		char* _maxsuffptr=NULL,*actualmaxsuffptr=NULL;
-		ngram_state_t _maxsuffidx=NULL,actualmaxsuffidx=NULL;
+		ngram_state_t _maxsuffidx=0,actualmaxsuffidx=0;
 		unsigned int _statesize=0,actualstatesize=0;
 		int _bol=0,actualbol=MAX_NGRAM;
 		double _bow=0.0,actualbow=0.0; 
@@ -287,7 +287,7 @@ namespace irstlm {
 		double _logpr;
 		
 		char* _maxsuffptr=NULL,*actualmaxsuffptr=NULL;
-		ngram_state_t _maxsuffidx=NULL,actualmaxsuffidx=NULL;
+		ngram_state_t _maxsuffidx=0,actualmaxsuffidx=0;
 		unsigned int _statesize=0,actualstatesize=0;
 		int _bol=0,actualbol=MAX_NGRAM;
 		double _bow=0.0,actualbow=0.0; 
