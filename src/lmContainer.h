@@ -179,12 +179,8 @@ namespace irstlm {
 		}
 		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
-			//create the actual ngram
-			ngram ong(getDict());
-			ong.pushc(ng,ngsize);
-			MY_ASSERT (ong.size == ngsize);
-			
-			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			UNUSED(topic_weights);
+			return clprob(ng, ngsize, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
