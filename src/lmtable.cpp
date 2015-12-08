@@ -2525,7 +2525,7 @@ namespace irstlm {
 					iprob=ng.prob;
 					lpr = (double)(isQtable?Pcenters[ng.size][(qfloat_t)iprob]:iprob);
 					if (*ng.wordp(1)==dict->oovcode()) lpr-=logOOVpenalty; //add OOV penalty
-					if (maxsuffptr || statesize) { //one extra step is needed if ng.size=ong.size
+					if (maxsuffptr || maxsuffidx || statesize) { //one extra step is needed if ng.size=ong.size
 						if (ong.size==ng.size) {
 							ng.size--;
 							get(ng,ng.size,ng.size);
