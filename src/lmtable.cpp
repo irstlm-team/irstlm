@@ -2382,7 +2382,7 @@ namespace irstlm {
 	//It relies on the computation of maxsuffptr
 	ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)\n");
+		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
 		unsigned int isize; //internal state size variable
 		const char* suffptr = cmaxsuffptr(ong,&isize);
 		if (size != NULL){ *size = isize; }
@@ -2392,7 +2392,7 @@ namespace irstlm {
 	ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size)
 	{
 		VERBOSE(3,"ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
-		
+
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
 			return 0;

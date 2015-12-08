@@ -772,12 +772,6 @@ int symshiftbeta::discount(ngram ng_,int size,double& fstar,double& lambda, int 
 
   MY_ASSERT(size<=2); // only works with bigrams //
 
-  if (size == 3) {
-
-    ngram history=ng;
-
-
-  }
   if (size == 2) {
 
     //compute unigram probability of denominator
