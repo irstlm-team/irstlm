@@ -141,7 +141,7 @@ namespace irstlm {
                         ong.pushc(ng,ngsize);
                         MY_ASSERT (ong.size == ngsize);
 
-			return clprob(ng, ngsize, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
 		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
@@ -151,7 +151,7 @@ namespace irstlm {
                         ong.pushc(ng,ngsize);
                         MY_ASSERT (ong.size == ngsize);
 
-			return clprob(ng, ngsize, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
