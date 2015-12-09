@@ -72,7 +72,7 @@ namespace irstlm {
 		virtual void load(const std::string &filename,int mmap=0);
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 		
-		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
 		
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
