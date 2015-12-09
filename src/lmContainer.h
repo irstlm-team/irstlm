@@ -124,39 +124,18 @@ namespace irstlm {
 			return false;
 		}	
 		
-		virtual double clprob(ngram ng) {
-			
-			VERBOSE(3,"double lmContainer::clprob(ngram ng) ng:|" << ng  << "|\n");
-			return clprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL); 
-		}
+		virtual double clprob(ngram ng) { return clprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow) { return clprob(ng, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol) { return clprob(ng, bow, bol, NULL, NULL, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr) { return clprob(ng, bow, bol, NULL, maxsuffptr, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize) { return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, NULL); }
-		virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow) {
-			VERBOSE(3,"double lmContainer::clprob(ngram ng,double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow) ng:|" << ng  << "|\n");
-			return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); 
-		}
+		virtual double clprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow) { return clprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, lastbow); }
 		
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx) { return clprob(ng, bow, bol, maxsuffidx, NULL, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
-		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); }
-		
-		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-		{
-			UNUSED(ng);
-			UNUSED(bow);
-			UNUSED(bol);
-			UNUSED(maxsuffidx);
-			UNUSED(maxsuffptr);
-			UNUSED(statesize);
-			UNUSED(extendible);
-			UNUSED(lastbow);
-			
-			return 0.0;
-		}
+		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible) { return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); };
 		
 		virtual double clprob(int* ng, int ngsize){ return clprob(ng, ngsize, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 		virtual double clprob(int* ng, int ngsize, double* bow){ return clprob(ng, ngsize, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
@@ -165,51 +144,55 @@ namespace irstlm {
 		virtual double clprob(int* ng, int ngsize, double* bow, int* bol, ngram_state_t* maxsuffidx){ return clprob(ng, ngsize, bow, bol, maxsuffidx, NULL, NULL, NULL, NULL); }
 		virtual double clprob(int* ng, int ngsize, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
 		{
-			//create the actual ngram
-			ngram ong(getDict());
-			ong.pushc(ng,ngsize);
-			MY_ASSERT (ong.size == ngsize);
-			
+                        //create the actual ngram
+                        ngram ong(getDict());
+                        ong.pushc(ng,ngsize);
+                        MY_ASSERT (ong.size == ngsize);
+
 			return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}		
-		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-		{
-			UNUSED(topic_weights);
-			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
-		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
-		{
-			UNUSED(topic_weights);
-			return clprob(ng, ngsize, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
-		virtual double clprob(string_vec_t& text, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
-			UNUSED(text);
-			UNUSED(bow);
-			UNUSED(bol);
-			UNUSED(maxsuffidx);
-			UNUSED(maxsuffptr);
-			UNUSED(statesize);
-			UNUSED(extendible);
-			UNUSED(lastbow);
-			return 0.0;
+                        //create the actual ngram
+                        ngram ong(getDict());
+                        ong.pushc(ng,ngsize);
+                        MY_ASSERT (ong.size == ngsize);
+
+			return clprob(ng, ngsize, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
-		
-		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL)
-		{ 
-			UNUSED(text);
-			UNUSED(topic_weights);
-			UNUSED(bow);
-			UNUSED(bol);
-			UNUSED(maxsuffidx);
-			UNUSED(maxsuffptr);
-			UNUSED(statesize);
-			UNUSED(extendible);
-			UNUSED(lastbow);
-			return 0.0;
-		}
-		
+
+	//this is a function which could be overwritten	
+		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+                {
+                        UNUSED(ng);
+                        UNUSED(bow);
+                        UNUSED(bol);
+                        UNUSED(maxsuffidx);
+                        UNUSED(maxsuffptr);
+                        UNUSED(statesize);
+                        UNUSED(extendible);
+                        UNUSED(lastbow);
+
+                        return 0.0;
+                }
+
+	//this is a function which could be overwritten	
+                virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+                {
+                        UNUSED(topic_weights);
+                        UNUSED(ng);
+                        UNUSED(bow);
+                        UNUSED(bol);
+                        UNUSED(maxsuffidx);
+                        UNUSED(maxsuffptr);
+                        UNUSED(statesize);
+                        UNUSED(extendible);
+                        UNUSED(lastbow);
+                        
+                        return 0.0;
+		}                
+
 		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
 		{
 			UNUSED(ng);

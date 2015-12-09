@@ -315,23 +315,9 @@ namespace irstlm {
 		
 		int reload(std::set<string> words);
 		
-		void filter(const char* /* unused parameter: lmfile */) {}
-		/*
-		virtual double  lprob(ngram ng){ return lprob(ng, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow){ return lprob(ng, bow, NULL, NULL, NULL, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol){ return lprob(ng, bow, bol, NULL, NULL, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr){ return lprob(ng, bow, bol, NULL, maxsuffptr, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize){ return lprob(ng, bow, bol, NULL, maxsuffptr, statesize, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, char** maxsuffptr, unsigned int* statesize, bool* extendible){ return lprob(ng, bow, bol, NULL, maxsuffptr, statesize, extendible, NULL); }
-
-		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx){ return lprob(ng, bow, bol, maxsuffidx, NULL, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, NULL, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, NULL, NULL); }
-		virtual double  lprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible){ return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, NULL); }
-		*/
-
-		virtual double  lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		void filter(const char* /* unused parameter: lmfile */) {};
+		virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
+		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
 
 		virtual double clprob(string_vec_t& text, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
 		{

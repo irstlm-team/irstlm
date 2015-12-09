@@ -75,14 +75,8 @@ namespace irstlm {
 		
 		virtual void load(const std::string &filename,int mmap=0);
 		
-		/*		
-		  virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible,lastbow); }
-		  virtual double clprob(ngram ng,double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,bow,bol,NULL,maxsuffptr,statesize,extendible); }
-		  virtual double clprob(int* ng, int ngsize, double* bow=NULL,int* bol=NULL,char** maxsuffptr=NULL,unsigned int* statesize=NULL,bool* extendible=NULL) { return clprob(ng,ngsize,bow,bol,NULL,maxsuffptr,statesize,extendible); }
-		*/
-		
-		virtual double lprob(ngram ng, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
-		virtual double clprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL) { return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); }
+		virtual double lprob(ngram ng, double* bow,int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
+		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow) { return lprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow); };
 		
 		inline bool is_OOV(int code) {
 			//a word is consisdered OOV if its mapped value is OOV
