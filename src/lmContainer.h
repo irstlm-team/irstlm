@@ -159,7 +159,7 @@ namespace irstlm {
                         ong.pushc(ng,ngsize);
                         MY_ASSERT (ong.size == ngsize);
 
-			return clprob(ng, ngsize, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
 	//this is a function which could be overwritten	
