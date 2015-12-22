@@ -193,6 +193,35 @@ namespace irstlm {
                         return 0.0;
 		}                
 
+		virtual double clprob(string_vec_t& text, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{
+			UNUSED(text);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+			UNUSED(extendible);
+			UNUSED(lastbow);
+
+                        return 0.0;
+		} 
+
+		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		{ 
+			UNUSED(topic_weights);
+                        UNUSED(text);
+			UNUSED(bow);
+			UNUSED(bol);
+			UNUSED(maxsuffidx);
+			UNUSED(maxsuffptr);
+			UNUSED(statesize);
+                        UNUSED(extendible);
+                        UNUSED(lastbow);
+
+                        return 0.0;
+		}
+
 		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
 		{
 			UNUSED(ng);
