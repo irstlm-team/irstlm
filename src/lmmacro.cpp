@@ -65,6 +65,15 @@ namespace irstlm {
 	void lmmacro::load(const std::string &filename,int memmap)
 	{
 		VERBOSE(2,"lmmacro::load(const std::string &filename,int memmap)" << std::endl);
+		//get parent directory of the configuration file
+		//we assume that the parent directory must be prefixed to the filenames (if relative) pointed in the configuration file
+		std::string parent_dir=filename;
+
+		//remove path information
+		std::string::size_type p = parent_dir.rfind('/');
+		if (p != 0 && ((p+1) < parent_dir.size())){
+			parent_dir.erase(p+1,std::string::npos);
+		}
 		
 		//get info from the configuration file
 		fstream inp(filename.c_str(),ios::in|ios::binary);
@@ -106,6 +115,10 @@ namespace irstlm {
 		if (inp.getline(line,MAX_LINE,'\n')) {
 			tokenN = parseWords(line,words,MAX_TOKEN_N_MAP);
 			lmfilename = words[0];
+			p = lmfilename.find('/');
+			if (p != 0){ //path of LM is relative; hence, add parent path of the configuration file
+				lmfilename = parent_dir+lmfilename;
+			}
 		} else
 			error((char*)"ERROR: wrong format of configuration file\ncorrect format: LMMACRO lmsize field [true|false]\nfilename_of_LM\nfilename_of_map (optional)");
 		
@@ -113,6 +126,11 @@ namespace irstlm {
 		if (inp.getline(line,MAX_LINE,'\n')) {
 			tokenN = parseWords(line,words,MAX_TOKEN_N_MAP);
 			mapfilename = words[0];
+                        p = mapfilename.find('/');
+                        if (p != 0){ //path of map is relative; hence, add parent path of the configuration file
+				mapfilename = parent_dir+mapfilename;
+			}
+
 			mapFlag = true;
 		} else {
 			mapFlag = false;

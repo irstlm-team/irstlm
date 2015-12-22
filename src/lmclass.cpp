@@ -68,6 +68,15 @@ namespace irstlm {
 	void lmclass::load(const std::string &filename,int memmap)
 	{
 		VERBOSE(2,"lmclass::load(const std::string &filename,int memmap)" << std::endl);
+		//get parent directory of the configuration file
+		//we assume that the parent directory must be prefixed to the filenames (if relative) pointed in the configuration file
+		std::string parent_dir=filename;
+
+		//remove path information
+		std::string::size_type p = parent_dir.rfind('/');
+		if (p != 0 && ((p+1) < parent_dir.size())){
+			parent_dir.erase(p+1,std::string::npos);
+		}
 		
 		//get info from the configuration file
 		fstream inp(filename.c_str(),ios::in|ios::binary);
@@ -86,6 +95,10 @@ namespace irstlm {
 		if (inp.getline(line,MAX_LINE,'\n')) {
 			tokenN = parseWords(line,words,LMCLASS_MAX_TOKEN);
 			lmfilename = words[0];
+			p = lmfilename.find('/');
+			if (p != 0){ //path of LM is relative; hence, add parent path of the configuration file
+				lmfilename = parent_dir+lmfilename;
+			}
 		} else {
 			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCLASS LM_order\nfilename_of_LM\nfilename_of_map");
 		}
@@ -94,6 +107,10 @@ namespace irstlm {
 		if (inp.getline(line,MAX_LINE,'\n')) {
 			tokenN = parseWords(line,words,LMCLASS_MAX_TOKEN);
 			W2Cdict = words[0];
+			p = W2Cdict.find('/');
+			if (p != 0){ //path of W2C is relative; hence, add parent path of the configuration file
+				W2Cdict = parent_dir+W2Cdict;
+			}
 		} else {
 			error((char*)"ERROR: wrong header format of configuration file\ncorrect format: LMCLASS LM_order\nfilename_of_LM\nfilename_of_map");
 		}

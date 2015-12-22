@@ -48,7 +48,16 @@ namespace irstlm {
 	{
 		VERBOSE(2,"lmInterpolation::load(const std::string &filename,int memmap)" << std::endl);
 		VERBOSE(2," filename:|" << filename << "|" << std::endl);
-		
+		//get parent directory of the configuration file
+		//we assume that the parent directory must be prefixed to the filenames (if relative) pointed in the configuration file
+		std::string parent_dir=filename;
+
+		//remove path information
+		std::string::size_type p = parent_dir.rfind('/');
+		if (p != 0 && ((p+1) < parent_dir.size())){
+			parent_dir.erase(p+1,std::string::npos);
+		}
+
 		std::stringstream ss_format;
 		
 		ss_format << "LMINTERPOLATION number_of_models\nweight_of_LM_1 filename_of_LM_1 [inverted]\nweight_of_LM_2 filename_of_LM_2 [inverted]\n...\n";
@@ -146,6 +155,10 @@ namespace irstlm {
 				VERBOSE(2,"i:" << i << " name.str():|" << name.str() << "| m_name[i]:|" << m_name[i] << "|" << endl);
 			}
 			m_file[i] = words[idx_file];
+			p = m_file[i].find('/');
+			if (p != 0){ //path of class filename is relative; hence, add parent path of the configuration file
+				m_file[i] = parent_dir+m_file[i];
+			}
 			
 			VERBOSE(2,"lmInterpolation::load(const std::string &filename,int mmap) i:" << i << " m_name:|"<< m_name[i] << "|" " m_file:|"<< m_file[i] << "| isadaptive:|" << m_isadaptive << "|" << std::endl);
 			
