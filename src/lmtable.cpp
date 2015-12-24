@@ -2265,7 +2265,7 @@ namespace irstlm {
 	//non recursive version
 	const char *lmtable::maxsuffptr(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size)\n");
+		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size) ong:|" << ong <<"|\n");
 		
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
@@ -2313,7 +2313,7 @@ namespace irstlm {
 	
 	const char *lmtable::cmaxsuffptr(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"const char *lmtable::maxsuffptr(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
+		VERBOSE(3,"const char *lmtable::cmaxsuffptr(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
 		
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
@@ -2369,16 +2369,17 @@ namespace irstlm {
 	//It relies on the computation of maxsuffptr
 	ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)
 	{
-		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size)\n");
-		
-		const char* suffptr = cmaxsuffptr(ong,size);
-		return convert(suffptr,*size);
+		VERBOSE(3,"ngram_state_t lmtable::maxsuffidx(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
+		unsigned int isize;
+		const char* suffptr = cmaxsuffptr(ong,&isize);
+		if (size) *size=isize;
+		return convert(suffptr,isize);
 	}
 	
 	ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size)
 	{
 		VERBOSE(3,"ngram_state_t lmtable::cmaxsuffidx(ngram ong, unsigned int* size) ong:|" << ong  << "|\n");
-		
+
 		if (ong.size==0) {
 			if (size!=NULL) *size=0;
 			return 0;
@@ -2511,7 +2512,7 @@ namespace irstlm {
 					iprob=ng.prob;
 					lpr = (double)(isQtable?Pcenters[ng.size][(qfloat_t)iprob]:iprob);
 					if (*ng.wordp(1)==dict->oovcode()) lpr-=logOOVpenalty; //add OOV penalty
-					if (maxsuffptr || statesize) { //one extra step is needed if ng.size=ong.size
+					if (maxsuffptr || maxsuffidx || statesize) { //one extra step is needed if ng.size=ong.size
 						if (ong.size==ng.size) {
 							ng.size--;
 							get(ng,ng.size,ng.size);
@@ -2566,7 +2567,7 @@ namespace irstlm {
 		if (ong.size==0) {
 			if (statesize!=NULL) *statesize=0;
 			if (state!=NULL) *state=NULL;
-			if (ngramstate!=NULL) *ngramstate=NULL;
+			if (ngramstate!=NULL) *ngramstate=0;
 			if (extendible!=NULL) *extendible=false;
 			if (lastbow!=NULL) *lastbow=false;
 			return 0.0;

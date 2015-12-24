@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <assert.h>
 
 using namespace std;
@@ -48,6 +49,8 @@ using namespace std;
 
 #define BUCKET 10000
 #define SSEED 50
+
+typedef std::map< std::string, float > topic_map_t;
 
 class ngram;
 typedef unsigned int  ngram_state_t; //type for pointing to a full ngram in the table
