@@ -7,11 +7,11 @@ $> compile-lm train.lm train.blm
 \noindent
 which generates the binary file {\tt train.blm} that can be quickly loaded in memory.  If the LM
 is really very large, {\tt compile-lm} can avoid to create the binary LM directly in memory through the 
-option {\tt -memmap 1}, which exploits the {\em Memory Mapping} mechanism in order to work as 
+option {\tt -memmap=1}, which exploits the {\em Memory Mapping} mechanism in order to work as 
 much as possible on disk rather than in RAM. \\
 
 \begin{verbatim}
-$> compile-lm --memmap 1 train.lm train.blm
+$> compile-lm --memmap=1 train.lm train.blm
 \end{verbatim}
 \noindent
 This option clearly pays a fee  in terms of speed, but  is often the only way to proceed. It is also recommended 

@@ -42,12 +42,12 @@ command and by the Moses SMT decoder running with {\IRSTLM}.
 To convert the file into the standard ARPA format you can use the command:
 
 \begin{verbatim}
-$> compile-lm train.ilm.gz --text yes train.lm 
+$> compile-lm train.ilm.gz train.lm --text=yes
 \end{verbatim}
 this will create the proper ARPA file {\tt lm-final}.
 To create a gzipped file you might also use:
 \begin{verbatim}
-$> compile-lm train.ilm.gz --text yes /dev/stdout | gzip -c > train.lm.gz
+$> compile-lm train.ilm.gz /dev/stdout --text=yes | gzip -c > train.lm.gz
 \end{verbatim}
 
 

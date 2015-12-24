@@ -59,14 +59,14 @@ Examples:
 \noindent
 \thesubsection.a) selection of the second field:
 \begin{verbatim}
-$> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfield
+$> compile-lm --eval=test/test.w-micro cfgfile/cfg.2ndfield
 %% Nw=126 PP=2.68 PPwp=0.00 Nbo=0 Noov=0 OOV=0.00%
 \end{verbatim}
 
 \noindent
 \thesubsection.b) selection of the first field:
 \begin{verbatim}
-$> compile-lm --eval test/test.w-micro cfgfile/cfg.1stfield
+$> compile-lm --eval=test/test.w-micro cfgfile/cfg.1stfield
 %% Nw=126 PP=9.71 PPwp=0.00 Nbo=76 Noov=0 OOV=0.00%
 \end{verbatim}
 
@@ -77,7 +77,7 @@ the standard configuration involving just words:
 \noindent
 \thesubsection.c) usual case on words:
 \begin{verbatim}
-$> compile-lm --eval test/test.w lm/train.en.blm 
+$> compile-lm --eval=test/test.w lm/train.en.blm 
 %% Nw=126 PP=9.71 PPwp=0.00 Nbo=76 Noov=0 OOV=0.00%
 \end{verbatim}
 
@@ -101,7 +101,7 @@ query. Examples:
 
 \noindent \thesubsection.a) map applied to the second field:
 \begin{verbatim}
-$> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfld-map
+$> compile-lm --eval=test/test.w-micro cfgfile/cfg.2ndfld-map
 %% Nw=126 PP=16.40 PPwp=0.00 Nbo=33 Noov=0 OOV=0.00%
 \end{verbatim}
 
@@ -109,7 +109,7 @@ $> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfld-map
 
 \noindent \thesubsection.b) just to assess the correctness of the (16.2.a) result:
 \begin{verbatim}
-$> compile-lm --eval test/test.macro lm/train.macro.blm
+$> compile-lm --eval=test/test.macro lm/train.macro.blm
 %% Nw=126 PP=16.40 PPwp=0.00 Nbo=33 Noov=0 OOV=0.00%
 
 
@@ -166,10 +166,10 @@ setting {\tt <lmmacroSize>} to two-three times the size of the LM in {\tt
 
 \noindent \thesubsection.a) second field, micro$\rightarrow$macro map, collapse:
 \begin{verbatim}
-$> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfld-map-cllps
+$> compile-lm --eval=test/test.w-micro cfgfile/cfg.2ndfld-map-cllps
 %% Nw=126 PP=1.84 PPwp=0.00 Nbo=0 Noov=0 OOV=0.00%
 
-$> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfld-map-cllps -d=1
+$> compile-lm --eval=test/test.w-micro cfgfile/cfg.2ndfld-map-cllps -d=1
 %% Nw=126 PP=1.83774013 ... OOV=0.00% logPr=-33.29979642
 
 \end{verbatim}
@@ -177,14 +177,14 @@ $> compile-lm --eval test/test.w-micro cfgfile/cfg.2ndfld-map-cllps -d=1
 \noindent
 \thesubsection.b) whole token,  micro$\rightarrow$macro map, collapse:
 \begin{verbatim}
-$> compile-lm --eval test/test.micro cfgfile/cfg.token-map-cllps
+$> compile-lm --eval=test/test.micro cfgfile/cfg.token-map-cllps
 %% Nw=126 PP=1.84 PPwp=0.00 Nbo=0 Noov=0 OOV=0.00%
 \end{verbatim}
 
 \noindent
 \thesubsection.c)  whole token,  micro$\rightarrow$macro map, NO collapse:
 \begin{verbatim}
-$> compile-lm --eval test/test.micro cfgfile/cfg.token-map
+$> compile-lm --eval=test/test.micro cfgfile/cfg.token-map
 %% Nw=126 PP=16.40 PPwp=0.00 Nbo=0 Noov=0 OOV=0.00%
 \end{verbatim}
 \noindent Note that the configuration (16.3.c) gives the same result of that in
@@ -196,7 +196,7 @@ example (16.2.b), as they are equivalent.
 reported above, the following configuration with usual LM:
 
 \begin{verbatim}
-$> compile-lm --eval test/test.chunk lm/train.macro.blm -d=1
+$> compile-lm --eval=test/test.chunk lm/train.macro.blm -d=1
 Nw=73 PP=2.85754443 ... OOV=0.00000000% logPr=-33.28748842
 \end{verbatim}
 

@@ -25,14 +25,14 @@ LMs with different orders\\
 Given an initial configuration file {\tt lmlist.init} (with arbitrary weights), new weights can be estimated
 through Expectation-Maximization on some text sample {\tt test} by running the command:
 \begin{verbatim}
-$> interpolate-lm lmlist.init --learn test
+$> interpolate-lm lmlist.init --learn=test
 \end{verbatim}
 \noindent
 New weights will be written in the updated configuration file, called by default {\tt lmlist.init.out}.
 You can also specify the name of the updated configuration file as follows:
 
 \begin{verbatim}
-$> interpolate-lm lmlist.init --learn test lmlist.final
+$> interpolate-lm lmlist.init lmlist.final --learn=test
 \end{verbatim}
 
 
@@ -40,21 +40,21 @@ $> interpolate-lm lmlist.init --learn test lmlist.final
 Similarly to {\tt compile-lm}, interpolated LMs can be queried through the option {\tt --score}
 
 \begin{verbatim}
-$> interpolate-lm lmlist.final --score yes < test
+$> interpolate-lm lmlist.final --score=yes < test
 \end{verbatim}
 
 \noindent
 and can return the perplexity of a given input text (``{\tt --eval text-file}''), optionally  at sentence level  by enabling the option ``{\tt --sentence yes}'',
 
 \begin{verbatim}
-$> interpolate-lm lmlist.final --eval test 
-$> interpolate-lm lmlist.final --eval test --sentence yes
+$> interpolate-lm lmlist.final --eval=test 
+$> interpolate-lm lmlist.final --eval=test --sentence=yes
 \end{verbatim}
 
 \bigskip
 \noindent
 If there are binary LMs in the list,  {\tt interpolate-lm} can avoid to load them in memory through the memory 
-mapping option {\tt -memmap 1}.
+mapping option {\tt -memmap=1}.
 
 
 \noindent
