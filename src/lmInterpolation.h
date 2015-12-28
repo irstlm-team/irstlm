@@ -80,35 +80,7 @@ namespace irstlm {
 		
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
 		virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
-		
-		virtual double clprob(string_vec_t& text, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-		{
-			VERBOSE(2,"lmInterpolation::clprob(string_vec_t& text, ...)" << std::endl);
-			
-			//create the actual ngram
-			ngram ng(dict);
-			ng.pushw(text);
-			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
-			for (size_t i=0; i<m_number_lm; i++) {
-				VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << endl);
-			}
-			MY_ASSERT (ng.size == (int) text.size());
-			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
-		
-		virtual double clprob(string_vec_t& text, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-		{
-			VERBOSE(2,"lmInterpolation::clprob(string_vec_t& text, topic_map_t& lm_weights, ...)" << std::endl);
-			
-			//create the actual ngram
-			ngram ng(dict);
-			ng.pushw(text);
-			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
-			
-			MY_ASSERT (ng.size == (int) text.size());
-			return clprob(ng, lm_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
-		
+
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
 		

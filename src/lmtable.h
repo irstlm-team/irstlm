@@ -318,33 +318,6 @@ namespace irstlm {
 		void filter(const char* /* unused parameter: lmfile */) {};
 		virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
-
-		virtual double clprob(string_vec_t& text, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-		{
-			VERBOSE(2,"lmtable::clprob(string_vec_t& text, ...)" << std::endl);
-			
-			//create the actual ngram
-			ngram ng(dict);
-			ng.pushw(text);
-			VERBOSE(3,"ng:|" << ng << "|" << std::endl);
-			MY_ASSERT (ng.size == (int) text.size());
-			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
-		
-		virtual double clprob(string_vec_t& text, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
-		{
-			UNUSED(lm_weights);
-			VERBOSE(2,"lmtable::clprob(string_vec_t& text, topic_map_t& lm_weights, ...)" << std::endl);
-			
-			//create the actual ngram
-			ngram ng(dict);
-			ng.pushw(text);
-			VERBOSE(3,"ng:|" << ng << "|" << std::endl);		
-			
-			MY_ASSERT (ng.size == (int) text.size());
-			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
-		
 		virtual const char *maxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t maxsuffidx(ngram ong, unsigned int* size=NULL);
