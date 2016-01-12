@@ -2451,7 +2451,7 @@ namespace irstlm {
 	//non recursive version, also includes maxsuffptr and maxsuffidx
 	double lmtable::lprob(ngram ong,double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible, double *lastbow)
 	{
-		VERBOSE(3," lmtable::lprob(ngram) ong |" << ong  << "|\n" << std::endl);
+		VERBOSE(3,"double lmtable::lprob(ngram ong,double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr,unsigned int* statesize,bool* extendible, double *lastbow) ong |" << ong  << "|" << std::endl);
 		
 		if (ong.size==0){ //sanity check
 			if (maxsuffptr) *maxsuffptr=NULL;
@@ -2566,9 +2566,9 @@ namespace irstlm {
 	}
 	
 	//return log10 probsL use cache memory
-	double lmtable::clprob(ngram ong,double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow)
+	double lmtable::clprob(ngram ong, double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow)
 	{
-		VERBOSE(3,"double lmtable::clprob(ngram ong,double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow) ong:|" << ong  << "|\n");
+		VERBOSE(3,"double lmtable::clprob(ngram ong, double* bow, int* bol, ngram_state_t* ngramstate, char** state, unsigned int* statesize, bool* extendible, double* lastbow) ong:|" << ong  << "|\n");
 		
 #ifdef TRACE_CACHELM
 		//		if (probcache && ong.size==maxlev && sentence_id>0) {

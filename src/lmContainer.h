@@ -155,13 +155,11 @@ namespace irstlm {
 		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
                         //create the actual ngram
-//                        ngram ong(getDict());
-//                        ong.pushc(ng,ngsize);
-//                        MY_ASSERT (ong.size == ngsize);
+                        ngram ong(getDict());
+                        ong.pushc(ng,ngsize);
+                        MY_ASSERT (ong.size == ngsize);
 
-                        UNUSED(topic_weights);
-			return clprob(ng, ngsize, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-			//return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
 	//this is a function which should be overwritten	
