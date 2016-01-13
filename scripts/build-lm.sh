@@ -25,11 +25,85 @@ OPTIONS:
        -l|--LogFile            File to store logging info (default /dev/null)
        -u|--uniform            Use uniform word frequency for dictionary splitting (default false)
        -b|--boundaries         Include sentence boundary n-grams (optional, default false)
+       --zipping            enabling zipping of files
+       --add-start-end         add start and end symbols before and after each line
        -v|--verbose            Verbose
+       -irstlm|--irstlm        optionally set the directory of installation of IRSTLM; if not specified, the environment variable IRSTLM is used
        -h|-?|--help            Show this message
 
 EOF
 }
+
+#default parameters
+logfile=/dev/null
+tmpdir=stat_$$
+order=3
+parts=3
+inpfile="";
+outfile=""
+zipping="";
+addstartend="";
+verbose="";
+smoothing="witten-bell";
+prune="";
+prune_thr_str="";
+boundaries="";
+dictionary="";
+uniform="-f=y";
+backoff=""
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -i | --InputFile )	shift;
+				inpfile=$1;
+				;;
+        -o | --OutputFile )	shift;
+				outfile=$1;
+                                ;;
+        -n | --NgramSize )	shift;
+				order=$1;
+                                ;;
+        -k | --Parts )		shift;
+				parts=$1;
+                                ;;
+        -d | --Dictionary )     shift;
+                                dictionary="-sd=$1";
+                                ;;
+        -s | --LanguageModelType )	shift;
+					smoothing=$1;
+					;;
+        -f | --PruneFrequencyThreshold )	shift;
+						prune_thr_str="--PruneFrequencyThreshold=$1";
+                                        	;;
+        -p | --PruneSingletons )	prune='--prune-singletons';
+					;;
+        -l | --LogFile )        shift;
+				logfile=$1;
+                                ;;
+        -t | --TmpDir )         shift;
+				tmpdir=$1;
+                                ;;
+        -u | --uniform )        uniform=' ';
+                                ;;
+        -b | --boundaries )     boundaries='--cross-sentence';
+				;;
+        --zipping )        zipping='--zipping';
+				;;
+        --add-start-end )       addstartend='--addstartend';
+				;;
+        -v | --verbose )        verbose='--verbose';
+                                ;;
+        -irstlm | --irstlm )	shift;
+				IRSTLM=$1;
+                                ;;
+        -h | -? | --help )      usage;
+                                exit 0;
+                                ;;
+        * )                     usage;
+                                exit 1;
+    esac
+    shift
+done
 
 if [ ! $IRSTLM ]; then
    echo "Set IRSTLM environment variable with path to irstlm"
@@ -48,67 +122,6 @@ if [ ! -e $bin/dict -o  ! -e $scr/split-dict.pl ]; then
    exit 3
 fi
 
-#default parameters
-logfile=/dev/null
-tmpdir=stat_$$
-order=3
-parts=3
-inpfile="";
-outfile=""
-verbose="";
-smoothing="witten-bell";
-prune="";
-prune_thr_str="";
-boundaries="";
-dictionary="";
-uniform="-f=y";
-backoff=""
-
-while [ "$1" != "" ]; do
-    case $1 in
-        -i | --InputFile )          shift;
-																inpfile=$1;
-																;;
-        -o | --OutputFile )         shift;
-																outfile=$1;
-                                ;;
-        -n | --NgramSize )           shift;
-																order=$1;
-                                ;;
-        -k | --Parts )          shift;
-																parts=$1;
-                                ;;
-        -d | --Dictionary )     shift;
-                                dictionary="-sd=$1";
-                                ;;
-        -s | --LanguageModelType )        shift;
-																				  smoothing=$1;
-                                          ;;
-        -f | --PruneFrequencyThreshold )  shift;
-																          prune_thr_str="--PruneFrequencyThreshold=$1";
-                                          ;;
-        -p | --PruneSingletons )     prune='--prune-singletons';
-																			;;
-        -l | --LogFile )        shift;
-																logfile=$1;
-                                ;;
-        -t | --TmpDir )         shift;
-																tmpdir=$1;
-                                ;;
-        -u | --uniform )        uniform=' ';
-                                ;;
-        -b | --boundaries )     boundaries='--cross-sentence';
-																;;
-        -v | --verbose )        verbose='--verbose';
-                                ;;
-        -h | -? | --help )      usage;
-                                exit 0;
-                                ;;
-        * )                     usage;
-                                exit 1;
-    esac
-    shift
-done
 
 case $smoothing in
 witten-bell) 
@@ -139,10 +152,14 @@ esac
 			
 
 echo "LOGFILE:$logfile"
-			 
+if [ $zipping ] ; then
+echo "ZIPPING:yes"
+else
+echo "ZIPPING:no"
+fi		 
 
 if [ $verbose ] ; then
-echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str  >> $logfile 2>&1
+echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str zipping=$zipping addstartend=$addstartend >> $logfile 2>&1
 fi
 
 if [ ! "$inpfile" -o ! "$outfile" ] ; then
@@ -177,9 +194,29 @@ else
     fi
 fi
 
+res=`echo $inpfile | grep ' '`
+actual_inpfile=""
+if [[ $res ]] ; then
+echo "the inpfile is a command, actually"
+if [ $addstartend ] ; then
+actual_inpfile="$inpfile | $bin/add-start-end.sh"
+else
+actual_inpfile="$inpfile"
+fi
+else
+echo "the inpfile is a file, actually"
+if [ $addstartend ] ; then
+actual_inpfile="$bin/add-start-end.sh < $inpfile"
+else
+actual_inpfile="$inpfile"
+fi
+
+fi
+
+echo "input is the following:\'$actual_inpfile\'"
 
 echo "Extracting dictionary from training corpus" >> $logfile 2>&1
-$bin/dict -i="$inpfile" -o=$tmpdir/dictionary $uniform -sort=no 2> $logfile
+$bin/dict -i="$actual_inpfile" -o=$tmpdir/dictionary $uniform -sort=no 2> $logfile
 
 echo "Splitting dictionary into $parts lists" >> $logfile 2>&1
 $scr/split-dict.pl --input $tmpdir/dictionary --output $tmpdir/dict. --parts $parts >> $logfile 2>&1
@@ -197,12 +234,11 @@ else
 additional_parameters=""
 fi
 
-$bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary $additional_parameters >> $logfile 2>&1 &
-
-#$bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary -iknstat="$tmpdir/ikn.stat.$sdict" >> $logfile 2>&1 &
-#else
-#$bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary >> $logfile 2>&1 &
-#fi
+if [ $zipping ] ; then
+$bin/ngt -i="$actual_inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary $additional_parameters >> $logfile 2>&1 &
+else
+$bin/ngt -i="$actual_inpfile" -n=$order -gooout=y -o="$tmpdir/ngram.${sdict}" -fd="$tmpdir/$sdict" $dictionary $additional_parameters >> $logfile 2>&1 &
+fi
 done
 
 # Wait for all parallel jobs to finish
@@ -220,13 +256,12 @@ else
 additional_smoothing_parameters=""
 additional_parameters=""
 fi
-$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
 
-#if [ $smoothing = "--shift-beta" -o $smoothing = "--improved-shift-beta" ]; then
-#$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "cat $tmpdir/ikn.stat.dict.*" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $backoff >> $logfile 2>&1 &
-#else
-#$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict >> $logfile 2>&1 &
-#fi
+if [ $zipping ] ; then
+$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
+else
+$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$tmpdir/ngram.${sdict}" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
+fi
 
 done
 
@@ -235,6 +270,9 @@ while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 
 echo "Merging language models into $outfile" >> $logfile 2>&1
 $scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff  >> $logfile 2>&1
+
+exit
+
 
 echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
 rm $tmpdir/* 2> /dev/null
