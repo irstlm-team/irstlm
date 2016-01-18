@@ -201,9 +201,9 @@ int main(int argc, char **argv)
   lmt->setMaxLoadedLevel(requiredMaxlev);
 	
   lmt->load(infile);
-//	((lmContextDependent*) lmt->set_Active(context_model_active);
+	//	((lmContextDependent*) lmt->set_Active(context_model_active);
 	lmt->set_Active(context_model_active);
-//	((lmContextDependent*) lmt)->set_Normalized(context_model_normalization);
+	//	((lmContextDependent*) lmt)->set_Normalized(context_model_normalization);
 	lmt->set_Normalized(context_model_normalization);
 	
   if (dub) lmt->setlogOOVpenalty((int)dub);
@@ -226,15 +226,15 @@ int main(int argc, char **argv)
 		}
 	}
 	/*
-	if (std::string lexiconfile!= NULL) {
-		fstream inp(lexiconfile,ios::in|ios::binary);
-		std::string w1, w2;
-		while (inp >> w1 >> w2){
-			lexicon.insert(make_pair(w1,w2));
-		}
-		add_lexicon_words=true;
-	}
-	*/
+	 if (std::string lexiconfile!= NULL) {
+	 fstream inp(lexiconfile,ios::in|ios::binary);
+	 std::string w1, w2;
+	 while (inp >> w1 >> w2){
+	 lexicon.insert(make_pair(w1,w2));
+	 }
+	 add_lexicon_words=true;
+	 }
+	 */
 	
 	if (topicscore == true) {
 		if (lmt->getLanguageModelType() != _IRSTLM_LMCONTEXTDEPENDENT) {
@@ -395,14 +395,14 @@ int main(int argc, char **argv)
 			std::string context;
 			std::string sentence_lexiconfile;
 			
-//			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
+			//			bool withLexicon = ((lmContextDependent*) lmt)->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
 			bool withLexicon = lmt->GetSentenceAndLexicon(tmp_sentence,sentence_lexiconfile,line_str);
 			bool withContext = lmt->GetSentenceAndContext(sentence,context,tmp_sentence);
 			
 			//getting apriori topic weights
 			topic_map_t apriori_topic_map;
 			if (withContext){
-//				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
+				//				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
 				lmt->setContextMap(apriori_topic_map,context);
 			}
 			// computation using std::string
@@ -431,7 +431,7 @@ int main(int argc, char **argv)
 				first = last - size;
 				
 				string_vec_t tmp_word_vec(word_vec.begin() + first, word_vec.begin() +last);
-			
+				
 				if (size>=1) {
 					VERBOSE(2,"computing prob for first:|" << first << "| and last:|" << last << "|" << std::endl);
 					
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
 					
 					VERBOSE(2,"tmp_word_vec.size:|" << tmp_word_vec.size() << "|" << std::endl);	
 					VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);	
-						
+					
 					if (withContext){
 						current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msidx, &msp, &statesize);
 					}else{
@@ -492,7 +492,7 @@ int main(int argc, char **argv)
 							lexicon.clear();
 							load_lexicon(sentence_lexiconfile.c_str(), lexicon);
 						}
-												
+						
 						std::pair <std::multimap< std::string, std::string>::iterator, std::multimap< std::string, std::string>::iterator> ret = lexicon.equal_range(current_word);
 						for (std::multimap<std::string, std::string>::const_iterator it=ret.first; it!=ret.second; ++it)
 						{
@@ -701,7 +701,7 @@ int main(int argc, char **argv)
 				<< " sent_OOVrate=" << (float)sent_Noov/sent_Nw * 100.0 << "%" 
 				<< " sent_avg_alternatives=" << (float) sent_current_dict_alternatives/sent_Nw
 				<< std::endl;
-			
+				
 				std::cout << "%% sent_Nw=" << sent_Nw
 				<< " sent_model_logPr=" << sent_model_logPr
 				<< " sent_model_PP=" << sent_model_PP
@@ -724,7 +724,7 @@ int main(int argc, char **argv)
 			
 			apriori_topic_map.clear();
 		}
-
+		
 		model_norm_PP = exp((-model_norm_logPr * M_LN10) / Nw);
 		model_norm_PPwp = model_norm_PP * (1 - 1/exp(Noov *  norm_oovpenalty * M_LN10 / Nw));
 		model_PP = exp((-model_logPr * M_LN10) / Nw);
@@ -859,7 +859,7 @@ int main(int argc, char **argv)
 			size_t last, first;
 			size_t size=0;
 			size_t order = lmt->maxlevel();
-
+			
 			std::stringstream rank_outstr;
 			
 			for (size_t word_pos=0; word_pos<word_vec.size(); ++word_pos){
@@ -1019,7 +1019,7 @@ int main(int argc, char **argv)
 					for (int h=0;h<current_dict->size();++h){
 						VERBOSE(2,"h:" << h << " w:|" << current_dict->decode(h) << "|" << std::endl);
 					}
-
+					
 				  //the first word in current_dict is always the current_word; hence we can skip it during the scan 
 					//variables for the computation of the ranking
 					max_rank = current_dict->size(); //the current word is  included in the selected alternative words
