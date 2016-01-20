@@ -158,10 +158,6 @@ else
 echo "ZIPPING:no"
 fi		 
 
-if [ $verbose ] ; then
-echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str zipping=$zipping addstartend=$addstartend >> $logfile 2>&1
-fi
-
 if [ ! "$inpfile" -o ! "$outfile" ] ; then
     usage
     exit 5
@@ -177,7 +173,9 @@ if [ -e $logfile -a $logfile != "/dev/null" -a $logfile != "/dev/stdout" ]; then
    exit 7
 fi
 
-echo "BIS LOGFILE:$logfile" >> $logfile 2>&1
+if [ $verbose ] ; then
+echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str zipping=$zipping addstartend=$addstartend >> $logfile 2>&1
+fi
 
 #check tmpdir
 tmpdir_created=0;
@@ -199,14 +197,14 @@ actual_inpfile=""
 if [[ $res ]] ; then
 echo "the inpfile is a command, actually"
 if [ $addstartend ] ; then
-actual_inpfile="$inpfile | $bin/add-start-end.sh"
+actual_inpfile="$inpfile | $scr/add-start-end.sh"
 else
 actual_inpfile="$inpfile"
 fi
 else
 echo "the inpfile is a file, actually"
 if [ $addstartend ] ; then
-actual_inpfile="$bin/add-start-end.sh < $inpfile"
+actual_inpfile="$scr/add-start-end.sh < $inpfile"
 else
 actual_inpfile="$inpfile"
 fi
@@ -215,12 +213,15 @@ fi
 
 echo "input is the following:\'$actual_inpfile\'"
 
+date >> $logfile 2>&1
 echo "Extracting dictionary from training corpus" >> $logfile 2>&1
 $bin/dict -i="$actual_inpfile" -o=$tmpdir/dictionary $uniform -sort=no 2> $logfile
 
+date >> $logfile 2>&1
 echo "Splitting dictionary into $parts lists" >> $logfile 2>&1
 $scr/split-dict.pl --input $tmpdir/dictionary --output $tmpdir/dict. --parts $parts >> $logfile 2>&1
 
+date >> $logfile 2>&1
 echo "Extracting n-gram statistics for each word list" >> $logfile 2>&1
 echo "Important: dictionary must be ordered according to order of appearance of words in data" >> $logfile 2>&1
 echo "used to generate n-gram blocks,  so that sub language model blocks results ordered too" >> $logfile 2>&1
@@ -244,6 +245,7 @@ done
 # Wait for all parallel jobs to finish
 while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 
+date >> $logfile 2>&1
 echo "Estimating language models for each word list" >> $logfile 2>&1
 for sdict in `ls $tmpdir/dict.*` ; do
 sdict=`basename $sdict`
@@ -258,7 +260,7 @@ additional_parameters=""
 fi
 
 if [ $zipping ] ; then
-$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
+$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters --zipping >> $logfile 2>&1 &
 else
 $scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$tmpdir/ngram.${sdict}" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
 fi
@@ -268,12 +270,15 @@ done
 # Wait for all parallel jobs to finish
 while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 
+date >> $logfile 2>&1
 echo "Merging language models into $outfile" >> $logfile 2>&1
+if [ $zipping ] ; then
+$scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff --zipping >> $logfile 2>&1
+else
 $scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff  >> $logfile 2>&1
+fi
 
-exit
-
-
+date >> $logfile 2>&1
 echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
 rm $tmpdir/* 2> /dev/null
 
