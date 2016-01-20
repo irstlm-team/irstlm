@@ -28,16 +28,12 @@
 use strict;
 use Getopt::Long "GetOptions";
 
-my $gzip=`which gzip 2> /dev/null`;
-my $gunzip=`which gunzip 2> /dev/null`;
-chomp($gzip);
-chomp($gunzip);
-
 my $cutoffword="<CUTOFF>"; #special word for Google 1T-ngram cut-offs
 my $blocksize=10000000; #this is the blocksize of produced n-grams
 my $from=2;             #starting n-gram level
 
 my($help,$verbose,$maxsize,$googledir,$ngramdir)=();
+my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
 
 $help=1 unless
 &GetOptions('maxsize=i' => \$maxsize,
@@ -45,7 +41,8 @@ $help=1 unless
 			'googledir=s' => \$googledir,
 			'ngramdir=s' => \$ngramdir,
 			'h|help' => \$help,
-			'verbose' => \$verbose);
+			'verbose' => \$verbose,
+			'zipping' => \$zipping);
 
 
 if ($help || !$maxsize || !$googledir || !$ngramdir ) {
@@ -55,18 +52,26 @@ if ($help || !$maxsize || !$googledir || !$ngramdir ) {
 	"\nUSAGE:\n",
 	"       $cmnd [options]\n",
 	"\nOPTIONS:\n",
-    "       --maxsize <int>       maximum n-gram level of conversion\n",
-    "       --startfrom <int>     skip initial levels if already available (default 2)\n",
-    "       --googledir <string>  directory containing the google-grams dirs (1gms,2gms,...)\n",
-    "       --ngramdir <string>   directory where to write the n-grams \n",
-    "       --verbose             (optional) very talktive output\n",
-    "       -h, --help            (optional) print these instructions\n",
-    "\n";
+	"       --maxsize <int>       maximum n-gram level of conversion\n",
+	"       --startfrom <int>     skip initial levels if already available (default 2)\n",
+	"       --googledir <string>  directory containing the google-grams dirs (1gms,2gms,...)\n",
+	"       --ngramdir <string>   directory where to write the n-grams \n",
+	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
+	"       --verbose             (optional) very talktive output\n",
+	"       -h, --help            (optional) print these instructions\n",
+	"\n";
 
   exit(1);
 }
 
-warn "goograms2ngrams: maxsize $maxsize from $from googledir $googledir ngramdir $ngramdir \n"
+if ($zipping){
+  $gzip=`which gzip 2> /dev/null`;
+  $gunzip=`which gunzip 2> /dev/null`;
+  chomp($gzip);
+  chomp($gunzip);
+}
+
+warn "goograms2ngrams: maxsize $maxsize from $from googledir $googledir ngramdir $ngramdir zipping $zipping\n"
 if $verbose;
 
 die "goograms2ngrams: value of --maxsize must be between 2 and 5\n" if $maxsize<2 || $maxsize>5;
@@ -84,17 +89,36 @@ foreach ($n=$from;$n<=$maxsize;$n++){
   	
   warn "Converting google-$n-grams into $n-gram\n"; 
 
-  $hgrams=($n==2?"${googledir}/1gms/vocab.gz":"${ngramdir}/".($n-1)."grams-*.gz");
-  open(HGR,"$gunzip -c $hgrams |") || die "cannot open $hgrams\n";
-  
-  $ggrams="${googledir}/".($n)."gms/".($n)."gm-*";
-  open(GGR,"$gunzip -c $ggrams |") || die "cannot open $ggrams\n";
-   
-  my $id = sprintf("%04d", 0);
-  $ngrams="${ngramdir}/".($n)."grams-${id}.gz";
+  if ($zipping){
+    $hgrams=($n==2?"${googledir}/1gms/vocab.gz":"${ngramdir}/".($n-1)."grams-*.gz");
+    $tmp_open="$gunzip -c $hgrams |";
+  }else{ $tmp_open="";
+    $hgrams=($n==2?"${googledir}/1gms/vocab":"${ngramdir}/".($n-1)."grams-*");
+    $tmp_open="cat $hgrams |";
+  }
+  open(HGR,"$tmp_open") || die "cannot open $hgrams\n";
 
-  next if -e $ngrams; #go to next step if file exists already;
-  open(NGR,"|$gzip -c > $ngrams ")  || die "cannot open $ngrams\n";
+  if ($zipping){
+    $ggrams="${googledir}/".($n)."gms/".($n)."gm-*";
+    $tmp_open="$gunzip -c $ggrams |";
+  }else{ $tmp_open="";
+    $hgrams=($n==2?"${googledir}/1gms/vocab":"${ngramdir}/".($n-1)."grams-*");
+    $tmp_open="cat $ggrams |";
+  }
+  open(GGR,"$tmp_open") || die "cannot open $ggrams\n";
+
+  my $id = sprintf("%04d", 0);
+
+  if ($zipping){
+    $ngrams="${ngramdir}/".($n)."grams-${id}.gz";
+    next if -e $ngrams; #go to next step if file exists already;
+    $tmp_open="|$gzip -c > $ngrams";
+  }else{ $tmp_open="";
+    $ngrams="${ngramdir}/".($n)."grams-${id}";
+    next if -e $ngrams; #go to next step if file exists already;
+    $tmp_open="$ngrams";
+  }
+  open(NGR,"$tmp_open") || die "cannot open $ngrams\n";
 
   chop($ggr=<GGR>); @ggr=split(/[ \t]/,$ggr);$ggrcnt=(pop @ggr);
   #warn "ggr: ",$ggrcnt," ",join(" ",@ggr[0..$n-1]),"\n";
@@ -129,8 +153,15 @@ foreach ($n=$from;$n<=$maxsize;$n++){
 	if (($counter % $blocksize)==0){ 
 		close(NGR);
 		my $id = sprintf("%04d", int($counter / $blocksize));
-		$ngrams="${ngramdir}/".($n)."grams-${id}.gz";
-		open(NGR,"|$gzip -c > $ngrams ")  || die "cannot open $ngrams\n";	
+
+		if ($zipping){
+		  $ngrams="${ngramdir}/".($n)."grams-${id}.gz";
+		  $tmp_open="|$gzip -c > $ngrams";
+		}else{
+		  $ngrams="${ngramdir}/".($n)."grams-${id}";
+		  $tmp_open="$ngrams";
+		}
+		open(NGR,"$tmp_open") || die "cannot open $ngrams\n";
 	}
 	
   }

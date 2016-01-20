@@ -28,8 +28,12 @@ use Getopt::Long "GetOptions";
 use File::Basename;
 
 my ($help,$lm,$size,$sublm)=();
+my ($tmp_open,$gzip,$zipping)=("","","","");
+
 $help=1 unless
-&GetOptions('h|help' => \$help);
+&GetOptions(
+'zipping' => \$zipping,
+'h|help' => \$help);
 
 if ($help) {
 	my $cmnd = basename($0);
@@ -41,12 +45,17 @@ if ($help) {
 	"       Input is expected on STDIN.\n",
 	"       <output_prefix>       prefix of files to be created\n",
 	"\nOPTIONS:\n",
-    "       -h, --help            (optional) print these instructions\n",
-    "\n";
+	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
+	"       -h, --help            (optional) print these instructions\n",
+	"\n";
 
   exit(1);
 }
 
+if ($zipping){
+  $gzip=`which gzip 2> /dev/null`;
+  chomp($gzip);
+}
 
 $max_pref=10000;   #number of prefixes to be put in one file 
 $max_ngram=5000000;#number of n-grams to be put in one file
@@ -56,11 +65,10 @@ $ngram_cnt=0;      #counter of n-gram in the current file
 
 $path=($ARGV[0]?$ARGV[0]:"goong");     #path of files to be created
 
-$gzip=`which gzip`; 
-chomp($gzip);
-
 $pwrd="";
-open(OUT,sprintf("|$gzip -c > %s.%04d.gz",$path,++$file_cnt));
+
+if ($zipping){ $tmp_open=sprintf("|$gzip -c > %s.%04d.gz",$path,++$file_cnt); }else{ $tmp_open=sprintf("%s.%04d",$path,++$file_cnt); };
+open(OUT,$tmp_open);
 
 while ($ng=<STDIN>){
   ($wrd)=$ng=~/^([^ ]+)/;

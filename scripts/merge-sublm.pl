@@ -26,6 +26,8 @@ use Getopt::Long "GetOptions";
 use File::Basename;
 
 my ($help,$lm,$size,$sublm,$backoff)=();
+my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
+
 $help=0;
 $backoff=0;
 
@@ -33,6 +35,7 @@ $backoff=0;
 'lm=s' => \$lm,
 'sublm=s' => \$sublm,
 'backoff' => \$backoff,
+'zipping' => \$zipping,
 'h|help' => \$help);
 
 if ($help || !$size || !$lm || !$sublm) {
@@ -43,21 +46,23 @@ if ($help || !$size || !$lm || !$sublm) {
 	"\nOPTIONS:\n",
 	"       --size <int>          maximum n-gram size for the language model\n",
 	"       --sublm <string>      path identifying all input prefix sub LMs\n",
-	"       --lm <string>         name of the output LM file (will be gzipped)\n",
+	"       --lm <string>         name of the output LM file (will be gzipped if parameter '--zipping' is set)\n",
 	"       --backoff						  (optional) create a backoff LM, output is directly in ARPA format (default is false, i.e. iARPA format) \n",
+	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 
   exit(1);
 }
 
+if ($zipping){
+  $gzip=`which gzip 2> /dev/null`;
+  $gunzip=`which gunzip 2> /dev/null`;
+  chomp($gzip);
+  chomp($gunzip);
+}
 
-my $gzip=`which gzip 2> /dev/null`;
-my $gunzip=`which gunzip 2> /dev/null`;
-chomp($gzip);
-chomp($gunzip);
-
-warn "merge-sublm.pl --size $size --sublm $sublm --lm $lm --backoff $backoff\n";
+warn "merge-sublm.pl --size $size --sublm $sublm --lm $lm --backoff $backoff --$zipping\n";
 
 warn "Compute total sizes of n-grams\n";
 my @size=();          #number of n-grams for each level
@@ -74,7 +79,9 @@ for (my $n=1;$n<=$size;$n++){
   warn "join files $files\n";
   
   if ($n==1){
-    open(INP,"$gunzip -c $files|") || die "cannot open $files\n";
+    if ($zipping){ $tmp_open="$gunzip -c $files|"; }else{ $tmp_open="cat $files|"; }
+    open(INP,"$tmp_open") || die "cannot open $files\n";
+
     while(my $line = <INP>){
       $size[$n]++;
       chomp($line);
@@ -96,7 +103,11 @@ for (my $n=1;$n<=$size;$n++){
     }
   }else{
     for (my $j=0;$j<scalar(@files);$j++){
-      safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | wc -l > wc$$") or die;
+      if ($zipping){
+        safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | wc -l > wc$$") or die;
+      }else{
+        safesystem("grep -v '10000.000' < $files[$j] | wc -l > wc$$") or die;
+      }
       open(INP,"wc$$") || die "cannot open wc$$\n";
       my $wc = <INP>;
       chomp($wc);
@@ -110,8 +121,9 @@ for (my $n=1;$n<=$size;$n++){
 
 warn "Merge all sub LMs\n";
 
-$lm.=".gz" if $lm!~/.gz$/;
-open(LM,"|$gzip -c > $lm") || die "Cannot open $lm\n";
+if ($zipping){ $lm.=".gz" if $lm!~/.gz$/; }
+if ($zipping){ $tmp_open="|$gzip -c > $lm"; }else{ $tmp_open="> $lm"; };
+open(LM,"$tmp_open") || die "Cannot open $lm\n";
 
 warn "Write LM Header\n";
 if ($backoff){
@@ -135,9 +147,14 @@ for (my $n=1;$n<=$size;$n++){
   @files=map { glob($_) } "${sublm}*.${n}gr*";
   $files=join(" ",@files);
   warn "input from: $files\n";
-  if ($n==1){         
-    open(INP,"$gunzip -c $files|") || die "cannot open $files\n";
-    open(LM,"|$gzip -c >> $lm");
+  my $tmp_open="";      
+  if ($n==1){
+    if ($zipping){ $tmp_open="$gunzip -c $files|"; }else{ $tmp_open="cat $files|"; };
+    open(INP,"$tmp_open") || die "cannot open $files\n";
+
+    if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
+    open(LM,"$tmp_open");
+
     printf LM "\\$n-grams:\n";
     while(my $line = <INP>){   
       chomp($line);
@@ -173,17 +190,27 @@ for (my $n=1;$n<=$size;$n++){
     printf LM "%f <unk>\n",$pr;
     close(LM);
   }else{
-    open(LM,"|$gzip -c >> $lm");
+
+    if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
+    open(LM,"$tmp_open") || die "Cannot open $lm\n";
+
     printf LM "\\$n-grams:\n";
     close(LM);
     for (my $j=0;$j<scalar(@files);$j++){
-      safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | gzip -c >> $lm") or die;
+      next if ! -s $files[$j]; #skip if it has size 0, note that the file surely exists)
+      if ($zipping){
+        safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | gzip -c >> $lm") or die;
+      }else{
+        safesystem("cat $files[$j] | grep -v '10000.000' >> $lm") or die;
+      }
     }
   }
 
 }
 
-open(LM,"|$gzip -c >> $lm") || die "Cannot open $lm\n";
+if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
+open(LM,"$tmp_open") || die "Cannot open $lm\n";
+
 printf LM "\\end\\\n";
 close(LM);
 

@@ -38,10 +38,6 @@ use strict;
 use Getopt::Long "GetOptions";
 use File::Basename;
 
-my $gzip=`which gzip 2> /dev/null`;
-my $gunzip=`which gunzip 2> /dev/null`;
-chomp($gzip);
-chomp($gunzip);
 my $cutoffword="<CUTOFF>"; #special word for Google 1T-ngram cut-offs 
 my $cutoffvalue=39;   #cut-off threshold for Google 1T-ngram cut-offs 
 
@@ -50,6 +46,7 @@ my ($verbose,$size,$ngrams,$sublm)=(0, 0, undef, undef);
 my ($witten_bell,$good_turing,$shift_beta,$improved_shift_beta,$stupid_backoff)=(0, 0, "", "", "");
 my ($witten_bell_flag,$good_turing_flag,$shift_beta_flag,$improved_shift_beta_flag,$stupid_backoff_flag)=(0, 0, 0, 0, 0);
 my ($freqshift,$prune_singletons,$prune_thr_str,$cross_sentence)=(0, 0, "", 0);
+my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
 
 my $help = 0;
 $help = 1 unless
@@ -66,7 +63,8 @@ $help = 1 unless
 'pft|PruneFrequencyThreshold=s' => \$prune_thr_str,
 'cross-sentence' => \$cross_sentence,
 'h|help' => \$help,
-'verbose' => \$verbose);
+'verbose' => \$verbose,
+'zipping' => \$zipping);
 
 
 if ($help || !$size || !$ngrams || !$sublm) {
@@ -88,10 +86,18 @@ if ($help || !$size || !$ngrams || !$sublm) {
 	"       -pft, --PruneFrequencyThreshold <string>	(optional) pruning frequency threshold for each level; comma-separated list of values; (default is \"0,0,...,0\", for all levels)\n",
 	"       --cross-sentence      (optional) include cross-sentence bounds (disabled by default)\n",
 	"       --verbose             (optional) print debugging info\n",
+	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 	
   exit(1);
+}
+
+if ($zipping){
+  $gzip=`which gzip 2> /dev/null`;
+  $gunzip=`which gunzip 2> /dev/null`;
+  chomp($gzip);
+  chomp($gunzip);
 }
 
 $good_turing_flag = 1 if ($good_turing);
@@ -103,7 +109,7 @@ $stupid_backoff_flag = 1 if ($stupid_backoff);
 $improved_shift_beta_flag = 1 if ($improved_shift_beta);
 $witten_bell = $witten_bell_flag = 1 if ($witten_bell_flag + $shift_beta_flag + $improved_shift_beta_flag + $stupid_backoff_flag) == 0;
 
-print STDERR  "build-sublm: size=$size ngrams=$ngrams sublm=$sublm witten-bell=$witten_bell shift-beta=$shift_beta improved-shift-beta=$improved_shift_beta stupid-backoff=$stupid_backoff prune-singletons=$prune_singletons cross-sentence=$cross_sentence PruneFrequencyThreshold=$prune_thr_str\n" if $verbose;
+print STDERR  "build-sublm: size=$size ngrams=$ngrams sublm=$sublm witten-bell=$witten_bell shift-beta=$shift_beta improved-shift-beta=$improved_shift_beta stupid-backoff=$stupid_backoff prune-singletons=$prune_singletons cross-sentence=$cross_sentence PruneFrequencyThreshold=$prune_thr_str zipping=$zipping\n" if $verbose;
 
 
 die "build-sublm: choose only one smoothing method\n" if ($witten_bell_flag + $shift_beta_flag + $improved_shift_beta_flag + $stupid_backoff_flag) > 1;
@@ -159,7 +165,10 @@ my $n;
 print STDERR  "Collecting 1-gram counts\n" if $verbose;
 
 open(INP,"$ngrams") || open(INP,"$ngrams|")  || die "cannot open $ngrams\n";
-open(GR,"|$gzip -c >${sublm}.1gr.gz") || die "cannot create ${sublm}.1gr.gz\n";
+
+if ($zipping){ $tmp_open="|$gzip -c >${sublm}.1gr.gz"; }else{ $tmp_open="> ${sublm}.1gr"; }
+print STDERR "tmp_open:$tmp_open\n";
+open(GR,"$tmp_open") || die "cannot create ${sublm}.1gr(.gz)\n";
 
 while ($ng=<INP>) {
   
@@ -249,11 +258,17 @@ foreach ($n=2;$n<=$size;$n++) {
 		print STDERR  "Improved-Shift-Beta  smoothing: level:$n beta[1]:$beta[1] beta[2]:$beta[2] beta[3]:$beta[3]\n" if $verbose; 
   }
 	
-  open(HGR,"$gunzip -c ${sublm}.".($n-1)."gr.gz |") || die "cannot open ${sublm}.".($n-1)."gr.gz\n";
   open(INP,"$ngrams") || open(INP,"$ngrams |")  || die "cannot open $ngrams\n";
-  open(GR,"| $gzip -c >${sublm}.${n}gr.gz");
-  open(NHGR,"| $gzip -c > ${sublm}.".($n-1)."ngr.gz") || die "cannot open ${sublm}.".($n-1)."ngr.gz";
-	
+
+  if ($zipping){ $tmp_open="$gunzip -c ${sublm}.".($n-1)."gr.gz |"; }else{ $tmp_open="${sublm}.".($n-1)."gr"; }
+  open(HGR,"$tmp_open") || die "cannot open ${sublm}.".($n-1)."gr(.gz)\n";
+
+  if ($zipping){ $tmp_open="| $gzip -c > ${sublm}.${n}gr.gz"; }else{ $tmp_open="> ${sublm}.${n}gr"; }
+  open(GR,"$tmp_open");
+
+  if ($zipping){ $tmp_open="| $gzip -c > ${sublm}.".($n-1)."ngr.gz"; }else{ $tmp_open="> ${sublm}.".($n-1)."ngr"; }
+  open(NHGR,"$tmp_open") || die "cannot open ${sublm}.".($n-1)."ngr(.gz)\n";
+
   my $ngram;
   my ($reduced_h, $reduced_ng) = ("", "");
 	
@@ -442,7 +457,11 @@ foreach ($n=2;$n<=$size;$n++) {
 	
   close(HGR); close(INP); close(GR); close(NHGR);
 	
-  rename("${sublm}.".($n-1)."ngr.gz","${sublm}.".($n-1)."gr.gz");
+  if ($zipping){
+    rename("${sublm}.".($n-1)."ngr.gz","${sublm}.".($n-1)."gr.gz");
+  }else{
+    rename("${sublm}.".($n-1)."ngr","${sublm}.".($n-1)."gr");
+  }
 }   
 
 
