@@ -113,17 +113,18 @@ int main(int argc, char **argv)
   int requiredMaxlev = 1000;
   int dub = 10000000;
   int randcalls = 0;
+  bool keep_start_symbols = false; //flag to keep (or not) multiple contiguous start symbols in the n-gram; false means that just one start symbol is kept, true means that all start symbols are kept
   float ngramcache_load_factor = 0.0;
   float dictionary_load_factor = 0.0;
 	
   bool help=false;
 	
 	DeclareParams((char*)
-								"lm", CMDSTRINGTYPE|CMDMSG, &lmfile, "LM to load",
-								"test", CMDSTRINGTYPE|CMDMSG, &testfile, "computes scores of the specified text file",
-								"lexicon", CMDSTRINGTYPE|CMDMSG, &lexiconfile, "lexicon file contains associated words (required by rankscore)",
+		"lm", CMDSTRINGTYPE|CMDMSG, &lmfile, "LM to load",
+		"test", CMDSTRINGTYPE|CMDMSG, &testfile, "computes scores of the specified text file",
+		"lexicon", CMDSTRINGTYPE|CMDMSG, &lexiconfile, "lexicon file contains associated words (required by rankscore)",
                 "randcalls", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
-								"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
+		"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
                 "contextbasedscore", CMDBOOLTYPE|CMDMSG, &contextbasedscore, "computes context-dependent probabilities and pseudo-perplexity of the text from standard input",
                 "topicscore", CMDBOOLTYPE|CMDMSG, &topicscore, "computes the topic scores of the text from standard input",
                 "rankscore", CMDBOOLTYPE|CMDMSG, &rankscore, "computes the average rank position of the text from standard input",
@@ -131,6 +132,7 @@ int main(int argc, char **argv)
 								"d", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
                 "level", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
 								"l", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
+		"keep-start-symbols", CMDBOOLTYPE|CMDMSG, &keep_start_symbols, "keeps (or not) multiple contiguous start symbols in the n-grams; false means that just one start symbol is kept, true means that all start symbols are kept; default is false",
                 "dub", CMDINTTYPE|CMDMSG, &dub, "dictionary upperbound to compute OOV word penalty: default 10^7",
                 "sentence", CMDBOOLTYPE|CMDMSG, &sent_flag, "computes perplexity at sentence level (identified through the end symbol)",
                 "dict_load_factor", CMDFLOATTYPE|CMDMSG, &dictionary_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is 0",
@@ -289,9 +291,9 @@ int main(int argc, char **argv)
 				size=(size<order)?size:order;
 				last=i+1;
 				
-				// reset ngram at begin of sentence
+				// reset ngram at begin of sentence (if keep_start_symbols is set to false)
 				if (word_vec.at(i) == lmt->getDict()->BoS()) {
-					size=1;
+					if (!keep_start_symbols) size=1;	
 					continue;
 				}
 				first = last - size;
@@ -423,9 +425,9 @@ int main(int argc, char **argv)
 				size=(size<order)?size:order;
 				last=i+1;
 				
-				// reset ngram at begin of sentence
+				// reset ngram at begin of sentence (if keep_start_symbols is set to false)
 				if (word_vec.at(i) == lmt->getDict()->BoS()) {
-					size=1;
+					if (!keep_start_symbols) size=1;	
 					continue;
 				}
 				first = last - size;
@@ -867,9 +869,9 @@ int main(int argc, char **argv)
 				size=(size<order)?size:order;
 				last=word_pos+1;
 				
-				// reset ngram at begin of sentence
+				// reset ngram at begin of sentence (if keep_start_symbols is set to false)
 				if (word_vec.at(word_pos) == lmt->getDict()->BoS()) {
-					size=1;
+					if (!keep_start_symbols) size=1;
 					continue;
 				}
 				first = last - size;
