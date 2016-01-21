@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 	
 	int debug = 0;
   bool memmap = false;
-  bool keep-start-symbols = false; //flag to keep (or not) multiple contiguous start symbols in the n-gram; false means that just one start symbol is kept, true means that all start symbols are kept
+  bool keep_start_symbols = false; //flag to keep (or not) multiple contiguous start symbols in the n-gram; false means that just one start symbol is kept, true means that all start symbols are kept
   int requiredMaxlev = IRSTLM_REQUIREDMAXLEV_DEFAULT;
   int dub = IRSTLM_DUB_DEFAULT;
   int randcalls = 0;
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 		"l", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
                 "memmap", CMDBOOLTYPE|CMDMSG, &memmap, "uses memory map to read a binary LM",
 		"mm", CMDBOOLTYPE|CMDMSG, &memmap, "uses memory map to read a binary LM",
-                "keep-start-symbols", CMDBOOLTYPE|CMDMSG, &keep_start_symbols, "keeps (or not) multiple contiguous start symbols in the n-grams; false means that just one start symbol is kept, true means that all start symbols are kept
+                "keep-start-symbols", CMDBOOLTYPE|CMDMSG, &keep_start_symbols, "keeps (or not) multiple contiguous start symbols in the n-grams; false means that just one start symbol is kept, true means that all start symbols are kept",
                 "dub", CMDINTTYPE|CMDMSG, &dub, "dictionary upperbound to compute OOV word penalty: default 10^7",
                 "tmpdir", CMDSTRINGTYPE|CMDMSG, &tmpdir, "directory for temporary computation, default is either the environment variable TMP if defined or \"/tmp\")",
                 "invert", CMDBOOLTYPE|CMDMSG, &invert, "builds an inverted n-gram binary table for fast access; default if false",
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
 
         // reset ngram at begin of sentence
         if (*ng.wordp(1)==bos) {
-	  if (!keep-start-symbols) ng.size=1;
+	  if (!keep_start_symbols) ng.size=1;
           continue;
         }
 
@@ -445,7 +445,7 @@ int main(int argc, char **argv)
       //std::cout << ng << std::endl;;
       // reset ngram at begin of sentence
       if (*ng.wordp(1)==bos) {
-        if (!keep-start-symbols) ng.size=1;
+        if (!keep_start_symbols) ng.size=1;
         continue;
       }
 
