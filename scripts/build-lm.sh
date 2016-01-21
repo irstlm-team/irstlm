@@ -25,7 +25,8 @@ OPTIONS:
        -l|--LogFile            File to store logging info (default /dev/null)
        -u|--uniform            Use uniform word frequency for dictionary splitting (default false)
        -b|--boundaries         Include sentence boundary n-grams (optional, default false)
-       --zipping            enabling zipping of files
+       --zipping               enabling zipping of files (default: enabled)
+       --no-zipping            disabling zipping of files (default: enabled)
        --add-start-end         add start and end symbols before and after each line
        -v|--verbose            Verbose
        -irstlm|--irstlm        optionally set the directory of installation of IRSTLM; if not specified, the environment variable IRSTLM is used
@@ -41,7 +42,7 @@ order=3
 parts=3
 inpfile="";
 outfile=""
-zipping="";
+zipping="--zipping";
 addstartend="";
 verbose="";
 smoothing="witten-bell";
@@ -88,6 +89,8 @@ while [ "$1" != "" ]; do
         -b | --boundaries )     boundaries='--cross-sentence';
 				;;
         --zipping )        zipping='--zipping';
+				;;
+        --no-zipping )        zipping='';
 				;;
         --add-start-end )       addstartend='--addstartend';
 				;;
@@ -157,6 +160,7 @@ echo "ZIPPING:yes"
 else
 echo "ZIPPING:no"
 fi		 
+
 
 if [ ! "$inpfile" -o ! "$outfile" ] ; then
     usage
