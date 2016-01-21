@@ -73,6 +73,7 @@ int main(int argc, char **argv)
 	
 	int debug = 0;
   bool memmap = false;
+  bool keep-start-symbols = false; //flag to keep (or not) multiple contiguous start symbols in the n-gram; false means that just one start symbol is kept, true means that all start symbols are kept
   int requiredMaxlev = IRSTLM_REQUIREDMAXLEV_DEFAULT;
   int dub = IRSTLM_DUB_DEFAULT;
   int randcalls = 0;
@@ -90,32 +91,33 @@ int main(int argc, char **argv)
                 "keepunigrams", CMDBOOLTYPE|CMDMSG, &skeepunigrams, "filter by keeping all unigrams in the table, default  is true",
                 "ku", CMDBOOLTYPE|CMDMSG, &skeepunigrams, "filter by keeping all unigrams in the table, default  is true",
                 "eval", CMDSTRINGTYPE|CMDMSG, &seval, "computes perplexity of the specified text file",
-								"e", CMDSTRINGTYPE|CMDMSG, &seval, "computes perplexity of the specified text file",
+		"e", CMDSTRINGTYPE|CMDMSG, &seval, "computes perplexity of the specified text file",
                 "randcalls", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
-								"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
+		"r", CMDINTTYPE|CMDMSG, &randcalls, "computes N random calls on the specified text file",
                 "score", CMDBOOLTYPE|CMDMSG, &sscore, "computes log-prob scores of n-grams from standard input",
-								"s", CMDBOOLTYPE|CMDMSG, &sscore, "computes log-prob scores of n-grams from standard input",
+		"s", CMDBOOLTYPE|CMDMSG, &sscore, "computes log-prob scores of n-grams from standard input",
                 "ngramscore", CMDBOOLTYPE|CMDMSG, &ngramscore, "computes log-prob scores of the last n-gram  before an _END_NGRAM_ symbol from standard input",
                 "ns", CMDBOOLTYPE|CMDMSG, &ngramscore, "computes log-prob scores of the last n-gram  before an _END_NGRAM_ symbol from standard input",
-								"debug", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
-								"d", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
+		"debug", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
+		"d", CMDINTTYPE|CMDMSG, &debug, "verbose output for --eval option; default is 0",
                 "level", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
-								"l", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
+		"l", CMDINTTYPE|CMDMSG, &requiredMaxlev, "maximum level to load from the LM; if value is larger than the actual LM order, the latter is taken",
                 "memmap", CMDBOOLTYPE|CMDMSG, &memmap, "uses memory map to read a binary LM",
-								"mm", CMDBOOLTYPE|CMDMSG, &memmap, "uses memory map to read a binary LM",
+		"mm", CMDBOOLTYPE|CMDMSG, &memmap, "uses memory map to read a binary LM",
+                "keep-start-symbols", CMDBOOLTYPE|CMDMSG, &keep_start_symbols, "keeps (or not) multiple contiguous start symbols in the n-grams; false means that just one start symbol is kept, true means that all start symbols are kept
                 "dub", CMDINTTYPE|CMDMSG, &dub, "dictionary upperbound to compute OOV word penalty: default 10^7",
                 "tmpdir", CMDSTRINGTYPE|CMDMSG, &tmpdir, "directory for temporary computation, default is either the environment variable TMP if defined or \"/tmp\")",
                 "invert", CMDBOOLTYPE|CMDMSG, &invert, "builds an inverted n-gram binary table for fast access; default if false",
-								"i", CMDBOOLTYPE|CMDMSG, &invert, "builds an inverted n-gram binary table for fast access; default if false",
+		"i", CMDBOOLTYPE|CMDMSG, &invert, "builds an inverted n-gram binary table for fast access; default if false",
                 "sentence", CMDBOOLTYPE|CMDMSG, &sent_PP_flag, "computes perplexity at sentence level (identified through the end symbol)",
                 "dict_load_factor", CMDFLOATTYPE|CMDMSG, &dictionary_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is 0",
                 "ngram_load_factor", CMDFLOATTYPE|CMDMSG, &ngramcache_load_factor, "sets the load factor for ngram cache; it should be a positive real value; default is false",
 
-								"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
-								"h", CMDBOOLTYPE|CMDMSG, &help, "print this help",
+		"Help", CMDBOOLTYPE|CMDMSG, &help, "print this help",
+		"h", CMDBOOLTYPE|CMDMSG, &help, "print this help",
 								
                 (char*)NULL
-								);
+		);
 	
 	if (argc == 1){
 		usage();
@@ -305,18 +307,18 @@ int main(int argc, char **argv)
       lmt->dictionary_incflag(1);
 
       while(inptxt >> ng) {
-				VERBOSE(3,"read ng:|" << ng << "|" << std::endl);
+	VERBOSE(3,"read ng:|" << ng << "|" << std::endl);
 
         if (ng.size>lmt->maxlevel()) ng.size=lmt->maxlevel();
 
         // reset ngram at begin of sentence
         if (*ng.wordp(1)==bos) {
-					ng.size=1;
+	  if (!keep-start-symbols) ng.size=1;
           continue;
         }
 
         if (ng.size>=1) {
-					VERBOSE(3,"computing clprob ng:|" << ng << "|" << std::endl);
+  	VERBOSE(3,"computing clprob ng:|" << ng << "|" << std::endl);
 //          Pr=lmt->clprob(ng,&bow,&bol,&msp,&statesize);
           Pr=lmt->clprob(ng,&bow,&bol,&msidx,&msp,&statesize);
 					
@@ -443,7 +445,7 @@ int main(int argc, char **argv)
       //std::cout << ng << std::endl;;
       // reset ngram at begin of sentence
       if (*ng.wordp(1)==bos) {
-        ng.size=1;
+        if (!keep-start-symbols) ng.size=1;
         continue;
       }
 
