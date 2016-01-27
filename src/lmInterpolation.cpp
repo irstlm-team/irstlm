@@ -224,22 +224,28 @@ namespace irstlm {
 		
 		double_vec_t weight(m_number_lm);
 		set_weight(lm_weights,weight);
-		
+
+                for (size_t i=0; i<m_number_lm; i++) {
+                        VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << " normalized_weight[i]:" << weight[i] << endl);
+                }
+
 		for (size_t i=0; i<m_number_lm; i++) {
 			if (weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
 				_ng.trans(ng);
-				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffptr,&_statesize,&_extendible,&_lastbow);
+				_logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible,&_lastbow);
 				
 				IFVERBOSE(3){
 					//cerr.precision(10);
-					VERBOSE(3," LM " << i << " weight:" << weight[i] << std::endl);
-					VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
-					VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
-					VERBOSE(3," _statesize:" << _statesize << std::endl);
-					VERBOSE(3," _bow:" << _bow << std::endl);
-					VERBOSE(3," _bol:" << _bol << std::endl);
-					VERBOSE(3," _lastbow:" << _lastbow << std::endl);
+                                        VERBOSE(3," LM " << i << " m_weight:" << m_weight[i] << " normalized_weight:" << weight[i] << std::endl);
+                                        VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
+                                        VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
+                                        VERBOSE(3," LM " << i << " msp:" << (void*) _maxsuffptr << std::endl);
+                                        VERBOSE(3," LM " << i << " msidx:" << _maxsuffidx << std::endl);
+                                        VERBOSE(3," LM " << i << " statesize:" << _statesize << std::endl);
+                                        VERBOSE(3," LM " << i << " bow:" << _bow << std::endl);
+                                        VERBOSE(3," LM " << i << " bol:" << _bol << std::endl);
+                                        VERBOSE(3," LM " << i << " lastbow:" << _lastbow << std::endl);
 				}
 				
 				/*
@@ -283,6 +289,8 @@ namespace irstlm {
 		if (extendible) *extendible=actualextendible;
 		if (lastbow) *bol=actuallastbow;
 		
+                if (maxsuffptr) VERBOSE(3," msp:" << (void*) *maxsuffptr << std::endl);
+                if (maxsuffidx) VERBOSE(3," maxsuffidx:" << *maxsuffidx << std::endl);
 		if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
 		if (bow) VERBOSE(3, " bow:" << *bow << std::endl);
 		if (bol) VERBOSE(3, " bol:" << *bol << std::endl);
