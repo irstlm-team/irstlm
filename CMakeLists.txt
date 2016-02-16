@@ -16,8 +16,6 @@ OPTION(ASSERT "Enable/Disable MY_ASSERT_FLAG" ON)
 option(BUILD_STATIC_LIBS "Build the static library (default is ON) " ON)
 option(BUILD_SHARED_LIBS "Build the shared library (default is OFF)" OFF)
 
-MESSAGE(STATUS "BUILD_STATIC_LIBS ${BUILD_STATIC_LIBS}")
-MESSAGE(STATUS "BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS}")
 
 if (BUILD_STATIC_LIBS AND BUILD_SHARED_LIBS)
 MESSAGE(FATAL_ERROR " It is not allowed compiling both static and shared libraries and executables;
@@ -30,6 +28,9 @@ MESSAGE(FATAL_ERROR " It is mandatory enabling either static or shared compilati
  - to enable/disable static compilation, set -DBUILD_STATIC_LIBS=[ON|OFF] (default is ON)
  - to enable/disable shared compilation, set -DBUILD_SHARED_LIBS=[ON|OFF] (default is OFF)")
 endif()
+
+MESSAGE(STATUS "BUILD_STATIC_LIBS ${BUILD_STATIC_LIBS}")
+MESSAGE(STATUS "BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS}")
 
 MATH(EXPR IRSTLM_INT_VERSION "(${IRSTLM_VERSION_MAJOR} * 10000) + (${IRSTLM_VERSION_MINOR} * 100) + (${IRSTLM_VERSION_PATCH} * 1)" )
 
