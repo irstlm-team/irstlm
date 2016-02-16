@@ -2,6 +2,8 @@
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/bin)
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/lib)
 
+set(CMAKE_MACOSX_RPATH 1)
+
 ADD_DEFINITIONS("-D_LARGE_FILES")
 ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
 ADD_DEFINITIONS("-DMYCODESIZE=3")
@@ -29,6 +31,8 @@ else()
   SET(STD_FLAG "")
   ADD_DEFINITIONS("-UHAVE_CXX0")
 endif() 
+
+  
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${STD_FLAG} -isystem/usr/include -W -Wall -ffor-scope")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
@@ -67,15 +71,32 @@ SET( LIB_IRSTLM_SRC
         context-similarity.h context-similarity.cpp
 )
 
-ADD_LIBRARY(irstlm STATIC ${LIB_IRSTLM_SRC})
 LINK_DIRECTORIES (${LIBRARY_OUTPUT_PATH})
 
-FOREACH(CMD dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching context-dependent-evaluation)
+SET( IRSTLM_EXE dict ngt tlm dtsel plsa cswa compile-lm interpolate-lm prune-lm quantize-lm score-lm verify-caching context-dependent-evaluation)
 
-ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
-TARGET_LINK_LIBRARIES (${CMD} irstlm -lm -lz -lpthread)
 
-ENDFOREACH()
+if (BUILD_STATIC_LIBS)
+  MESSAGE(STATUS "Compiling static library")
+  ADD_LIBRARY(irstlmStatic STATIC ${LIB_IRSTLM_SRC})
+  set_target_properties(irstlmStatic PROPERTIES OUTPUT_NAME irstlm)
+  FOREACH(CMD ${IRSTLM_EXE})
+    ADD_EXECUTABLE(${CMD} ${CMD}.cpp)
+    TARGET_LINK_LIBRARIES (${CMD} irstlmStatic -lm -lz -lpthread)
+  ENDFOREACH()
+endif()
+if (BUILD_SHARED_LIBS)
+  MESSAGE(STATUS "Compiling shared library")
+  SET (CMAKE_SHARED_LINKER_FLAGS "-lz")
+  ADD_LIBRARY(irstlmShared SHARED ${LIB_IRSTLM_SRC})
+  set_target_properties(irstlmShared PROPERTIES OUTPUT_NAME irstlm)
+
+  FOREACH(CMD ${IRSTLM_EXE})
+    ADD_EXECUTABLE(${CMD}Shared ${CMD}.cpp)
+    TARGET_LINK_LIBRARIES (${CMD}Shared irstlmShared -lm -lz -lpthread)
+    set_target_properties(${CMD}Shared PROPERTIES OUTPUT_NAME ${CMD})
+  ENDFOREACH()
+endif()
 
 #INSTALL INCLUDE FILES
 FILE(GLOB includes src *.h)
