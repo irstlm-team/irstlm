@@ -29,7 +29,6 @@ OPTIONS:
        --no-zipping            disabling zipping of files (default: enabled)
        --add-start-end         add start and end symbols before and after each line
        -v|--verbose            Verbose
-       --debug                 Enable debug (deafult false); if enabled the temporary files are not removed
        -irstlm|--irstlm        optionally set the directory of installation of IRSTLM; if not specified, the environment variable IRSTLM is used
        -h|-?|--help            Show this message
 
@@ -41,19 +40,28 @@ function fileExists()
     file=$1; shift;
 
     if [ ! -e $file ] ; then
-        echo "file ($file) does not exist" >> $logfile 2>&1
+        echo "file ($file) does not exist" >&2
         exit 1
     else
-        if [ $debug ] ; then
+        if [ $verbose ] ; then
             echo "file ($file) exists" >> $logfile 2>&1
         fi
     fi
 }
 
-function fileIsOpened()
+function fileIsOpen()
 {
     file=$1; shift;
     $IRSTLM/bin/check_if_closed.sh $file
+
+    err_str=$(lsof $file 2>&1 > /dev/null ; echo $?)
+    until [ $err_str != 0 ]; do
+        echo "file ($file) is still open" >&2 
+        # lsof returned 1 but didn't print an error string, assume the file is open
+        sleep 1.0
+        err_str=$(lsof $file 2>&1 >/dev/null ; echo $?)
+    done
+    echo "file ($file) is closed" >&2 
 }
 
 #default parameters
@@ -65,7 +73,6 @@ inpfile="";
 outfile=""
 zipping="--zipping";
 addstartend="";
-debug="";
 verbose="";
 smoothing="witten-bell";
 prune="";
@@ -118,8 +125,6 @@ while [ "$1" != "" ]; do
 				                ;;
         -v | --verbose )        verbose='--verbose';
                                 ;;
-        --debug )               debug='--debug';
-				                ;;
         -irstlm | --irstlm )	shift;
 				                IRSTLM=$1;
                                 ;;
@@ -137,7 +142,7 @@ if [ -e $logfile -a $logfile != "/dev/null"  -a $logfile != "/dev/stderr" -a $lo
    exit 7
 fi
 
-if [ $debug ] ; then
+if [ $verbose ] ; then
     if [ $logfile == "/dev/null" ] ; then
         logfile="/dev/stderr"
     fi
@@ -208,7 +213,8 @@ fi
 
 
 if [ $verbose ] ; then
-echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str zipping=$zipping addstartend=$addstartend >> $logfile 2>&1
+echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts prune=$prune smoothing=$smoothing dictionary=$dictionary prune_thr_str=$prune_thr_str >> $logfile 2>&1
+echo tmpdir=$tmpdir verbose=$verbose zipping=$zipping addstartend=$addstartend >> $logfile 2>&1
 fi
 
 #check tmpdir
@@ -249,9 +255,18 @@ if [ $verbose ] ; then
     echo "input is the following:\'$actual_inpfile\'" >> $logfile 2>&1
 fi
 
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Extracting dictionary from training corpus" >> $logfile 2>&1
-$bin/dict -i="$actual_inpfile" -o=$tmpdir/dictionary $uniform -sort=no 2> $logfile
+$bin/dict -i="$actual_inpfile" -o=$tmpdir/dictionary.tmp $uniform -sort=no 2> $logfile
+
+#checking whether the temporary files exist
+#checking whether the temporary files are closed
+#renaming the temporary filenames into the official filenames
+tmp_out_file="$tmpdir/dictionary"
+fileExists ${tmp_out_file}.tmp
+fileIsOpen ${tmp_out_file}.tmp
+mv ${tmp_out_file}.tmp  ${tmp_out_file}
 
 res=$?
 if [ $res -ne 0 ] ; then
@@ -260,16 +275,21 @@ if [ $res -ne 0 ] ; then
 fi
 
 
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Splitting dictionary into $parts lists" >> $logfile 2>&1
 sfxList=`$scr/split-dict.pl --input $tmpdir/dictionary --output $tmpdir/dict. --parts $parts 2>> $logfile`
 echo "sfxList:$sfxList" >> $logfile 2>&1
 
+#checking whether the temporary files exist
+#checking whether the temporary files are closed
 for sfx in $sfxList ; do
-    fileExists $tmpdir/dict.${sfx}
-    fileIsOpened $tmpdir/dict.${sfx}
+    tmp_out_file="$tmpdir/dict.${sfx}"
+    fileExists ${tmp_out_file}
+    fileIsOpen ${tmp_out_file}
 done
 
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Extracting n-gram statistics for each word list" >> $logfile 2>&1
 echo "Important: dictionary must be ordered according to order of appearance of words in data" >> $logfile 2>&1
@@ -295,16 +315,16 @@ done
 # Wait for all parallel jobs to finish
 while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; sleep 0.1; done
 
+#checking whether the temporary files exist
+#checking whether the temporary files are closed
 for sfx in $sfxList ; do
-    if [ $zipping ] ; then
-        fileExists $tmpdir/ngram.dict.${sfx}.gz
-        fileIsOpened $tmpdir/ngram.dict.${sfx}.gz
-    else
-        fileExists $tmpdir/ngram.dict.${sfx}
-        fileIsOpened $tmpdir/ngram.dict.${sfx}
-    fi
+    tmp_out_file="$tmpdir/ngram.dict.${sfx}"
+    if [ $zipping ] ; then tmp_out_file="${tmp_out_file}.gz" ; fi
+    fileExists ${tmp_out_file}
+    fileIsOpen ${tmp_out_file}
 done
 
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Estimating language models for each word list" >> $logfile 2>&1
 for sdict in `ls $tmpdir/dict.*` ; do
@@ -319,51 +339,46 @@ additional_smoothing_parameters=""
 additional_parameters=""
 fi
 
-if [ $zipping ] ; then
-$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters --zipping >> $logfile 2>&1 &
-else
-$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$tmpdir/ngram.${sdict}" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
-fi
+ngrams="$tmpdir/ngram.${sdict}"
+if [ $zipping ] ; then ngrams="$gunzip -c $tmpdir/ngram.${sdict}.gz" ; fi
+$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$ngrams" -sublm $tmpdir/lm.$sdict $additional_parameters $zipping >> $logfile 2>&1 &
 
 done
 
 # Wait for all parallel jobs to finish
 while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; sleep 0.1; done
 
-
-# check whether all files for the sublm are created
+#checking whether the temporary files exist
+#checking whether the temporary files are closed
+#renaming the temporary filenames into the official filenames
 for sfx in $sfxList ; do
     o=1
     while [ $o -le $order ] ; do
-        if [ $zipping ] ; then
-            fileExists $tmpdir/lm.dict.${sfx}.${o}gr.gz
-            fileIsOpened $tmpdir/lm.dict.${sfx}.${o}gr.gz
-        else
-            fileExists $tmpdir/lm.dict.${sfx}.${o}gr
-            fileIsOpened $tmpdir/lm.dict.${sfx}.${o}gr
-        fi
+        tmp_out_file="$tmpdir/lm.dict.${sfx}.${o}gr"
+        if [ $zipping ] ; then tmp_out_file="${tmp_out_file}.gz" ; fi
+        fileExists ${tmp_out_file}
+        fileIsOpen ${tmp_out_file}
         o=$(( $o + 1))
     done
 done
 
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Merging language models into $outfile" >> $logfile 2>&1
-if [ $zipping ] ; then
-$scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff --zipping >> $logfile 2>&1
-else
-$scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff  >> $logfile 2>&1
-fi
+$scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm ${outfile} $backoff $zipping >> $logfile 2>&1
 
-if [ $zipping ] ; then
-    fileExists $outfile.gz
-    fileIsOpened $outfile.gz
-else
-    fileExists $outfile
-    fileIsOpened $outfile
-fi
+#checking whether the temporary files exist
+#checking whether the temporary files are closed
+tmp_out_file="${outfile}"
+if [ $zipping ] ; then tmp_out_file="${tmp_out_file}.gz" ; fi
+fileExists ${tmp_out_file}
+fileIsOpen ${tmp_out_file}
+
+echo >> $logfile 2>&1
 date >> $logfile 2>&1
+echo "ARPA LM file created into $outfile" >> $logfile 2>&1
 
-if [ ! $debug ] ; then
+if [ ! $verbose ] ; then
     echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
     rm $tmpdir/* 2> /dev/null
 

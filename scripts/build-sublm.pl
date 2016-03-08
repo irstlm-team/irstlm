@@ -164,10 +164,9 @@ my $n;
 
 print STDERR  "Collecting 1-gram counts\n" if $verbose;
 
-print STDERR "opening $ngrams\n" if ($verbose);
+print STDERR "opening (read) $ngrams\n" if ($verbose);
 open(INP,"$ngrams") || open(INP,"$ngrams|")  || die "cannot open $ngrams\n";
 
-print STDERR "zipping:|$zipping|\n";
 my ($tmp_sublm, $tmp_open)=("","");
 if ($zipping){
     ${tmp_sublm}="${sublm}.1gr.gz";
@@ -177,7 +176,7 @@ if ($zipping){
     ${tmp_open}="> ${tmp_sublm}.tmp";
 }
 
-print STDERR "opening ${tmp_sublm}\n" if ($verbose);
+print STDERR "opening (write) ${tmp_sublm}\n" if ($verbose);
 open(GR,"${tmp_open}") || die "cannot create {tmp_sublm}\n";
 
 while ($ng=<INP>) {
@@ -213,7 +212,7 @@ my $locfreq;
 if ($shift_beta_flag || $improved_shift_beta_flag) {
   my $statfile=$shift_beta || $improved_shift_beta;
   print STDERR "load \& merge IKN statistics from $statfile \n" if ($verbose);
-  print STDERR "opening $statfile\n" if ($verbose);
+  print STDERR "opening (read) $statfile\n" if ($verbose);
   open(IKN,"$statfile") || open(IKN,"$statfile|")  || die "cannot open $statfile\n";
   while (<IKN>) {
     my($lev,$n1,$n2,$n3,$n4,$uno3)=$_=~/level: (\d+)  n1: (\d+) n2: (\d+) n3: (\d+) n4: (\d+) unover3: (\d+)/;
@@ -272,7 +271,7 @@ foreach ($n=2;$n<=$size;$n++) {
     print STDERR  "Improved-Shift-Beta  smoothing: level:$n beta[1]:$beta[1] beta[2]:$beta[2] beta[3]:$beta[3]\n" if $verbose;
   }
 
-  print STDERR "opening $ngrams\n" if ($verbose);
+  print STDERR "opening (read) $ngrams\n" if ($verbose);
   open(INP,"$ngrams") || open(INP,"$ngrams |")  || die "cannot open $ngrams\n";
 
   my ($out_file_hgr,$out_file_gr,$out_file_nhgr)=("","","");
@@ -283,7 +282,7 @@ foreach ($n=2;$n<=$size;$n++) {
       ${out_file_hgr}="${sublm}.".($n-1)."gr";
       ${tmp_open}="${out_file_hgr}";
   }
-  print STDERR "opening ${out_file_hgr}\n" if ($verbose);
+  print STDERR "opening (read) ${out_file_hgr}\n" if ($verbose);
   open(HGR,"$tmp_open") || die "cannot open ${out_file_hgr}\n";
 
   if ($zipping){
@@ -293,7 +292,7 @@ foreach ($n=2;$n<=$size;$n++) {
       ${out_file_gr}="${sublm}.${n}gr";
       ${tmp_open}="> ${out_file_gr}.tmp";
   }
-  print STDERR "opening ${out_file_gr}\n" if ($verbose);
+  print STDERR "opening (write) ${out_file_gr}\n" if ($verbose);
   open(GR,"$tmp_open") || die "cannot open ${out_file_gr}.tmp\n";
 
   if ($zipping){
@@ -303,7 +302,7 @@ foreach ($n=2;$n<=$size;$n++) {
       ${out_file_nhgr}="${sublm}.".($n-1)."ngr";
       ${tmp_open}="> ${out_file_nhgr}.tmp";
   }
-  print STDERR "opening ${out_file_nhgr}\n" if ($verbose);
+  print STDERR "opening (write) ${out_file_nhgr}\n" if ($verbose);
   open(NHGR,"${tmp_open}") || die "cannot open ${out_file_nhgr}\n";
 
   my $ngram;
@@ -502,7 +501,7 @@ foreach ($n=2;$n<=$size;$n++) {
 
   print STDERR "renaming ${out_file_gr}.tmp into ${out_file_gr}\n" if ($verbose);
   move("${out_file_gr}.tmp","${out_file_gr}");
-  print STDERR "renaming ${out_file_nhgr}.tmp into ${out_file_nhgr}\n" if ($verbose);
+  print STDERR "renaming ${out_file_nhgr}.tmp into ${out_file_hgr}\n" if ($verbose);
   move("${out_file_nhgr}.tmp","${out_file_hgr}");
 }
 
