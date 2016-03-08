@@ -56,12 +56,16 @@ function fileIsOpen()
 
     err_str=$(lsof $file 2>&1 > /dev/null ; echo $?)
     until [ $err_str != 0 ]; do
-        echo "file ($file) is still open" >&2 
+        if [ $verbose ] ; then
+            echo "file ($file) is still open" >&2 
+        fi
         # lsof returned 1 but didn't print an error string, assume the file is open
         sleep 1.0
         err_str=$(lsof $file 2>&1 >/dev/null ; echo $?)
     done
-    echo "file ($file) is closed" >&2 
+    if [ $verbose ] ; then
+        echo "file ($file) is closed" >&2 
+    fi
 }
 
 #default parameters
@@ -226,13 +230,13 @@ if [ ! -d $tmpdir ]; then
    tmpdir_created=1
 else
    echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
-    rm $tmpdir/* 2> /dev/null
-    if [ $? != 0 ]; then
-        echo "Warning: some temporary files could not be removed" >> $logfile 2>&1
-    fi
+   rm -rf $tmpdir/* 2> /dev/null
+   if [ $? != 0 ]; then
+      echo "Warning: some temporary files could not be removed" >> $logfile 2>&1
+   fi
 fi
 
-res=`echo $inpfile | grep ' '`
+res=`echo $inpfile | awk '$0 ~ / /'`
 actual_inpfile=""
 if [[ $res ]] ; then
     echo "the inpfile is a command, actually" >> $logfile 2>&1
@@ -279,7 +283,14 @@ echo >> $logfile 2>&1
 date >> $logfile 2>&1
 echo "Splitting dictionary into $parts lists" >> $logfile 2>&1
 sfxList=`$scr/split-dict.pl --input $tmpdir/dictionary --output $tmpdir/dict. --parts $parts 2>> $logfile`
-echo "sfxList:$sfxList" >> $logfile 2>&1
+
+res=$?
+if [ $res -ne 0 ] ; then
+    echo "creation of the sub-dictionaries failed with error status $res"
+    exit $res
+fi
+
+echo "List of the suffixes:$sfxList" >> $logfile 2>&1
 
 #checking whether the temporary files exist
 #checking whether the temporary files are closed
@@ -367,6 +378,12 @@ date >> $logfile 2>&1
 echo "Merging language models into $outfile" >> $logfile 2>&1
 $scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm ${outfile} $backoff $zipping >> $logfile 2>&1
 
+res=$?
+if [ $res -ne 0 ] ; then
+    echo "merging of sub-lms failed with error status $res"
+    exit $res
+fi
+
 #checking whether the temporary files exist
 #checking whether the temporary files are closed
 tmp_out_file="${outfile}"
@@ -380,7 +397,7 @@ echo "ARPA LM file created into $outfile" >> $logfile 2>&1
 
 if [ ! $verbose ] ; then
     echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
-    rm $tmpdir/* 2> /dev/null
+    rm -rf $tmpdir/* 2> /dev/null
 
     if [ $tmpdir_created -eq 1 ]; then
         echo "Removing temporary directory $tmpdir" >> $logfile 2>&1
