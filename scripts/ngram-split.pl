@@ -26,13 +26,15 @@
 
 use Getopt::Long "GetOptions";
 use File::Basename;
+use File::Copy qw(move);
 
 my ($help,$lm,$size,$sublm)=();
-my ($tmp_open,$gzip,$zipping)=("","","","");
+my ($gzip,$zipping,$verbose)=();
 
 $help=1 unless
 &GetOptions(
 'zipping' => \$zipping,
+'v|verbose' => \$verbose
 'h|help' => \$help);
 
 if ($help) {
@@ -46,6 +48,7 @@ if ($help) {
 	"       <output_prefix>       prefix of files to be created\n",
 	"\nOPTIONS:\n",
 	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
+    "       -v, --verbose         (optional) print debugging info on stderr\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 
@@ -67,26 +70,47 @@ $path=($ARGV[0]?$ARGV[0]:"goong");     #path of files to be created
 
 $pwrd="";
 
-if ($zipping){ $tmp_open=sprintf("|$gzip -c > %s.%04d.gz",$path,++$file_cnt); }else{ $tmp_open=sprintf("%s.%04d",$path,++$file_cnt); };
-open(OUT,$tmp_open);
+if ($zipping){
+    ${out_file}=sprintf("%s.%04d.gz",$path,++$file_cnt);
+    ${tmp_open}=sprintf("|$gzip -c > ${out_file}.tmp");
+}else{
+    ${out_file}=sprintf("%s.%04d",$path,++$file_cnt);
+    ${tmp_open}=sprintf("${out_file}.tmp");
+};
+open(OUT,"${tmp_open}");
 
+my (${out_file}, ${tmp_open}) = ();
 while ($ng=<STDIN>){
   ($wrd)=$ng=~/^([^ ]+)/;
-  #warn "$wrd\n";
+  print STDERR "word:$wrd\n" if $verbose;
   if ($pwrd ne $wrd){
     $pwrd=$wrd;
     if ($file_pref>$max_pref || $ngram_cnt>$max_ngram){
-      warn "it's time to change file\n";
+      print STDERR "closing ${out_file}.tmp\n" if ($verbose);
       close(OUT);
-      open(OUT,sprintf("|$gzip -c > %s.%04d.gz",$path,++$file_cnt));
+      print STDERR "renaming ${out_file}.tmp into ${out_file}\n" if ($verbose);
+      move("${out_file}","${out_file}.tmp");
+      if ($zipping){
+          ${out_file}=sprintf("%s.%04d.gz",$path,++$file_cnt);
+          ${tmp_open}=sprintf("|$gzip -c > ${out_file}.tmp");
+      }else{
+          ${out_file}=sprintf("%s.%04d",$path,++$file_cnt);
+          ${tmp_open}=sprintf("${out_file}.tmp");
+      }
+      print STDERR "opening ${out_file}.tmp\n" if ($verbose);
+      open(OUT,"${tmp_open}.tmp");
       $pref_cnt=$ngram_cnt=0;
     }
     else{
       $pref_cnt++;
     }
-  }
+  };
   print OUT $ng;
   $ngram_cnt++;
 }
+
+print STDERR "closing ${out_file}.tmp\n" if $verbose;
 close(OUT);
 
+print STDERR "renaming ${out_file}.tmp into ${out_file}\n" if ($verbose);
+move("${out_file}","${out_file}.tmp");

@@ -24,13 +24,17 @@
 use strict;
 use Getopt::Long "GetOptions";
 use File::Basename;
+use File::Copy qw(move)
 
-my ($help,$lm,$txt)=();
+my ($lm,$txt)=();
+my ($verbose,$help)=();
+
 $help=1 unless
 
 &GetOptions('lm=s' => \$lm,
             'txt=s' => \$txt,
-            'h|help' => \$help,);
+            'v|verbose' => \$verbose,
+            'h|help' => \$help);
 
 if ($help || !$lm || !$txt) {
 	my $cmnd = basename($0);
@@ -40,6 +44,7 @@ if ($help || !$lm || !$txt) {
 	"\nOPTIONS:\n",
     "       --lm  <string>        language model file \n",
     "       --txt <string>        text file\n",
+    "       -v, --verbose         (optional) print debugging info on stderr\n"
     "       -h, --help            (optional) print these instructions\n",
     "\n";
 
@@ -47,17 +52,16 @@ if ($help || !$lm || !$txt) {
 }
 
 if (!$ENV{IRSTLM}){
-  print "Set environment variable IRSTLM with path to the irstlm directory\n";
-  exit(1);
+  die "Set environment variable IRSTLM with path to the irstlm directory\n";
 }
-
-
 
 my $clm="$ENV{IRSTLM}/bin/compile-lm";
 
+print STDERR "opening a stream on this command |$clm $lm --eval $txt --debug 1|\n" if $(verbose);
 open (OUT,"$clm $lm --eval $txt --debug 1|");
 while (<OUT>){
-print;
+  print;
 }
 
+print STDERR "closing the stream on the command\n" if $(verbose);
 close(OUT);

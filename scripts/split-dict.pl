@@ -30,14 +30,17 @@
 use strict;
 use Getopt::Long "GetOptions";
 use File::Basename;
+use File::Copy qw(move);
 
-my ($help,$input,$output,$parts)=();
+my ($input,$output,$parts)=();
+my ($verbose,$help)=();
 
 $help=1 unless
 &GetOptions('input=s' => \$input,
             'output=s' => \$output, 
-             'parts=i' => \$parts,           
-             'h|help' => \$help,);
+            'parts=i' => \$parts,
+            'v|verbose' => \$verbose,
+            'h|help' => \$help);
 
 if ($help || !$input || !$output || !$parts) {
 	my $cmnd = basename($0);
@@ -53,13 +56,12 @@ if ($help || !$input || !$output || !$parts) {
     "       --input <string>      input dictionary with frequencies\n",
     "       --output <string>     prefix of output dictionaries\n",
     "       --parts <int>         number of partitions to create\n",
+    "       -v, --verbose         (optional) print debugging info on stderr\n",
     "       -h, --help            (optional) print these instructions\n",
     "\n";
 
   exit(1);
 }
-
-
 
 my $freqflag=0;
 my ($w,$f,$globf,$thr);
@@ -91,13 +93,13 @@ close (IN);
 
 $thr=$globf/$parts;
 my $totf=0;
-print STDERR "Dictionary 0: (thr: $thr , $globf, $totf , $parts)\n";
+print STDERR "Dictionary 0: (thr: $thr , $globf, $totf , $parts)\n" if $verbose;
 
 my $sfx=0;
 my $w;
 for (my $i=0;$i<=$#D;$i++){
 	
-# if the remaining words are less than or equal to 
+# if the remaining words are less than or equal to
 # the number of remaining sub-dictionaries to create
 # put only one word per each sub-dictionary.
 	if (($totf>0) && ($#D+1-$i) <= ($parts-1-$sfx)){
@@ -106,7 +108,7 @@ for (my $i=0;$i<=$#D;$i++){
 		$sfx++;
 		$globf-=$totf;
 		$thr=($globf)/($parts-$sfx);
-		print STDERR "Dictionary $sfx: (thr: $thr , $globf , $totf , ",($parts-$sfx),")\n";
+		print STDERR "Dictionary $sfx: (thr: $thr , $globf , $totf , ",($parts-$sfx),")\n" if $verbose;
 		$totf=0;
 	}
 
@@ -120,21 +122,26 @@ for (my $i=0;$i<=$#D;$i++){
 		$sfx++;
 		$globf-=$totf;
 		$thr=($globf)/($parts-$sfx);
-		print STDERR "Dictionary $sfx: (thr: $thr , $globf , $totf , ",($parts-$sfx),")\n";
+		print STDERR "Dictionary $sfx: (thr: $thr , $globf , $totf , ",($parts-$sfx),")\n" if $verbose;
 		$totf=0;
 	}
 }
 
 
 my $oldsfx=-1;
+my $sfxList="";
 for (my $i=0;$i<=$#D;$i++){
 	$w=$D[$i];
 	$sfx="0000$S{$w}";
 	$sfx=~s/.+(\d{3})/$1/;
+
 	if ($sfx != $oldsfx){
-#print STDERR "opening $output$sfx\n";
-		close (OUT) if $oldsfx!= -1;
-		open(OUT,">$output$sfx");
+		if ($oldsfx!= -1){
+            print STDERR "opening $output$sfx\n" if $verbose;
+		    close (OUT);
+		}
+        print STDERR "opening $output$sfx\n" if $verbose;
+		open(OUT,">$output$sfx.tmp");
 		if ($freqflag){
 			print OUT "DICTIONARY 0 $C[$sfx]\n";
 		}
@@ -142,6 +149,12 @@ for (my $i=0;$i<=$#D;$i++){
 			print OUT "dictionary 0 $C[$sfx]\n";
 		}
 		$oldsfx=$sfx;
+
+	    if (${sfxList} eq ""){
+	        ${sfxList}="$sfx";
+        } else{
+	        ${sfxList}="${sfxList} $sfx"
+	    };
 	}
 	if ($freqflag){
 		print OUT "$w $F[$i]\n";
@@ -150,8 +163,18 @@ for (my $i=0;$i<=$#D;$i++){
 		print OUT "$w\n";
 	}
 }
-close (OUT) if $oldsfx!= -1;
+if ($oldsfx!= -1){
+    print STDERR "opening $output$sfx\n" if $verbose;
+	close (OUT);
+}
 
 my $numdict=$S{$D[$#D]}+1;
-die "Only $numdict dictionaries were crested instead of $parts!" if ($numdict != $parts);
+die "Only $numdict dictionaries were created instead of $parts!" if ($numdict != $parts);
 
+foreach my $sfx (split(/ /,$sfxList)){
+    print STDERR "renaming $output$sfx.tmp into $output$sfx\n" if ($verbose);
+    move("$output$sfx.tmp","$output$sfx");
+}
+
+# print the list of suffixes of the created sub-dictionaries
+print STDOUT "${sfxList}\n";

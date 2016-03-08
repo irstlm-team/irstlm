@@ -24,9 +24,11 @@
 use strict;
 use Getopt::Long "GetOptions";
 use File::Basename;
+use File::Copy qw(move);
 
-my ($help,$lm,$size,$sublm,$backoff)=();
-my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
+my ($lm,$size,$sublm,$backoff)=();
+my ($verbose,$help)=();
+my ($gzip,$gunzip,$zipping)=();
 
 $help=0;
 $backoff=0;
@@ -36,6 +38,7 @@ $backoff=0;
 'sublm=s' => \$sublm,
 'backoff' => \$backoff,
 'zipping' => \$zipping,
+'v|verbose' => \$verbose,
 'h|help' => \$help);
 
 if ($help || !$size || !$lm || !$sublm) {
@@ -49,6 +52,7 @@ if ($help || !$size || !$lm || !$sublm) {
 	"       --lm <string>         name of the output LM file (will be gzipped if parameter '--zipping' is set)\n",
 	"       --backoff						  (optional) create a backoff LM, output is directly in ARPA format (default is false, i.e. iARPA format) \n",
 	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
+    "       -v, --verbose         (optional) print debugging info on stderr\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 
@@ -62,9 +66,10 @@ if ($zipping){
   chomp($gunzip);
 }
 
-warn "merge-sublm.pl --size $size --sublm $sublm --lm $lm --backoff $backoff --$zipping\n";
+print STDERR "merge-sublm.pl --size $size --sublm $sublm --lm $lm --backoff $backoff --$zipping\n" if ($verbose);
 
-warn "Compute total sizes of n-grams\n";
+print STDERR "Compute total sizes of n-grams\n" if ($verbose);
+
 my @size=();          #number of n-grams for each level
 my $tot1gr=0;         #total frequency of 1-grams
 my $unk=0;            #frequency of <unk>
@@ -76,16 +81,18 @@ for (my $n=1;$n<=$size;$n++){
   @files=map { glob($_) } "${sublm}*.${n}gr*";
   $files=join(" ",@files);
   $files || die "cannot find sublm files\n";
-  warn "join files $files\n";
+  print STDERR "join files $files\n" if ($verbose);
   
   if ($n==1){
+    my ${tmp_open}="";
     if ($zipping){ $tmp_open="$gunzip -c $files|"; }else{ $tmp_open="cat $files|"; }
+    print STDERR "opening (concatenated) ${files}\n" if ($verbose);
     open(INP,"$tmp_open") || die "cannot open $files\n";
 
     while(my $line = <INP>){
       $size[$n]++;
       chomp($line);
-      warn "there is an empty line in any of these files ($files); this should not happen\n" if $line =~ /^$/;
+      print STDERR "there is an empty line in any of these files ($files); this should not happen\n" if ($line =~ /^$/) && ($verbose);
       my @words = split(/[ \t]+/,$line);
       #cut down counts for sentence initial
       $words[0]=1 if $words[1]=~/<s>/;
@@ -95,9 +102,10 @@ for (my $n=1;$n<=$size;$n++){
       $unk+=$words[0] if $words[1]=~/<unk>/i;
       $tot1gr+=$words[0];
     }
+    print STDERR "closing (concatenated) ${files}\n" if ($verbose);
     close(INP);
     if ($unk==0){
-      warn "implicitely add <unk> word to counters\n";
+      print STDERR "implicitely add <unk> word to counters\n" if ($verbose);
       $tot1gr+=$size[$n]; #equivalent to WB smoothing
       $size[$n]++; 
     }
@@ -106,26 +114,34 @@ for (my $n=1;$n<=$size;$n++){
       if ($zipping){
         safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | wc -l > wc$$") or die;
       }else{
-        safesystem("grep -v '10000.000' < $files[$j] | wc -l > wc$$") or die;
+        safesystem("cat $files[$j] | grep -v '10000.000' | wc -l > wc$$") or die;
       }
+      print STDERR "opening wc$$\n" if ($verbose);
       open(INP,"wc$$") || die "cannot open wc$$\n";
       my $wc = <INP>;
       chomp($wc);
       $size[$n] += $wc;
+      print STDERR "closing wc$$\n" if ($verbose);
       close(INP);
+      print STDERR "removing wc$$\n" if ($verbose);
       unlink("wc$$");
     }
   }
-  warn "n:$n size:$size[$n] unk:$unk\n";
+  print STDERR "n:$n size:$size[$n] unk:$unk\n" if ($verbose);
 }
 
-warn "Merge all sub LMs\n";
+print STDERR "Merge all sub LMs\n" if ($verbose);
 
+my (${tmp_lm})=();
 if ($zipping){ $lm.=".gz" if $lm!~/.gz$/; }
-if ($zipping){ $tmp_open="|$gzip -c > $lm"; }else{ $tmp_open="> $lm"; };
-open(LM,"$tmp_open") || die "Cannot open $lm\n";
+unlink("${lm}.tmp");
+if ($zipping){ ${tmp_lm}="|$gzip -c >> ${lm}.tmp"; }else{ ${tmp_lm}=">> ${lm}.tmp"; };
 
-warn "Write LM Header\n";
+print STDERR "opening |${tmp_lm}|\n" if ($verbose);
+print STDERR "opening ${lm}.tmp to print the header of the ARPA format\n" if ($verbose);
+open(LM,"${tmp_lm}") || die "Cannot open ${lm}.tmp\n";
+
+print STDERR "Write LM Header\n" if ($verbose);
 if ($backoff){
 	printf LM "ARPA\n\n";
 } else{
@@ -137,29 +153,32 @@ for (my $n=1;$n<=$size;$n++){
     printf LM "ngram $n=\t$size[$n]\n";
 }
 printf LM "\n";
-close(LM);
 
-warn "Writing LM Tables\n";
+print STDERR "closing ${lm}.tmp\n" if ($verbose);
+close(LM);;
+
+print STDERR "Writing LM Tables\n" if ($verbose);
 for (my $n=1;$n<=$size;$n++){
   
-  warn "Level $n\n";
+  print STDERR "Level $n\n" if ($verbose);
   
   @files=map { glob($_) } "${sublm}*.${n}gr*";
   $files=join(" ",@files);
-  warn "input from: $files\n";
+  print STDERR "input from: $files\n" if ($verbose);
   my $tmp_open="";      
   if ($n==1){
-    if ($zipping){ $tmp_open="$gunzip -c $files|"; }else{ $tmp_open="cat $files|"; };
-    open(INP,"$tmp_open") || die "cannot open $files\n";
+    if ($zipping){ ${tmp_open}="$gunzip -c $files|"; }else{ $tmp_open="cat $files|"; }
+    print STDERR "opening (concatenated) input files ${tmp_open}\n" if ($verbose);
+    open(INP,"${tmp_open}") || die "cannot open $files\n";
 
-    if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
-    open(LM,"$tmp_open");
+    print STDERR "re-opening output file ${lm}.tmp to print 1-grams\n" if ($verbose);
+    open(LM,"${tmp_lm}");
 
     printf LM "\\$n-grams:\n";
-    while(my $line = <INP>){   
+    while (my $line = <INP>){
       chomp($line);
-      warn "there is an empty line in any of these files ($files); this should not happen\n" if $line =~ /^$/;
-	 #lowercase some expressions of google n-grams
+      print STDERR "there is an empty line in any of these files ($files); this should not happen\n" if ($line =~ /^$/) && ($verbose);
+	  #lowercase some expressions of google n-grams
       $line=~s/<S>/<s>/g;
       $line=~s/<\/S>/<\/s>/g;
       $line=~s/<UNK>/<unk>/g;
@@ -177,6 +196,7 @@ for (my $n=1;$n<=$size;$n++){
       shift @words;
       printf LM "%f\t%s\t%f\n",$pr,$words[0],$words[1];
     }
+    print STDERR "closing (concatenated input files\n" if ($verbose);
     close(INP);
 
     #print final <unk>
@@ -188,31 +208,35 @@ for (my $n=1;$n<=$size;$n++){
     }
 
     printf LM "%f <unk>\n",$pr;
-    close(LM);
+    print STDERR "re-closing output file ${lm}.tmp\n" if ($verbose);
+    close(LM);;
   }else{
-
-    if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
-    open(LM,"$tmp_open") || die "Cannot open $lm\n";
+    print STDERR "re-opening output file for adding symbol of the ARPA format\n" if ($verbose);
+    open(LM,"${tmp_lm}") || die "Cannot open ${lm}.tmp\n";
 
     printf LM "\\$n-grams:\n";
+    print STDERR "re-closing output file ${lm}.tmp\n" if ($verbose);
     close(LM);
+    print STDERR "copying n-grams (n>1) into ${lm}.tmp removing entries with undefined prob\n" if ($verbose);
     for (my $j=0;$j<scalar(@files);$j++){
       next if ! -s $files[$j]; #skip if it has size 0, note that the file surely exists)
       if ($zipping){
-        safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | gzip -c >> $lm") or die;
+        safesystem("$gunzip -c $files[$j] | grep -v '10000.000' | gzip -c >> ${lm}.tmp") or die;
       }else{
-        safesystem("cat $files[$j] | grep -v '10000.000' >> $lm") or die;
-      }
+        safesystem("cat $files[$j] | grep -v '10000.000' >> ${lm}.tmp") or die;
+      };
     }
   }
-
 }
 
-if ($zipping){ $tmp_open="|$gzip -c >> $lm"; }else{ $tmp_open=">> $lm"; };
-open(LM,"$tmp_open") || die "Cannot open $lm\n";
-
+print STDERR "re-opening output file ${lm}.tmp for adding final symbol of the ARPA format\n" if ($verbose);
+open(LM,"${tmp_lm}") || die "Cannot open ${lm}.tmp\n";
 printf LM "\\end\\\n";
+print STDERR "re-closing output file ${lm}.tmp\n" if ($verbose);
 close(LM);
+
+print STDERR "renaming ${lm}.tmp into ${lm}\n" if ($verbose);
+move("${lm}.tmp","${lm}");
 
 sub safesystem {
   print STDERR "Executing: @_\n";

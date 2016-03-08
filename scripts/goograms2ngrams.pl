@@ -27,12 +27,14 @@
 
 use strict;
 use Getopt::Long "GetOptions";
+use File::Copy qw(move);
 
 my $cutoffword="<CUTOFF>"; #special word for Google 1T-ngram cut-offs
 my $blocksize=10000000; #this is the blocksize of produced n-grams
 my $from=2;             #starting n-gram level
 
-my($help,$verbose,$maxsize,$googledir,$ngramdir)=();
+my($maxsize,$googledir,$ngramdir)=();
+my($verbose,$help)=();
 my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
 
 $help=1 unless
@@ -41,7 +43,7 @@ $help=1 unless
 			'googledir=s' => \$googledir,
 			'ngramdir=s' => \$ngramdir,
 			'h|help' => \$help,
-			'verbose' => \$verbose,
+			'v|verbose' => \$verbose,
 			'zipping' => \$zipping);
 
 
@@ -57,7 +59,7 @@ if ($help || !$maxsize || !$googledir || !$ngramdir ) {
 	"       --googledir <string>  directory containing the google-grams dirs (1gms,2gms,...)\n",
 	"       --ngramdir <string>   directory where to write the n-grams \n",
 	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
-	"       --verbose             (optional) very talktive output\n",
+	"       -v, --verbose         (optional) very talktive output\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 
@@ -71,8 +73,7 @@ if ($zipping){
   chomp($gunzip);
 }
 
-warn "goograms2ngrams: maxsize $maxsize from $from googledir $googledir ngramdir $ngramdir zipping $zipping\n"
-if $verbose;
+print STDERR "goograms2ngrams: maxsize $maxsize from $from googledir $googledir ngramdir $ngramdir zipping $zipping\n" if ($verbose);
 
 die "goograms2ngrams: value of --maxsize must be between 2 and 5\n" if $maxsize<2 || $maxsize>5;
 die "goograms2ngrams: cannot find --googledir $googledir \n" if ! -d $googledir;
@@ -87,8 +88,9 @@ foreach ($n=$from;$n<=$maxsize;$n++){
   
   my $counter=0;
   	
-  warn "Converting google-$n-grams into $n-gram\n"; 
+  print STDERR "Converting google-$n-grams into $n-gram\n" if $(verbose);
 
+  my (${out_file_ngr})=();
   if ($zipping){
     $hgrams=($n==2?"${googledir}/1gms/vocab.gz":"${ngramdir}/".($n-1)."grams-*.gz");
     $tmp_open="$gunzip -c $hgrams |";
@@ -96,15 +98,17 @@ foreach ($n=$from;$n<=$maxsize;$n++){
     $hgrams=($n==2?"${googledir}/1gms/vocab":"${ngramdir}/".($n-1)."grams-*");
     $tmp_open="cat $hgrams |";
   }
+  print STDERR "opening $hgrams\n" if $verbose;
   open(HGR,"$tmp_open") || die "cannot open $hgrams\n";
 
   if ($zipping){
     $ggrams="${googledir}/".($n)."gms/".($n)."gm-*";
     $tmp_open="$gunzip -c $ggrams |";
-  }else{ $tmp_open="";
+  }else{
     $hgrams=($n==2?"${googledir}/1gms/vocab":"${ngramdir}/".($n-1)."grams-*");
     $tmp_open="cat $ggrams |";
   }
+  print STDERR "opening $ggrams\n" if $verbose;
   open(GGR,"$tmp_open") || die "cannot open $ggrams\n";
 
   my $id = sprintf("%04d", 0);
@@ -113,23 +117,22 @@ foreach ($n=$from;$n<=$maxsize;$n++){
     $ngrams="${ngramdir}/".($n)."grams-${id}.gz";
     next if -e $ngrams; #go to next step if file exists already;
     $tmp_open="|$gzip -c > $ngrams";
-  }else{ $tmp_open="";
+    $tmp_open="";
     $ngrams="${ngramdir}/".($n)."grams-${id}";
     next if -e $ngrams; #go to next step if file exists already;
     $tmp_open="$ngrams";
   }
+  print STDERR "opening $ngrams\n" if $verbose;
   open(NGR,"$tmp_open") || die "cannot open $ngrams\n";
 
   chop($ggr=<GGR>); @ggr=split(/[ \t]/,$ggr);$ggrcnt=(pop @ggr);
-  #warn "ggr: ",$ggrcnt," ",join(" ",@ggr[0..$n-1]),"\n";
 
   while ($hgr=<HGR>){	
 
 	$counter++;
-	printf(STDERR ".") if ($counter % 1000000)==0;
+	printf(STDERR ".") if (($counter % 1000000)==0) && ($verbose);
 	  
-	chop($hgr); @hgr=split(/[ \t]/,$hgr); $hgrcnt=(pop @hgr);
-    #warn "hgr: ",$hgrcnt," ",join(" ",@hgr[0..$n-2]),"\n";
+	chop($hgr); @hgr=split(/[ \t]/,$hgr); $hgrcnt=(pop @hgr);;
   
 	if (join(" ",@hgr[0..$n-2]) eq join(" ",@ggr[0..$n-2])){ 
 
@@ -141,17 +144,17 @@ foreach ($n=$from;$n<=$maxsize;$n++){
 		}until (join(" ",@hgr[0..$n-2]) ne join(" ",@ggr[0..$n-2]));
 
 		if ($hgrcnt > $totggrcnt){
-			#warn "difference: $hgrcnt $totggrcnt =",$hgrcnt-$totggrcnt,"\n";
 			print NGR join(" ",@hgr[0..$n-1])," ",$cutoffword," ",$hgrcnt-$totggrcnt,"\n";
 		}
 	}
 	else{ 
-		#warn "fully pruned context: $hgr\n";
+	    print STDERR "fully pruned context: $hgr\n" if ($verbose);
 		print NGR join(" ",@hgr[0..$n-1])," ",$cutoffword," ",$hgrcnt,"\n";
 	}	
 	
-	if (($counter % $blocksize)==0){ 
-		close(NGR);
+	if (($counter % $blocksize)==0){
+        print STDERR "closing ${ngrams}\n" if $verbose;
+        close(NGR);;
 		my $id = sprintf("%04d", int($counter / $blocksize));
 
 		if ($zipping){
@@ -161,13 +164,21 @@ foreach ($n=$from;$n<=$maxsize;$n++){
 		  $ngrams="${ngramdir}/".($n)."grams-${id}";
 		  $tmp_open="$ngrams";
 		}
+        print STDERR "opening $ngrams\n" if $verbose
 		open(NGR,"$tmp_open") || die "cannot open $ngrams\n";
 	}
 	
   }
 
-  close(HGR);close(NGR);close(GGR);
-  
+  print STDERR "closing ${hgrams}\n" if $verbose;
+  close(HGR);
+  print STDERR "closing ${ggrams}\n" if $verbose;
+  close(NGGR);
+  print STDERR "closing ${ngrams}\n" if $verbose;
+  close(NGR);
+
+  print STDERR "renaming ${$ngrams}.tmp into ${ngrams}\n" if ($verbose);
+  move("${$ngrams}.tmp","${$ngrams}");
 }
   
   

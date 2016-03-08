@@ -37,18 +37,19 @@
 use strict;
 use Getopt::Long "GetOptions";
 use File::Basename;
+use File::Copy qw(move);
 
 my $cutoffword="<CUTOFF>"; #special word for Google 1T-ngram cut-offs 
 my $cutoffvalue=39;   #cut-off threshold for Google 1T-ngram cut-offs 
 
 #set defaults for optional parameters
-my ($verbose,$size,$ngrams,$sublm)=(0, 0, undef, undef);
+my ($size,$ngrams,$sublm)=(0, undef, undef);
+my ($verbose,$help)=();
 my ($witten_bell,$good_turing,$shift_beta,$improved_shift_beta,$stupid_backoff)=(0, 0, "", "", "");
 my ($witten_bell_flag,$good_turing_flag,$shift_beta_flag,$improved_shift_beta_flag,$stupid_backoff_flag)=(0, 0, 0, 0, 0);
 my ($freqshift,$prune_singletons,$prune_thr_str,$cross_sentence)=(0, 0, "", 0);
-my ($tmp_open,$gzip,$gunzip,$zipping)=("","","","");
+my ($gzip,$gunzip,$zipping)=("","","");
 
-my $help = 0;
 $help = 1 unless
 &GetOptions('size=i' => \$size,
 'freq-shift=i' => \$freqshift, 
@@ -63,7 +64,7 @@ $help = 1 unless
 'pft|PruneFrequencyThreshold=s' => \$prune_thr_str,
 'cross-sentence' => \$cross_sentence,
 'h|help' => \$help,
-'verbose' => \$verbose,
+'v|verbose' => \$verbose,
 'zipping' => \$zipping);
 
 
@@ -85,8 +86,8 @@ if ($help || !$size || !$ngrams || !$sublm) {
 	"       --prune-singletons    (optional) remove n-grams occurring once, for n=3,4,5,... (disabled by default)\n",
 	"       -pft, --PruneFrequencyThreshold <string>	(optional) pruning frequency threshold for each level; comma-separated list of values; (default is \"0,0,...,0\", for all levels)\n",
 	"       --cross-sentence      (optional) include cross-sentence bounds (disabled by default)\n",
-	"       --verbose             (optional) print debugging info\n",
 	"       --zipping             (optional) enable usage of zipped temporary files (disabled by default)\n",
+	"       -v, --verbose         (optional) print debugging info on stderr\n",
 	"       -h, --help            (optional) print these instructions\n",
 	"\n";
 	
@@ -110,7 +111,6 @@ $improved_shift_beta_flag = 1 if ($improved_shift_beta);
 $witten_bell = $witten_bell_flag = 1 if ($witten_bell_flag + $shift_beta_flag + $improved_shift_beta_flag + $stupid_backoff_flag) == 0;
 
 print STDERR  "build-sublm: size=$size ngrams=$ngrams sublm=$sublm witten-bell=$witten_bell shift-beta=$shift_beta improved-shift-beta=$improved_shift_beta stupid-backoff=$stupid_backoff prune-singletons=$prune_singletons cross-sentence=$cross_sentence PruneFrequencyThreshold=$prune_thr_str zipping=$zipping\n" if $verbose;
-
 
 die "build-sublm: choose only one smoothing method\n" if ($witten_bell_flag + $shift_beta_flag + $improved_shift_beta_flag + $stupid_backoff_flag) > 1;
 
@@ -164,20 +164,27 @@ my $n;
 
 print STDERR  "Collecting 1-gram counts\n" if $verbose;
 
+print STDERR "opening $ngrams\n" if ($verbose);
 open(INP,"$ngrams") || open(INP,"$ngrams|")  || die "cannot open $ngrams\n";
 
-if ($zipping){ $tmp_open="|$gzip -c >${sublm}.1gr.gz"; }else{ $tmp_open="> ${sublm}.1gr"; }
-print STDERR "tmp_open:$tmp_open\n";
-open(GR,"$tmp_open") || die "cannot create ${sublm}.1gr(.gz)\n";
+print STDERR "zipping:|$zipping|\n";
+my ($tmp_sublm, $tmp_open)=("","");
+if ($zipping){
+    ${tmp_sublm}="${sublm}.1gr.gz";
+    ${tmp_open}="|$gzip -c > ${tmp_sublm}.tmp";
+}else{
+    ${tmp_sublm}="${sublm}.1gr";
+    ${tmp_open}="> ${tmp_sublm}.tmp";
+}
+
+print STDERR "opening ${tmp_sublm}\n" if ($verbose);
+open(GR,"${tmp_open}") || die "cannot create {tmp_sublm}\n";
 
 while ($ng=<INP>) {
   
   chomp($ng);  @ng=split(/[ \t]+/,$ng);  $ngcnt=(pop @ng) - $freqshift;
-  
-	#	warn "ng: |@ng| ngcnt:$ngcnt\n";
 	
   if ($oldwrd ne $ng[0]) {
-		#    warn "$totcnt,$oldwrd,$ng[0]\n" if $oldwrd ne '';
     printf (GR "%s\t%s\n",$totcnt,$oldwrd) if $oldwrd ne '';
     $totcnt=0;$oldwrd=$ng[0];
   }
@@ -187,8 +194,13 @@ while ($ng=<INP>) {
 }
 
 printf GR "%s\t%s\n",$totcnt,$oldwrd;
+print STDERR "closing $ngrams\n" if ($verbose);
 close(INP);
+print STDERR "closing $ngrams\n" if ($verbose);
 close(GR);
+
+print STDERR "renaming ${tmp_sublm}.tmp into ${tmp_sublm}\n" if ($verbose);
+move("${tmp_sublm}.tmp","${tmp_sublm}");
 
 my (@h,$h,$hpr);	      #n-gram history 
 my (@dict,$code);	      #sorted dictionary of history successors
@@ -200,23 +212,25 @@ my $locfreq;
 #collect global statistics for (Improved) Shift-Beta smoothing
 if ($shift_beta_flag || $improved_shift_beta_flag) {
   my $statfile=$shift_beta || $improved_shift_beta;
-  print STDERR  "load \& merge IKN statistics from $statfile \n" if $verbose;
+  print STDERR "load \& merge IKN statistics from $statfile \n" if ($verbose);
+  print STDERR "opening $statfile\n" if ($verbose);
   open(IKN,"$statfile") || open(IKN,"$statfile|")  || die "cannot open $statfile\n";
   while (<IKN>) {
     my($lev,$n1,$n2,$n3,$n4,$uno3)=$_=~/level: (\d+)  n1: (\d+) n2: (\d+) n3: (\d+) n4: (\d+) unover3: (\d+)/;
     $n1[$lev]+=$n1;$n2[$lev]+=$n2;$n3[$lev]+=$n3;$n4[$lev]+=$n4;$uno3[$lev]+=$uno3;
-		print STDERR  "from $statfile level $lev: n1:$n1 n2:$n2 n3:$n3 n4:$n4 uno3:$uno3\n";
-		print STDERR  "level $lev: n1[$lev]:$n1[$lev] n3[$lev]:$n2[$lev]  n3[$lev]:$n3[$lev] n4[$lev]:$n4[$lev] uno3[$lev]:$uno3[$lev]\n";
+	print STDERR  "from $statfile level $lev: n1:$n1 n2:$n2 n3:$n3 n4:$n4 uno3:$uno3\n" if ($verbose);
+	print STDERR  "level $lev: n1[$lev]:$n1[$lev] n3[$lev]:$n2[$lev]  n3[$lev]:$n3[$lev] n4[$lev]:$n4[$lev] uno3[$lev]:$uno3[$lev]\n" if ($verbose);
   }
-	if ($verbose){
-		for (my $lev=1;$lev<=$#n1;$lev++) {
-			print STDERR  "level $lev: n1[$lev]:$n1[$lev] n3[$lev]:$n2[$lev]  n3[$lev]:$n3[$lev] n4[$lev]:$n4[$lev] uno3[$lev]:$uno3[$lev]\n";
-		}
-	}
+  if ($verbose){
+	for (my $lev=1;$lev<=$#n1;$lev++) {
+  	  print STDERR  "level $lev: n1[$lev]:$n1[$lev] n3[$lev]:$n2[$lev]  n3[$lev]:$n3[$lev] n4[$lev]:$n4[$lev] uno3[$lev]:$uno3[$lev]\n" if ($verbose);
+  	}
+  }
+  print STDERR "closing $statfile\n" if ($verbose);
   close(IKN);
 }
 
-print STDERR  "Computing n-gram probabilities:\n" if $verbose;
+print STDERR  "Computing n-gram probabilities:\n" if ($verbose);
 
 foreach ($n=2;$n<=$size;$n++) {
 	
@@ -227,16 +241,16 @@ foreach ($n=2;$n<=$size;$n++) {
 	
   if ($stupid_backoff_flag) {
 		$beta=0.4;
-		print STDERR  "Stupid-Backoff smoothing: beta $n: $beta\n" if $verbose;
+		print STDERR "Stupid-Backoff smoothing: beta $n: $beta\n" if ($verbose);
 	}
 	
   if ($shift_beta_flag) {
     if ($n1[$n]==0 || $n2[$n]==0) {
-      print STDERR  "Error in Shift-Beta smoothing statistics: resorting to Witten-Bell\n" if $verbose;  
+      print STDERR  "Error in Shift-Beta smoothing statistics: resorting to Witten-Bell\n" if ($verbose);
       $beta=0;  
     } else {
       $beta=$n1[$n]/($n1[$n] + 2 * $n2[$n]); 
-      print STDERR  "Shift-Beta smoothing: beta $n: $beta\n" if $verbose;  
+      print STDERR "Shift-Beta smoothing: beta $n: $beta\n" if ($verbose);
     }
   }
 	
@@ -255,19 +269,42 @@ foreach ($n=2;$n<=$size;$n++) {
       $beta[2] = 2 - 3 * $Y * $n3[$n] / $n2[$n];
       $beta[3] = 3 - 4 * $Y * $n4[$n] / $n3[$n];
     }
-		print STDERR  "Improved-Shift-Beta  smoothing: level:$n beta[1]:$beta[1] beta[2]:$beta[2] beta[3]:$beta[3]\n" if $verbose; 
+    print STDERR  "Improved-Shift-Beta  smoothing: level:$n beta[1]:$beta[1] beta[2]:$beta[2] beta[3]:$beta[3]\n" if $verbose;
   }
-	
+
+  print STDERR "opening $ngrams\n" if ($verbose);
   open(INP,"$ngrams") || open(INP,"$ngrams |")  || die "cannot open $ngrams\n";
 
-  if ($zipping){ $tmp_open="$gunzip -c ${sublm}.".($n-1)."gr.gz |"; }else{ $tmp_open="${sublm}.".($n-1)."gr"; }
-  open(HGR,"$tmp_open") || die "cannot open ${sublm}.".($n-1)."gr(.gz)\n";
+  my ($out_file_hgr,$out_file_gr,$out_file_nhgr)=("","","");
+  if ($zipping){
+      ${out_file_hgr}="${sublm}.".($n-1)."gr.gz";
+      ${tmp_open}="$gunzip -c ${out_file_hgr} |";
+  }else{
+      ${out_file_hgr}="${sublm}.".($n-1)."gr";
+      ${tmp_open}="${out_file_hgr}";
+  }
+  print STDERR "opening ${out_file_hgr}\n" if ($verbose);
+  open(HGR,"$tmp_open") || die "cannot open ${out_file_hgr}\n";
 
-  if ($zipping){ $tmp_open="| $gzip -c > ${sublm}.${n}gr.gz"; }else{ $tmp_open="> ${sublm}.${n}gr"; }
-  open(GR,"$tmp_open");
+  if ($zipping){
+      ${out_file_gr}="${sublm}.${n}gr.gz";
+      ${tmp_open}="| $gzip -c > ${out_file_gr}.tmp";
+  }else{
+      ${out_file_gr}="${sublm}.${n}gr";
+      ${tmp_open}="> ${out_file_gr}.tmp";
+  }
+  print STDERR "opening ${out_file_gr}\n" if ($verbose);
+  open(GR,"$tmp_open") || die "cannot open ${out_file_gr}.tmp\n";
 
-  if ($zipping){ $tmp_open="| $gzip -c > ${sublm}.".($n-1)."ngr.gz"; }else{ $tmp_open="> ${sublm}.".($n-1)."ngr"; }
-  open(NHGR,"$tmp_open") || die "cannot open ${sublm}.".($n-1)."ngr(.gz)\n";
+  if ($zipping){
+      ${out_file_nhgr}="${sublm}.".($n-1)."ngr.gz";
+      ${tmp_open}="| $gzip -c > ${out_file_nhgr}.tmp";
+  }else{
+      ${out_file_nhgr}="${sublm}.".($n-1)."ngr";
+      ${tmp_open}="> ${out_file_nhgr}.tmp";
+  }
+  print STDERR "opening ${out_file_nhgr}\n" if ($verbose);
+  open(NHGR,"${tmp_open}") || die "cannot open ${out_file_nhgr}\n";
 
   my $ngram;
   my ($reduced_h, $reduced_ng) = ("", "");
@@ -319,8 +356,8 @@ foreach ($n=2;$n<=$size;$n++) {
 				my $index=(1-($concentration * $mass))/(1-1/$cutoffvalue) + (1/$cutoffvalue);
 				my $cutoffdiff=int($ngcnt * $index);
 				$cutoffdiff=1 if $cutoffdiff==0;
-				print STDERR "diff $diff $totcnt cutofffreq $ngcnt -- cutoffdiff: $cutoffdiff\n";
-				print STDERR "concentration:",$concentration," mass:", $mass,"\n";
+				print STDERR "diff $diff $totcnt cutofffreq $ngcnt -- cutoffdiff: $cutoffdiff\n" if ($verbose);
+				print STDERR "concentration:",$concentration," mass:", $mass,"\n" if ($verbose);
 				$diff+=$cutoffdiff;
       }
 		}
@@ -344,7 +381,7 @@ foreach ($n=2;$n<=$size;$n++) {
 				
 				$ngram=join(" ",$reduced_h,$dict[$c]);
 
-				print STDERR "totcnt:$totcnt diff:$diff singlediff:$singlediff\n" if $totcnt+$diff+$singlediff==0;
+				print STDERR "totcnt:$totcnt diff:$diff singlediff:$singlediff\n" if ($totcnt+$diff+$singlediff==0) && ($verbose);
 				
 				if ($shift_beta && $beta>0) {
 					$prob=($cnt[$c]-$beta)/$totcnt;
@@ -367,8 +404,7 @@ foreach ($n=2;$n<=$size;$n++) {
 				#rm singleton n-grams for (n>=3), if flag is active
 				#rm n-grams (n>=2) containing cross-sentence boundaries, if flag is not active
 				#rm n-grams containing <unk> or <cutoff> except for 1-grams
-				
-				#warn "considering $size $n |$ngram|\n";				
+
 				if (($prune_singletons && $n>=3 && $cnt[$c]==1) ||
 					(!$cross_sentence && &CrossSentence($ngram)) || 
 					(&containsOOV($dict[$c])) ||
@@ -420,22 +456,22 @@ foreach ($n=2;$n<=$size;$n++) {
     if ($hpr==-10000) {
       #skip this history
     } elsif ($shift_beta && $beta>0) {
-			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if $totcnt==0;
+			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if ($totcnt==0) && ($verbose);
       my $lambda=$beta * $diff/$totcnt; 	
       my $logp=log($boprob+$lambda)/$log10;
       printf NHGR "%s\t%f\n",$h,($logp>0?0:$logp);
     } elsif ($improved_shift_beta) {
-			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if $totcnt==0;
+			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if ($totcnt==0) && ($verbose);
       my $lambda=($beta[1] * $diff1 + $beta[2] * $diff2 + $beta[3] * $diff3)/$totcnt; 	  
       my $logp=log($boprob+$lambda)/$log10;
       printf NHGR "%s\t%f\n",$h,($logp>0?0:$logp);
     } elsif ($stupid_backoff) {
-			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if $totcnt==0;
+			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt -- denumerator:",($totcnt),"\n" if ($totcnt==0) && ($verbose);
       my $lambda=$beta;
 			my $logp=log($lambda)/$log10;
       printf NHGR "%s\t%f\n",$h,($logp>0?0:$logp);
     } else {
-			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt diff:$diff -- denumerator:",($totcnt+$diff),"\n" if $totcnt+$diff==0;
+			print STDERR "wrong division: considering rewriting history --- h:|$h| --- hpr=$hpr --- totcnt:$totcnt diff:$diff -- denumerator:",($totcnt+$diff),"\n" if ($totcnt+$diff==0) && ($verbose);
       my $lambda=$diff/($totcnt+$diff); 
       my $logp=log($boprob+$lambda)/$log10;
       printf NHGR "%s\t%f\n",$h,($logp>0?0:$logp);
@@ -455,21 +491,27 @@ foreach ($n=2;$n<=$size;$n++) {
     }
   }until (!defined($ng));		#n-grams are over
 	
-  close(HGR); close(INP); close(GR); close(NHGR);
-	
-  if ($zipping){
-    rename("${sublm}.".($n-1)."ngr.gz","${sublm}.".($n-1)."gr.gz");
-  }else{
-    rename("${sublm}.".($n-1)."ngr","${sublm}.".($n-1)."gr");
-  }
-}   
+  print STDERR "closing ${ngrams}\n" if ($verbose);
+  close(INP);
+  print STDERR "closing ${out_file_hgr}\n" if ($verbose);
+  close(HGR);
+  print STDERR "closing ${out_file_gr}.tmp\n" if ($verbose);
+  close(GR);
+  print STDERR "closing ${out_file_nhgr}.tmp\n" if ($verbose);
+  close(NHGR);
+
+  print STDERR "renaming ${out_file_gr}.tmp into ${out_file_gr}\n" if ($verbose);
+  move("${out_file_gr}.tmp","${out_file_gr}");
+  print STDERR "renaming ${out_file_nhgr}.tmp into ${out_file_nhgr}\n" if ($verbose);
+  move("${out_file_nhgr}.tmp","${out_file_hgr}");
+}
 
 
 #check if n-gram contains cross-sentence boundaries
 sub CrossSentence(){
   my ($ngram) = @_;
   if ($ngram=~/<\/s> /i) { #if </s> occurs not only in the last place
-		print STDERR  "check CrossSentence ngram:|$ngram| is CrossSentence\n" if $verbose;
+	##print STDERR  "check CrossSentence ngram:|$ngram| is CrossSentence\n" if ($verbose);
     return 1;
   }
   return 0;
