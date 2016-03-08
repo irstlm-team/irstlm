@@ -1,7 +1,6 @@
 #! /bin/bash
 
 set -m # Enable Job Control
-set -e
 
 function usage()
 {
@@ -294,7 +293,7 @@ fi
 done
 
 # Wait for all parallel jobs to finish
-while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
+while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; sleep 0.1; done
 
 for sfx in $sfxList ; do
     if [ $zipping ] ; then
@@ -329,7 +328,7 @@ fi
 done
 
 # Wait for all parallel jobs to finish
-while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
+while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; sleep 0.1; done
 
 
 # check whether all files for the sublm are created
