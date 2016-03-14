@@ -206,10 +206,103 @@ namespace irstlm {
 		return lmt;
 	}
 	
-	//return log10 prob of an ngram
-	double lmInterpolation::clprob(ngram ng, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+    //return log10 prob of an ngram
+    double lmInterpolation::clprob(ngram ng, topic_map_t& lm_weights, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
+    {
+        VERBOSE(1,"double lmInterpolation::clprob(ngram ng, topic_map_t& lm_weights,...)"  << std::endl);
+        
+        double pr=0.0;
+        double _logpr;
+        
+        char* _maxsuffptr=NULL,*actualmaxsuffptr=NULL;
+        ngram_state_t _maxsuffidx=0,actualmaxsuffidx=0;
+        unsigned int _statesize=0,actualstatesize=0;
+        int _bol=0,actualbol=MAX_NGRAM;
+        double _bow=0.0,actualbow=0.0;
+        double _lastbow=0.0,actuallastbow=0.0;
+        bool _extendible=false,actualextendible=false;
+        
+        double_vec_t weight(m_number_lm);
+        set_weight(lm_weights,weight);
+        
+        for (size_t i=0; i<m_number_lm; i++) {
+            VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << " normalized_weight[i]:" << weight[i] << endl);
+        }
+        
+        for (size_t i=0; i<m_number_lm; i++) {
+            if (weight[i]>0.0){
+                ngram _ng(m_lm[i]->getDict());
+                _ng.trans(ng);
+                _logpr=m_lm[i]->clprob(_ng,&_bow,&_bol,&_maxsuffidx,&_maxsuffptr,&_statesize,&_extendible,&_lastbow);
+                
+                IFVERBOSE(3){
+                    //cerr.precision(10);
+                    VERBOSE(3," LM " << i << " m_weight:" << m_weight[i] << " normalized_weight:" << weight[i] << std::endl);
+                    VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
+                    VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
+                    VERBOSE(3," LM " << i << " msp:" << (void*) _maxsuffptr << std::endl);
+                    VERBOSE(3," LM " << i << " msidx:" << _maxsuffidx << std::endl);
+                    VERBOSE(3," LM " << i << " statesize:" << _statesize << std::endl);
+                    VERBOSE(3," LM " << i << " bow:" << _bow << std::endl);
+                    VERBOSE(3," LM " << i << " bol:" << _bol << std::endl);
+                    VERBOSE(3," LM " << i << " lastbow:" << _lastbow << std::endl);
+                }
+                
+                /*
+                 //TO CHECK the following claims
+                 //What is the statesize of a LM interpolation? The largest _statesize among the submodels
+                 //What is the maxsuffptr of a LM interpolation? The _maxsuffptr of the submodel with the largest _statesize
+                 //What is the bol of a LM interpolation? The smallest _bol among the submodels
+                 //What is the bow of a LM interpolation? The weighted sum of the bow of the submodels
+                 //What is the prob of a LM interpolation? The weighted sum of the prob of the submodels
+                 //What is the extendible flag of a LM interpolation? true if the extendible flag is one for any LM
+                 //What is the lastbow of a LM interpolation? The weighted sum of the lastbow of the submodels
+                 */
+                
+                pr+=weight[i]*pow(10.0,_logpr);
+                actualbow+=weight[i]*pow(10.0,_bow);
+                
+                if(_statesize > actualstatesize || i == 0) {
+                    actualmaxsuffptr = _maxsuffptr;
+                    actualmaxsuffidx = _maxsuffidx;
+                    actualstatesize = _statesize;
+                }
+                if (_bol < actualbol) {
+                    actualbol=_bol; //backoff limit of LM[i]
+                }
+                if (_extendible) {
+                    actualextendible=true; //set extendible flag to true if the ngram is extendible for any LM
+                }
+                if (_lastbow < actuallastbow) {
+                    actuallastbow=_lastbow; //backoff limit of LM[i]
+                }
+            }
+            else{
+                VERBOSE(3," LM " << i << " weight is zero" << std::endl);
+            }
+        }
+        if (bol) *bol=actualbol;
+        if (bow) *bow=log(actualbow);
+        if (maxsuffptr) *maxsuffptr=actualmaxsuffptr;
+        if (maxsuffidx) *maxsuffidx=actualmaxsuffidx;
+        if (statesize) *statesize=actualstatesize;
+        if (extendible) *extendible=actualextendible;
+        if (lastbow) *bol=actuallastbow;
+        
+        if (maxsuffptr) VERBOSE(3," msp:" << (void*) *maxsuffptr << std::endl);
+        if (maxsuffidx) VERBOSE(3," maxsuffidx:" << *maxsuffidx << std::endl);
+        if (statesize) VERBOSE(3, " statesize:" << *statesize << std::endl);
+        if (bow) VERBOSE(3, " bow:" << *bow << std::endl);
+        if (bol) VERBOSE(3, " bol:" << *bol << std::endl);
+        if (lastbow) VERBOSE(3, " lastbow:" << *lastbow << std::endl);
+        
+        return log10(pr);
+    }
+    
+    //return log10 prob of an ngram
+	double lmInterpolation::clprob(ngram ng, double_vec_t& weight, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow)
 	{
-		VERBOSE(1,"double lmInterpolation::clprob(ngram ng, topic_map_t& lm_weights,...)"  << std::endl);
+		VERBOSE(1,"double lmInterpolation::clprob(ngram ng, double_vec_t& weight,...)"  << std::endl);
 		
 		double pr=0.0;
 		double _logpr;
@@ -222,12 +315,7 @@ namespace irstlm {
 		double _lastbow=0.0,actuallastbow=0.0; 
 		bool _extendible=false,actualextendible=false;
 		
-		double_vec_t weight(m_number_lm);
-		set_weight(lm_weights,weight);
-
-                for (size_t i=0; i<m_number_lm; i++) {
-                        VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << " normalized_weight[i]:" << weight[i] << endl);
-                }
+//		double_vec_t weight(m_number_lm);
 
 		for (size_t i=0; i<m_number_lm; i++) {
 			if (weight[i]>0.0){

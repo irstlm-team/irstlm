@@ -67,10 +67,10 @@ namespace irstlm {
 		float dictionary_load_factor;
 		
 		dictionary *dict; // dictionary for all interpolated LMs
-		
-		void set_weight(const topic_map_t& map, double_vec_t& weight);
 
-	public:
+    public:
+        
+        void set_weight(const topic_map_t& map, double_vec_t& weight);
 		
 		lmInterpolation(float nlf=0.0, float dlfi=0.0);
 		virtual ~lmInterpolation() {}
@@ -79,7 +79,8 @@ namespace irstlm {
 		lmContainer* load_lm(int i, int memmap, float nlf, float dlf);
 		
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
-		virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
+        virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
+        virtual double clprob(ngram ng, double_vec_t& weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
 
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);
@@ -153,7 +154,10 @@ namespace irstlm {
 
 		/* returns into the dictionary the successors of the given ngram */
 		virtual void getSuccDict(ngram& ng,dictionary* d);
-		
+        
+        virtual size_t get_Number_of_Components()		{
+            return m_number_lm;
+        }
 	};
 }//namespace irstlm
 

@@ -150,16 +150,26 @@ namespace irstlm {
 			MY_ASSERT (ong.size == ngsize);
 			
 			return clprob(ong, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
-		}
+        }
+        
+        virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+        {
+            //create the actual ngram
+            ngram ong(getDict());
+            ong.pushc(ng,ngsize);
+            MY_ASSERT (ong.size == ngsize);
+            
+            return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+        }
 		
-		virtual double clprob(int* ng, int ngsize, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		virtual double clprob(int* ng, int ngsize, double_vec_t& weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
 			//create the actual ngram
 			ngram ong(getDict());
 			ong.pushc(ng,ngsize);
 			MY_ASSERT (ong.size == ngsize);
 			
-			return clprob(ong, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+			return clprob(ong, weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 		
 		//this is a function which should be overwritten	
@@ -175,7 +185,14 @@ namespace irstlm {
 			UNUSED(lastbow);
 			
 			return 0.0;
-		}
+        }
+        
+        //this is a function which could be overwritten
+        virtual double clprob(ngram ng, double_vec_t& weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+        {
+            UNUSED(weights);
+            return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+        }
 		
 		//this is a function which could be overwritten	
 		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
@@ -205,7 +222,18 @@ namespace irstlm {
 			MY_ASSERT (ng.size == (int) text.size());
 			return clprob(ng, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
-		
+
+        //this is a function which could be overwritten
+        virtual double clprob(string_vec_t& text, double_vec_t& weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+        {
+            //create the actual ngram
+            ngram ng(getDict());
+            ng.pushw(text);
+            VERBOSE(3,"ng:|" << ng << "|" << std::endl);
+            MY_ASSERT (ng.size == (int) text.size());
+            return clprob(ng, weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
+        }
+        
 		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
 		{
 			UNUSED(ng);
@@ -237,7 +265,12 @@ namespace irstlm {
 			MY_ASSERT (ong.size == ngsize); 
 			return cmaxsuffidx(ong,statesize);
 		}
-		
+
+        virtual void set_weight(const topic_map_t& map, double_vec_t& weight){
+            UNUSED(map);
+            UNUSED(weight);
+        };
+        
 		virtual inline int get(ngram& ng) {
 			UNUSED(ng);
 			return 0;
@@ -333,7 +366,10 @@ namespace irstlm {
 		virtual bool is_Normalized(){ return  false; }
 		virtual void set_Normalized(bool val)		{
 			UNUSED(val);
-		}
+        }
+        virtual size_t get_Number_of_Components()		{
+            return 1;
+        }
 		
 	};
 	
