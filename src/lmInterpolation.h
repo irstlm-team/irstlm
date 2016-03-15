@@ -71,6 +71,7 @@ namespace irstlm {
     public:
         
         void set_weight(const topic_map_t& map, double_vec_t& weight);
+        void set_weight(const topic_map_t& map, double_vec_t& weight, sizet_vec_t idx);
 		
 		lmInterpolation(float nlf=0.0, float dlfi=0.0);
 		virtual ~lmInterpolation() {}
@@ -81,6 +82,7 @@ namespace irstlm {
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
         virtual double clprob(ngram ng, topic_map_t& lm_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
         virtual double clprob(ngram ng, double_vec_t& weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
+        virtual double clprob(ngram ng, double_vec_t& weights, sizet_vec_t idx, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL);
 
 		virtual const char *cmaxsuffptr(ngram ong, unsigned int* size=NULL);
 		virtual ngram_state_t cmaxsuffidx(ngram ong, unsigned int* size=NULL);

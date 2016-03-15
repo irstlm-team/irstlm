@@ -53,6 +53,7 @@ using namespace std;
 
 typedef std::vector< std::string > string_vec_t;
 typedef std::vector< double > double_vec_t;
+typedef std::vector< size_t > sizet_vec_t;
 typedef std::vector< float > float_vec_t;
 typedef std::map< std::string, float > topic_map_t;
 
