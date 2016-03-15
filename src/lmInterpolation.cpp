@@ -148,6 +148,7 @@ namespace irstlm {
 				m_idx[words[idx_name]] = i;
 				m_name[i] = words[idx_name];
 				VERBOSE(2,"i:" << i << " m_idx[words[idx_name]]:|" << m_idx[words[idx_name]] << "| m_name[i]:|" << m_name[i] << "|" << endl);
+			}else{
 				std::stringstream name;
 				name << i;
 				m_idx[name.str()] = i;
@@ -226,7 +227,7 @@ namespace irstlm {
         set_weight(lm_weights,weight);
         
         for (size_t i=0; i<m_number_lm; i++) {
-            VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " m_weight[i]:" << m_weight[i] << " normalized_weight[i]:" << weight[i] << endl);
+            VERBOSE(2,"this:|" << (void*) this << "| i:" << i << " original_m_weight[i]:" << m_weight[i] << " current_weight[i]:" << weight[i] << endl);
         }
         
         for (size_t i=0; i<m_number_lm; i++) {
@@ -237,7 +238,7 @@ namespace irstlm {
                 
                 IFVERBOSE(3){
                     //cerr.precision(10);
-                    VERBOSE(3," LM " << i << " m_weight:" << m_weight[i] << " normalized_weight:" << weight[i] << std::endl);
+                    VERBOSE(3," LM " << i << " original_m_weight:" << m_weight[i] << " current_weight:" << weight[i] << std::endl);
                     VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
                     VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
                     VERBOSE(3," LM " << i << " msp:" << (void*) _maxsuffptr << std::endl);
@@ -278,7 +279,7 @@ namespace irstlm {
                 }
             }
             else{
-                VERBOSE(3," LM " << i << " weight is zero" << std::endl);
+		VERBOSE(3," LM " << i << " original_m_weight:" << m_weight[i] << " current_weight is zero [skip prob computation]" << std::endl);
             }
         }
         if (bol) *bol=actualbol;
@@ -315,8 +316,6 @@ namespace irstlm {
 		double _lastbow=0.0,actuallastbow=0.0; 
 		bool _extendible=false,actualextendible=false;
 		
-//		double_vec_t weight(m_number_lm);
-
 		for (size_t i=0; i<m_number_lm; i++) {
 			if (weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
@@ -325,7 +324,7 @@ namespace irstlm {
 				
 				IFVERBOSE(3){
 					//cerr.precision(10);
-                                        VERBOSE(3," LM " << i << " m_weight:" << m_weight[i] << " normalized_weight:" << weight[i] << std::endl);
+                                        VERBOSE(3," LM " << i << " original_m_weight:" << m_weight[i] << " current_weight:" << weight[i] << std::endl);
                                         VERBOSE(3," LM " << i << " log10 logpr:" << _logpr<< std::endl);
                                         VERBOSE(3," LM " << i << " pr:" << pow(10.0,_logpr) << std::endl);
                                         VERBOSE(3," LM " << i << " msp:" << (void*) _maxsuffptr << std::endl);
@@ -366,7 +365,7 @@ namespace irstlm {
 				}
 			}
 			else{
-				VERBOSE(3," LM " << i << " weight is zero" << std::endl);
+				VERBOSE(3," LM " << i << " original_m_weight:" << m_weight[i] << " current_weight is zero [skip prob computation]" << std::endl);
 			}
 		}
 		if (bol) *bol=actualbol;
@@ -570,9 +569,8 @@ namespace irstlm {
 		return logOOVpenalty;
 	}
 	
-	
 	void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight){
-		VERBOSE(4,"void lmInterpolation::set_weight" << std::endl);
+		VERBOSE(4,"void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight)" << std::endl);
 		VERBOSE(4,"map.size:" << map.size() << std::endl);
 		for (topic_map_t::const_iterator it=map.begin(); it!=map.end();++it){
 			if (m_idx.find(it->first) == m_idx.end()){
