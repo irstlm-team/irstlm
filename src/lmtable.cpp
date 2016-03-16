@@ -106,7 +106,7 @@ namespace irstlm {
 		isInverted=false;
 		
 		//statistics
-		for (int i=0; i<=LMTMAXLEV+1; i++) totget[i]=totbsearch[i]=0;
+		for (int i=0; i<LMTMAXLEV+1; i++) totget[i]=totbsearch[i]=0;
 		
 		logOOVpenalty=0.0; //penalty for OOV words (default 0)
 		
