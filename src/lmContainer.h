@@ -297,8 +297,12 @@ namespace irstlm {
         virtual void set_weight(const topic_map_t& map, double_vec_t& weight){
             UNUSED(map);
             UNUSED(weight);
-        };
-        
+        }
+        virtual void set_weight(const topic_map_t& map, double_vec_t& weight, sizet_vec_t idx){
+            UNUSED(map);
+            UNUSED(weight);
+            UNUSED(idx);
+  	}
 		virtual inline int get(ngram& ng) {
 			UNUSED(ng);
 			return 0;
