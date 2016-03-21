@@ -27,3 +27,6 @@ Makefile.in
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+
+# For CMakeLists.txt build from MMT
+/build/
