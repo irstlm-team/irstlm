@@ -26,6 +26,7 @@ OPTIONS:
        -u|--uniform            Use uniform word frequency for dictionary splitting (default false)
        -b|--boundaries         Include sentence boundary n-grams (optional, default false)
        -v|--verbose            Verbose
+       --debug                 Debug
        -h|-?|--help            Show this message
 
 EOF
@@ -56,6 +57,7 @@ parts=3
 inpfile="";
 outfile=""
 verbose="";
+debug="";
 smoothing="witten-bell";
 prune="";
 prune_thr_str="";
@@ -101,6 +103,8 @@ while [ "$1" != "" ]; do
 																;;
         -v | --verbose )        verbose='--verbose';
                                 ;;
+        --debug )               debug='--debug';
+                                ;;
         -h | -? | --help )      usage;
                                 exit 0;
                                 ;;
@@ -142,7 +146,7 @@ echo "LOGFILE:$logfile"
 			 
 
 if [ $verbose ] ; then
-echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose prune_thr_str=$prune_thr_str  >> $logfile 2>&1
+echo inpfile='"'$inpfile'"' outfile=$outfile order=$order parts=$parts tmpdir=$tmpdir prune=$prune smoothing=$smoothing dictionary=$dictionary verbose=$verbose debug=$debug prune_thr_str=$prune_thr_str  >> $logfile 2>&1
 fi
 
 if [ ! "$inpfile" -o ! "$outfile" ] ; then
@@ -235,6 +239,11 @@ while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 
 echo "Merging language models into $outfile" >> $logfile 2>&1
 $scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff  >> $logfile 2>&1
+
+if [ $debug == "--debug" ] ; then
+    echo "Debugging is active; hence, not removing temporary directory $tmpdir" >> $logfile 2>&1
+exit 0
+fi
 
 echo "Cleaning temporary directory $tmpdir" >> $logfile 2>&1
 rm $tmpdir/* 2> /dev/null
