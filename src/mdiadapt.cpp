@@ -260,7 +260,7 @@ namespace irstlm {
 	
 	
 	
-	int mdiadaptlm::adapt(char* ngtfile,int alev,double step)
+	void mdiadaptlm::adapt(char* ngtfile,int alev,double step)
 	{
 		
 		if (alev > lmsize() || alev<=0) {
@@ -291,7 +291,7 @@ namespace irstlm {
 		for ((*w)=0; (*w)<dict->size(); (*w)++)
 			zeta0+=scalefact(ng) * backunig(ng);
 		
-		if (alev==1) return 1 ;
+		if (alev==1) return;
 		
 		cerr << "precomputing 2-gram normalization:\n";
 		
@@ -306,7 +306,7 @@ namespace irstlm {
 		
 		cerr << "done\n";
 		
-		return 1;
+		return;
 	};
 	
 	
@@ -329,7 +329,7 @@ namespace irstlm {
 			ngram histo=ng;
 			int succ=0;
 			
-			discount(ng,size,fstar,lambda,(int)0);
+			discount(ng,size,fstar,lambda,0);
 			
 			if ((lambda<1) && get(histo,size,size-1)) {
 				;
@@ -934,7 +934,7 @@ namespace irstlm {
 		scan(hg1,INIT,1);
 		while(scan(hg1,CONT,1)) {
 			
-			if ((*hg1.wordp(1)==oovcode)) continue;
+			if (*hg1.wordp(1)==oovcode) continue;
 			
 			*ng.wordp(3)=*hg1.wordp(1);
 			
@@ -1538,7 +1538,7 @@ namespace irstlm {
 					
 					// frequency pruning is not applied to unigrams
 					
-					pr=mdiadaptlm::prob(ng,i);
+					pr=mdiadaptlm::prob(ng,i,fstar,dummy,dummy2);
 					
 					if (sng.containsWord(subdict->OOV(),i) || ng.containsWord(dict->OOV(),i)) {
 						_OOV_unigram=true;
@@ -1991,7 +1991,7 @@ namespace irstlm {
 					
 					// frequency pruning is not applied to unigrams
 					VERBOSE(3,"mdiadaptlm::saveARPA_per_level(char *filename,int backoff,char* subdictfile ) computing prob for ng:|" << ng << "| size:" << i << std::endl);
-					pr=mdiadaptlm::prob(ng,i);
+					pr=mdiadaptlm::prob(ng,i,fstar,dummy,dummy2);
 					VERBOSE(3,"mdiadaptlm::saveARPA_per_level(char *filename,int backoff,char* subdictfile ) getting prob for ng:|" << ng << "| pr:" << pr << std::endl);
 					
 					if (sng.containsWord(subdict->OOV(),i) || ng.containsWord(dict->OOV(),i)) {

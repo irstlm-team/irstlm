@@ -315,7 +315,7 @@ namespace irstlm {
 		
 		int reload(std::set<string> words);
 		
-		void filter(const char* /* unused parameter: lmfile */) {};
+		//void filter(const char* /* unused parameter: lmfile */) {};
 		virtual double lprob(ngram ng, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL, bool* extendible=NULL, double* lastbow=NULL);
 		virtual double clprob(ngram ng, double* bow, int* bol, ngram_state_t* maxsuffidx, char** maxsuffptr, unsigned int* statesize, bool* extendible, double* lastbow);
 
@@ -629,8 +629,9 @@ namespace irstlm {
 		inline virtual void dictionary_incflag(const bool flag) {
 			UNUSED(flag);
 		};
-		
-		inline virtual bool filter(const string sfilter, lmtable* sublmt, const string skeepunigrams) {
+
+		using lmContainer::filter;
+		virtual bool filter(const string sfilter, lmtable* sublmt, const string skeepunigrams) {
 			std::cerr << "filtering... \n";
 			dictionary *dict=new dictionary((char *)sfilter.c_str());
 			

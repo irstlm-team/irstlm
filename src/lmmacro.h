@@ -118,8 +118,9 @@ namespace irstlm {
 		inline virtual void dictionary_incflag(const bool flag) {
 			dict->incflag(flag);
 		};
-		
-		inline virtual bool filter(const string sfilter, lmContainer* sublmt, const string skeepunigrams) {
+
+		using lmtable::filter;
+		inline virtual bool filter(const string sfilter, lmmacro* sublmt, const string skeepunigrams) {
 			UNUSED(sfilter);
 			UNUSED(sublmt);
 			UNUSED(skeepunigrams);
