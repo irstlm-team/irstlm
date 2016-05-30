@@ -400,7 +400,7 @@ namespace irstlm {
 		
 		
 		int codecmp(node a,node b) {
-			register int i,result;
+			int i,result;
 			for (i=(LMTCODESIZE-1); i>=0; i--) {
 				result=(unsigned char)a[i]-(unsigned char)b[i];
 				if(result) return result;

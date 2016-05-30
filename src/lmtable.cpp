@@ -1315,8 +1315,8 @@ namespace irstlm {
 		if (n==0) return 0;
 		
 		*idx=0;
-		register table_entry_pos_t low=0, high=n;
-		register unsigned char *p;
+		table_entry_pos_t low=0, high=n;
+		unsigned char *p;
 		int result;
 		
 #ifdef INTERP_SEARCH
