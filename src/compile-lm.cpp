@@ -44,7 +44,7 @@ void print_help(int TypeFlag=0){
 	std::cerr << "       a compiled representation that the IRST LM toolkit can quickly" << std::endl;
 	std::cerr << "       read and process. LM file can be compressed." << std::endl;
 	std::cerr << std::endl << "OPTIONS:" << std::endl;
-	
+
 	FullPrintParams(TypeFlag, 0, 1, stderr);
 }
 

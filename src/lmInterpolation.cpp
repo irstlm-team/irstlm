@@ -481,9 +481,9 @@ namespace irstlm {
 		logOOVpenalty=log10(OOVpenalty);
 		return logOOVpenalty;
 	}
-	
-	
-	void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight){
+
+	void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight)
+	{
 		VERBOSE(4,"void lmInterpolation::set_weight" << std::endl);
 		VERBOSE(4,"map.size:" << map.size() << std::endl);
 		for (topic_map_t::const_iterator it=map.begin(); it!=map.end();++it){
@@ -494,6 +494,7 @@ namespace irstlm {
 			VERBOSE(4,"it->first:|" << it->first << "| it->second:|" << it->second << "| m_idx[it->first]:|" << m_idx[it->first] << "| weight[m_idx[it->first]]:|" <<weight[m_idx[it->first]] << "|" << std::endl);
 		}
 	}
+
 	int lmInterpolation::get(ngram& ng,int n,int lev)
 	{
 		/*The function get for the lmInterpolation  LM type is not well defined
@@ -524,7 +525,8 @@ namespace irstlm {
 	/* returns into the dictionary the successors of the given ngram;
 	 it collects the successors from all submodels with weights larger than 0.0
 	 */
-	void lmInterpolation::getSuccDict(ngram& ng,dictionary* d){
+	void lmInterpolation::getSuccDict(ngram& ng,dictionary* d)
+	{
 		for (size_t i=0; i<m_number_lm; i++) {
 			if (m_weight[i]>0.0){
 				ngram _ng(m_lm[i]->getDict());
