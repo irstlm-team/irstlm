@@ -17,6 +17,7 @@ CMakeCache.txt
 *.lo
 aclocal.m4
 ar-lib
+compile
 config.guess
 config.h
 config.h.in
