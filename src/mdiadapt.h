@@ -92,7 +92,7 @@ public:
 
   double foreunig(ngram ng);
 
-  int adapt(char* ngtfile,int alev=1,double gis_step=0.4);
+  void adapt(char* ngtfile,int alev=1,double gis_step=0.4);
 
   int scalefact(char* ngtfile);
 

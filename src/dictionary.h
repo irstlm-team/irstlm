@@ -92,7 +92,6 @@ class dictionary
 	char       ifl;  //!< increment flag
 	int        dubv; //!< dictionary size upper bound
 	float        load_factor; //!< dictionary loading factor
-	char* oov_str;    //!< oov string
 	
 	void test(int* OOVchart, int* NwTest, int curvesize, const char *filename, int listflag=0);	// prepare into testOOV the OOV statistics computed on test set
 	

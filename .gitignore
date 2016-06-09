@@ -1,0 +1,10 @@
+#directories
+src/CMakeFiles/
+CMakeFiles/
+build/
+inst/
+
+#compilation files
+Makefile
+cmake_install.cmake
+CMakeCache.txt

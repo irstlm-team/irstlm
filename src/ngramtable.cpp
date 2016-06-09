@@ -939,9 +939,9 @@ int ngramtable::mybsearch(char *ar, int n, int size, unsigned char *key, int *id
 {
   if (n==0) return 0;
 
-  register int low = 0, high = n;
+  int low = 0, high = n;
   *idx=0;
-  register unsigned char *p=NULL;
+  unsigned char *p=NULL;
   int result;
 
 #ifdef INTERP_SEARCH
@@ -1723,7 +1723,7 @@ int ngramtable::ngtbcmp(int* wordp,char* tablep,int n) {
 }
 
 int ngramtable::codecmp(char * a,char *b) {
-    register int i,result;
+    int i,result;
     for (i=(CODESIZE-1); i>=0; i--) {
       result=(unsigned char)a[i]-(unsigned char)b[i];
       if(result) return result;

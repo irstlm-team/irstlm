@@ -28,7 +28,6 @@ namespace irstlm {
 	class linearwb: public mdiadaptlm
 	{
 		int prunethresh;
-		int minfreqthresh;
 	public:
 		linearwb(char* ngtfile,int depth=0,int prunefreq=0,TABLETYPE tt=SHIFTBETA_B);
 		int train();
@@ -40,7 +39,6 @@ namespace irstlm {
 	class linearstb: public mdiadaptlm
 	{
 		int prunethresh;
-		int minfreqthresh;
 	public:
 		linearstb(char* ngtfile,int depth=0,int prunefreq=0,TABLETYPE tt=SHIFTBETA_B);
 		int train();

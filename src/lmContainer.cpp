@@ -154,7 +154,7 @@ namespace irstlm {
 		VERBOSE(1,"lmContainer* lmContainer::CreateLanguageModel(int type, float nlf, float dlf) lm->getLanguageModelType:|" << lm->getLanguageModelType() << "|" << std::endl)
 		return lm;
 	}
-	
+
 	bool lmContainer::filter(const string sfilter, lmContainer*& sublmC, const string skeepunigrams)
 	{
 		if (lmtype == _IRSTLM_LMTABLE) {
@@ -166,7 +166,7 @@ namespace irstlm {
 			sublmC->maxlevel(maxlevel());
 			
 			bool res=((lmtable*) this)->filter(sfilter, (lmtable*) sublmC, skeepunigrams);
-			
+
 			return res;
 		}
 		return false;

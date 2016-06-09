@@ -114,7 +114,7 @@ public:
     return 0;
   }
 
-  virtual void adapt(char* /* unused parameter: ngtfile */, double /* unused parameter:  w */) {}
+  virtual void adapt(char* /* unused parameter: ngtfile */, int /* unused parameter:  l */, double /* unused parameter:  w */) {}
 
   virtual double prob(ngram /* unused parameter: ng */,int /* unused parameter: size */) {
     return 0.0;

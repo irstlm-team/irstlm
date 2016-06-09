@@ -111,7 +111,7 @@ namespace irstlm {
 			UNUSED(flag);
 			return false;
 		};
-		virtual bool is_inverted() {
+		virtual bool is_inverted() const {
 			return false;
 		};	
 		
@@ -237,11 +237,11 @@ namespace irstlm {
 		}
 		
 		
-		virtual void used_caches() {};
+		virtual void used_caches() const {};
 		virtual void init_caches(int uptolev) {
 			UNUSED(uptolev);
 		};
-		virtual void check_caches_levels() {};
+		virtual void check_caches_levels() const {};
 		virtual void reset_caches() {};
 		
 		virtual void  reset_mmap() {};
@@ -257,9 +257,9 @@ namespace irstlm {
 		inline virtual void dictionary_incflag(const bool flag) {
 			UNUSED(flag);
 		};
-		
+
 		virtual bool filter(const string sfilter, lmContainer*& sublmt, const string skeepunigrams);
-		
+
 		static lmContainer* CreateLanguageModel(const std::string infile, float nlf=0.0, float dlf=0.0);
 		static lmContainer* CreateLanguageModel(int type, float nlf=0.0, float dlf=0.0);
 		

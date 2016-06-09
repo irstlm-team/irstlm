@@ -11,7 +11,7 @@ option {\tt -memmap=1}, which exploits the {\em Memory Mapping} mechanism in ord
 much as possible on disk rather than in RAM. \\
 
 \begin{verbatim}
-$> compile-lm --memmap=1 train.lm train.blm
+$> compile-lm train.lm train.blm --memmap=1
 \end{verbatim}
 \noindent
 This option clearly pays a fee  in terms of speed, but  is often the only way to proceed. It is also recommended 
@@ -27,7 +27,7 @@ dramatically causing a ``disk full'' system error.  It is possible to
 explicitly set the directory used for temporary computation through the
 parameter ``--tmpdir''.
 \begin{verbatim}
-$> compile-lm --tmpdir=<mytmpdir> train.lm train.blm
+$> compile-lm train.lm train.blm --tmpdir=<mytmpdir>
 \end{verbatim}
 
 
@@ -36,7 +36,7 @@ $> compile-lm --tmpdir=<mytmpdir> train.lm train.blm
 For a faster access, the ngrams can be stored in inverted order with the following two commands:
 \begin{verbatim}
 $> sort-lm.pl -inv -ilm train.lm -olm train.inv.lm
-$> compile-lm train.inv.lm train.inv.blm --invert yes
+$> compile-lm train.inv.lm train.inv.blm --invert=yes
 \end{verbatim}
 
 \paragraph{Warning:} The following pipeline is no more allowed!!
@@ -46,7 +46,7 @@ or with the following pipeline:
 }
 \begin{verbatim}
 $> cat train.lm | sort-lm.pl -inv | \
-   compile-lm /dev/stdin train.inv.blm --invert yes
+   compile-lm /dev/stdin train.inv.blm --invert=yes
 \end{verbatim}
 
 
