@@ -668,6 +668,8 @@ namespace irstlm {
         void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight, sizet_vec_t idx){
                 VERBOSE(4,"void lmInterpolation::set_weight(const topic_map_t& map, double_vec_t& weight, sizet_vec_t idx)" << std::endl);
                 VERBOSE(4,"map.size:" << map.size() << std::endl);
+                VERBOSE(4,"weight.size:" << weight.size() << std::endl);
+                VERBOSE(4,"idx.size:" << idx.size() << std::endl);
 		size_t j=0;
                 for (topic_map_t::const_iterator it=map.begin(); it!=map.end();++it){
                         if (m_idx.find(it->first) == m_idx.end()){

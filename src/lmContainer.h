@@ -200,66 +200,83 @@ namespace irstlm {
 		//this is a function which could be overwritten	
 		virtual double clprob(ngram ng, topic_map_t& topic_weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
+	    		VERBOSE(3,"lmContainer::(ngram ng, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
 			UNUSED(topic_weights);
+            VERBOSE(3,"calling clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
 			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}                
 
 	        //this is a function which could be overwritten
 	        virtual double clprob(ngram ng, double_vec_t& weights, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
         	{
+	    	    VERBOSE(3,"lmContainer::(ngram ng, double_vec_t& weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
         	    UNUSED(weights);
+            VERBOSE(3,"calling clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
         	    return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
         	}
 
                 //this is a function which could be overwritten
+              virtual double clprob(ngram ng, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL){
+	    		VERBOSE(3,"lmContainer::(ngram ng, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
+	    		VERBOSE(3,"do nothing" << std::endl);
+			return 0.0;
+		}
+/*
                 virtual double clprob(ngram ng, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL, int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
                 {
+	    		VERBOSE(3,"lmContainer::(ngram ng, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
                         UNUSED(weights);
                         UNUSED(indexes);
+            VERBOSE(3,"calling clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
                         return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
                 }
+*/
 		
-		//this is a function which could be overwritten	
-		virtual double clprob(string_vec_t& text, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		double clprob(string_vec_t& text, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
+			VERBOSE(3,"lmContainer::(string_vec_t& text, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
 			//create the actual ngram
 			ngram ng(getDict());
 			ng.pushw(text);
 			VERBOSE(3,"ng:|" << ng << "|" << std::endl);
 			MY_ASSERT (ng.size == (int) text.size());
+            VERBOSE(3,"calling clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
 			return clprob(ng, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		} 
 		
-		//this is a function which could be overwritten	
-		virtual double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+		double clprob(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
 		{
+			VERBOSE(3,"lmContainer::(string_vec_t& text, topic_map_t& topic_weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
 			//create the actual ngram
 			ngram ng(getDict());
 			ng.pushw(text);
 			VERBOSE(3,"ng:|" << ng << "|" << std::endl);
 			MY_ASSERT (ng.size == (int) text.size());
+            VERBOSE(3,"calling clprob(ng, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
 			return clprob(ng, topic_weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
 		}
 
-        //this is a function which could be overwritten
-        virtual double clprob(string_vec_t& text, double_vec_t& weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+        double clprob(string_vec_t& text, double_vec_t& weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
         {
+	    VERBOSE(3,"lmContainer::(string_vec_t& text, double_vec_t& weights, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
             //create the actual ngram
             ngram ng(getDict());
             ng.pushw(text);
             VERBOSE(3,"ng:|" << ng << "|" << std::endl);
             MY_ASSERT (ng.size == (int) text.size());
+            VERBOSE(3,"calling clprob(ng, weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
             return clprob(ng, weights, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
         }
 
-        //this is a function which could be overwritten
-        virtual double clprob(string_vec_t& text, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
+        double clprob(string_vec_t& text, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)
         {
+	    VERBOSE(3,"lmContainer::(string_vec_t& text, double_vec_t& weights, sizet_vec_t& indexes, double* bow=NULL,int* bol=NULL, ngram_state_t* maxsuffidx=NULL, char** maxsuffptr=NULL, unsigned int* statesize=NULL,bool* extendible=NULL, double* lastbow=NULL)" << std::endl);
             //create the actual ngram
             ngram ng(getDict());
             ng.pushw(text);
             VERBOSE(3,"ng:|" << ng << "|" << std::endl);
             MY_ASSERT (ng.size == (int) text.size());
+            VERBOSE(3,"calling clprob(ng, weights, indexes, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow) " << std::endl);
             return clprob(ng, weights, indexes, bow, bol, maxsuffidx, maxsuffptr, statesize, extendible, lastbow);
         } 
 		virtual const char *cmaxsuffptr(ngram ng, unsigned int* statesize=NULL)
@@ -297,8 +314,12 @@ namespace irstlm {
         virtual void set_weight(const topic_map_t& map, double_vec_t& weight){
             UNUSED(map);
             UNUSED(weight);
-        };
-        
+        }
+        virtual void set_weight(const topic_map_t& map, double_vec_t& weight, sizet_vec_t idx){
+            UNUSED(map);
+            UNUSED(weight);
+            UNUSED(idx);
+        }
 		virtual inline int get(ngram& ng) {
 			UNUSED(ng);
 			return 0;

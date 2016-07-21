@@ -403,11 +403,16 @@ int main(int argc, char **argv)
             
             //getting apriori topic weights
             topic_map_t apriori_topic_map;
-            double_vec_t apriori_topic_weights(lmt->get_Number_of_Components());
+            //double_vec_t apriori_topic_weights(lmt->get_Number_of_Components());
+            double_vec_t apriori_topic_weights;
+            sizet_vec_t apriori_topic_indexes;
             if (withContext){
                 //				((lmContextDependent*) lmt)->setContextMap(apriori_topic_map,context);
                 lmt->setContextMap(apriori_topic_map,context);
-                lmt->set_weight(apriori_topic_map,apriori_topic_weights);
+                apriori_topic_weights.resize(apriori_topic_map.size());
+                apriori_topic_indexes.resize(apriori_topic_map.size());
+                //lmt->set_weight(apriori_topic_map,apriori_topic_weights);
+                lmt->set_weight(apriori_topic_map,apriori_topic_weights,apriori_topic_indexes);
             }
             // computation using std::string
             // loop over ngrams of the sentence
@@ -457,9 +462,12 @@ int main(int argc, char **argv)
                     VERBOSE(2,"dict.size:|" << lmt->getDict()->size() << "|" << std::endl);
                     
                     if (withContext){
+                        VERBOSE(2," calling lmt->clprob(tmp_word_vec, apriori_topic_weights, apriori_topic_indexes, &bow, &bol, &msidx, &msp, &statesize)" << std::endl);
 //                      current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msidx, &msp, &statesize);
-                        current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_weights, &bow, &bol, &msidx, &msp, &statesize);
+//                      current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_weights, &bow, &bol, &msidx, &msp, &statesize);
+                        current_Pr = lmt->clprob(tmp_word_vec, apriori_topic_weights, apriori_topic_indexes, &bow, &bol, &msidx, &msp, &statesize);
                     }else{
+                        VERBOSE(2," calling lmt->clprob(tmp_word_vec, &bow, &bol, &msidx, &msp, &statesize)" << std::endl);
                         current_Pr = lmt->clprob(tmp_word_vec, &bow, &bol, &msidx, &msp, &statesize);
                     }
                     /*
@@ -624,7 +632,9 @@ int main(int argc, char **argv)
                         
                         double pr;
                         if (withContext){
-                            pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msidx, &msp, &statesize, NULL, NULL);
+                            //pr=lmt->clprob(tmp_word_vec, apriori_topic_map, &bow, &bol, &msidx, &msp, &statesize, NULL, NULL);
+                            //pr=lmt->clprob(tmp_word_vec, apriori_topic_weights, &bow, &bol, &msidx, &msp, &statesize, NULL, NULL);
+                            pr=lmt->clprob(tmp_word_vec, apriori_topic_weights, apriori_topic_indexes, &bow, &bol, &msidx, &msp, &statesize, NULL, NULL);
                         }else{
                             pr=lmt->clprob(tmp_word_vec, &bow, &bol, &msidx, &msp, &statesize, NULL, NULL);
                         }
