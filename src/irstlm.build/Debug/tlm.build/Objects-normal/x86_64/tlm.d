@@ -1,0 +1,19 @@
+dependencies: \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/tlm.cpp \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/cmd.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/mfstream.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/mempool.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/htable.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/dictionary.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/util.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/n_gram.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/ngramtable.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/interplm.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/normcache.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/ngramcache.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/mdiadapt.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/shiftlm.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/linearlm.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/mixture.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/lmtable.h \
+  /Users/nicolabertoldi/Work/Software/IRSTLM/GitHubRepository/irstlm/src/lmContainer.h
