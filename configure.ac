@@ -160,19 +160,19 @@ else
     AC_MSG_NOTICE([optimization disabled (default)])
 fi
 
-if test "x$enable_cxx0" != 'xno'
-then
-    AC_MSG_NOTICE([c++x0 dialect is enabled (default), compilation with "-DHAVE_CXX0 -std=c++0x "])
-    CPPFLAGS="$CPPFLAGS -DHAVE_CXX0 -std=c++0x";
-else
-    AC_MSG_NOTICE([c++x0 dialect is disabled, compilation without "-std=c++0x" and with "-UHAVE_CXX0"])
-    CPPFLAGS="$CPPFLAGS -UHAVE_CXX0";
-fi
-
 if test "x$with_zlib" != 'xno'
 then
   CPPFLAGS="$CPPFLAGS -I${with_zlib}/include"
   LDFLAGS="$LDFLAGS -L${with_zlib}/lib"
+fi
+
+if test "x$enable_cxx0" != 'xno'
+then
+    AC_MSG_NOTICE([c++x0 dialect is enabled (default), compilation with "-DHAVE_CXX0 -std=c++0x "])
+    CXXFLAGS="$CXXFLAGS -DHAVE_CXX0 -std=c++0x";
+else
+    AC_MSG_NOTICE([c++x0 dialect is disabled, compilation without "-std=c++0x" and with "-UHAVE_CXX0"])
+    CXXFLAGS="$CXXFLAGS -UHAVE_CXX0";
 fi
 
 LIBS="$LIBS -lz"
