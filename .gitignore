@@ -1,11 +1,22 @@
+#directories
+src/CMakeFiles/
+CMakeFiles/
+build/
+inst/
+.deps/
+.DS_Store/
+.idea/
+autom4te.cache/
+
+#files
+Makefile
+Makefile.in
+cmake_install.cmake
+CMakeCache.txt
 *.o
 *.lo
-.deps
-.DS_Store
-.idea/
 aclocal.m4
 ar-lib
-autom4te.cache/
 compile
 config.guess
 config.h
@@ -22,8 +33,11 @@ ltmain.sh
 m4
 missing
 stamp-h1
+<<<<<<< HEAD
 Makefile
 Makefile.in
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+=======
+>>>>>>> 37157515b45ee411a8375bb2680cbd85ced89d62

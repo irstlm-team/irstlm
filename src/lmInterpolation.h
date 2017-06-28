@@ -108,7 +108,7 @@ namespace irstlm {
 		
 		//for an interpolation LM this variable does not make sense
 		//for compatibility, we return true if all subLM return true
-		inline bool is_inverted() {
+		inline bool is_inverted() const {
 			for (size_t i=0; i<m_number_lm; i++) {
 				if (m_isinverted[i] == false) return false;
 			}

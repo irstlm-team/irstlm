@@ -48,7 +48,7 @@ template <>
 address htable<int *>::Hash(int* key)
 {
   address  h;
-  register int i;
+  int i;
 
   //Thomas Wang's 32 bit Mix Function
   for (i=0,h=0; i<keylen; i++) {
@@ -71,8 +71,8 @@ address htable<char *>::Hash(char* key)
   char *Key = *(char**)key;
   int  length=strlen(Key);
 
-  register address h=0;
-  register int i;
+  address h=0;
+  int i;
 
   for (i=0,h=0; i<length; i++)
     h = h * Prime1 ^ (Key[i] - ' ');
@@ -86,7 +86,7 @@ int htable<int*>::Comp(int *key1, int *key2) const
 {
   MY_ASSERT(key1 && key2);
 
-  register int i;
+  int i;
 
   for (i=0; i<keylen; i++)
     if (key1[i]!=key2[i]) return 1;

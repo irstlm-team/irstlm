@@ -106,7 +106,7 @@ namespace irstlm {
 		isInverted=false;
 		
 		//statistics
-		for (int i=0; i<=LMTMAXLEV+1; i++) totget[i]=totbsearch[i]=0;
+		for (int i=0; i<LMTMAXLEV+1; i++) totget[i]=totbsearch[i]=0;
 		
 		logOOVpenalty=0.0; //penalty for OOV words (default 0)
 		
@@ -1315,8 +1315,8 @@ namespace irstlm {
 		if (n==0) return 0;
 		
 		*idx=0;
-		register table_entry_pos_t low=0, high=n;
-		register unsigned char *p;
+		table_entry_pos_t low=0, high=n;
+		unsigned char *p;
 		int result;
 		
 #ifdef INTERP_SEARCH
