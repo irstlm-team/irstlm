@@ -226,12 +226,6 @@ additional_parameters=""
 fi
 $scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "$additional_smoothing_parameters" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $additional_parameters >> $logfile 2>&1 &
 
-#if [ $smoothing = "--shift-beta" -o $smoothing = "--improved-shift-beta" ]; then
-#$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing "cat $tmpdir/ikn.stat.dict.*" --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict $backoff >> $logfile 2>&1 &
-#else
-#$scr/build-sublm.pl $verbose $prune $prune_thr_str $smoothing --size $order --ngrams "$gunzip -c $tmpdir/ngram.${sdict}.gz" -sublm $tmpdir/lm.$sdict >> $logfile 2>&1 &
-#fi
-
 done
 
 # Wait for all parallel jobs to finish
@@ -240,7 +234,7 @@ while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 echo "Merging language models into $outfile" >> $logfile 2>&1
 $scr/merge-sublm.pl --size $order --sublm $tmpdir/lm.dict -lm $outfile $backoff  >> $logfile 2>&1
 
-if [ $debug == "--debug" ] ; then
+if [ "$debug" == "--debug" ] ; then
     echo "Debugging is active; hence, not removing temporary directory $tmpdir" >> $logfile 2>&1
 exit 0
 fi
