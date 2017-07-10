@@ -195,7 +195,7 @@ echo "used to generate n-gram blocks,  so that sub language model blocks results
 for sdict in $tmpdir/dict.*;do
 sdict=`basename $sdict`
 echo "Extracting n-gram statistics for $sdict" >> $logfile 2>&1
-if [ $smoothing = "--shift-beta" -o $smoothing = "--improved-shift-beta" ]; then
+if [ "$smoothing" == "--shift-beta" -o "$smoothing" == "--improved-shift-beta" ]; then
 additional_parameters="-iknstat=$tmpdir/ikn.stat.$sdict"
 else
 additional_parameters=""
@@ -203,10 +203,6 @@ fi
 
 $bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary $additional_parameters >> $logfile 2>&1 &
 
-#$bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary -iknstat="$tmpdir/ikn.stat.$sdict" >> $logfile 2>&1 &
-#else
-#$bin/ngt -i="$inpfile" -n=$order -gooout=y -o="$gzip -c > $tmpdir/ngram.${sdict}.gz" -fd="$tmpdir/$sdict" $dictionary >> $logfile 2>&1 &
-#fi
 done
 
 # Wait for all parallel jobs to finish
@@ -217,7 +213,7 @@ for sdict in `ls $tmpdir/dict.*` ; do
 sdict=`basename $sdict`
 echo "Estimating language models for $sdict" >> $logfile 2>&1
 
-if [ $smoothing = "--shift-beta" -o $smoothing = "--improved-shift-beta" ]; then
+if [ $smoothing == "--shift-beta" -o $smoothing == "--improved-shift-beta" ]; then
 additional_smoothing_parameters="cat $tmpdir/ikn.stat.dict.*"
 additional_parameters="$backoff"
 else
