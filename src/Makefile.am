@@ -1,8 +1,8 @@
 lib_LTLIBRARIES = libirstlm.la
 
-AM_CXXFLAGS = -static -isystem/usr/include -W -Wall -ffor-scope -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES $(BOOST_CPPFLAGS) -DMYCODESIZE=3
+AM_CXXFLAGS = -Wall -ffor-scope -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES $(BOOST_CPPFLAGS) -DMYCODESIZE=3
 
-libirstlm_ladir = ${includedir}
+libirstlm_ladir = $(includedir)/irstlm
 
 libirstlm_la_HEADERS = \
   cmd.h \
@@ -64,33 +64,31 @@ libirstlm_la_SOURCES = \
 
 CLEANFILES = $(BUILT_SOURCES)
 
-libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB)
-
-LDADD = -lirstlm -lpthread
-DEPENDENCIES = libirstlm.la
+libirstlm_la_LIBADD = $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB) -lpthread
+libirstlm_la_LDFLAGS = -version-info 1:0:0
 
 bin_PROGRAMS = dict ngt dtsel compile-lm interpolate-lm prune-lm quantize-lm prune-lm score-lm tlm plsa verify-caching cswa
 dict_SOURCES = dict.cpp
-dict_DEPENDENCIES = $(DEPENDENCIES)
+dict_LDADD = libirstlm.la -lpthread
 ngt_SOURCES = ngt.cpp
-ngt_DEPENDENCIES = $(DEPENDENCIES)
+ngt_LDADD = libirstlm.la -lpthread
 dtsel_SOURCES = dtsel.cpp
-dtsel_DEPENDENCIES = $(DEPENDENCIES)
+dtsel_LDADD = libirstlm.la -lpthread
 compile_lm_SOURCES = compile-lm.cpp
-compile_lm_DEPENDENCIES = $(DEPENDENCIES)
+compile_lm_LDADD = libirstlm.la -lpthread
 interpolate_lm_SOURCES = interpolate-lm.cpp
-interpolate_lm_DEPENDENCIES = $(DEPENDENCIES)
+interpolate_lm_LDADD = libirstlm.la -lpthread
 prune_lm_SOURCES = prune-lm.cpp
-prune_lm_DEPENDENCIES = $(DEPENDENCIES)
+prune_lm_LDADD = libirstlm.la -lpthread
 quantize_lm_SOURCES = quantize-lm.cpp
-quantize_lm_DEPENDENCIES = $(DEPENDENCIES)
+quantize_lm_LDADD = libirstlm.la -lpthread
 score_lm_SOURCES = score-lm.cpp
-score_lm_DEPENDENCIES = $(DEPENDENCIES)
+score_lm_LDADD = libirstlm.la -lpthread
 tlm_SOURCES = tlm.cpp
-tlm_DEPENDENCIES = $(DEPENDENCIES)
+tlm_LDADD = libirstlm.la -lpthread
 plsa_SOURCES = plsa.cpp
-plsa_DEPENDENCIES = $(DEPENDENCIES)
+plsa_LDADD = libirstlm.la -lpthread
 verify_caching_SOURCES = verify-caching.cpp
-verify_caching_DEPENDENCIES = $(DEPENDENCIES)
+verify_caching_LDADD = libirstlm.la -lpthread
 cswa_SOURCES = cswa.cpp
-cswa_DEPENDENCIES = $(DEPENDENCIES)
+cswa_LDADD = libirstlm.la -lpthread

@@ -1,13 +1,13 @@
-AC_INIT([irstlm], [5.80.06])
+AC_INIT([irstlm], [6.00.05])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_LIBTOOL
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 m4_pattern_allow([AM_PROG_AR],[AM_PROG_AR])
 AM_PROG_AR
+AC_PROG_LIBTOOL
 
 AC_ARG_ENABLE([doc],
    [AC_HELP_STRING([--enable-doc|--disable-doc], [Enable or Disable (default) creation of documentation])])
