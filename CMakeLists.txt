@@ -12,6 +12,7 @@ SET(CMAKE_CXX_COMPILER "g++" )
 
 OPTION(CXX0 "Enable/Disable std=c++0" ON)
 OPTION(ASSERT "Enable/Disable MY_ASSERT_FLAG" ON)
+OPTION(BUILD_DOCS "Build documentation" OFF)
 
 MATH(EXPR IRSTLM_INT_VERSION "(${IRSTLM_VERSION_MAJOR} * 10000) + (${IRSTLM_VERSION_MINOR} * 100) + (${IRSTLM_VERSION_PATCH} * 1)" )
 
@@ -43,7 +44,9 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 ADD_SUBDIRECTORY (src)
 ADD_SUBDIRECTORY (scripts)
+IF(BUILD_DOCS)
 ADD_SUBDIRECTORY (doc)
+ENDIF()
 
 IF (WIN32)
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
